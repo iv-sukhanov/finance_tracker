@@ -1,0 +1,4 @@
+//an example of .env/.dev file
+SERVICE_NAME=GRO_GOROTH
+FIGURES=1234
+SYMBOLS=ABCD

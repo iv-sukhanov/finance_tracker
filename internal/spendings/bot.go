@@ -35,3 +35,13 @@ func (s *Service) InitBot() {
 
 	s.InitBotFromArgs(token, mode == "true")
 }
+
+func (s *Service) RunBot() {
+	for update := range s.bot.updates {
+		if update.Message == nil {
+			continue
+		}
+
+		s.log.WithField("Message", update.Message.Text).Debug("Received update")
+	}
+}
