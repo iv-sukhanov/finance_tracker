@@ -9,6 +9,7 @@ func New() *Service {
 	s.log.SetFormatter(&log.TextFormatter{
 		ForceColors: true,
 	})
+	s.log.SetLevel(log.DebugLevel)
 	s.InitBot()
 
 	return s
