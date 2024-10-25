@@ -15,6 +15,11 @@ func ConnectDB(ctx context.Context, url string) (db *pgx.Conn, close func(), err
 	if err != nil {
 		return nil, nil, fmt.Errorf("ConnectDB: %w", err)
 	}
+
+	if err := db.Ping(ctx); err != nil {
+		return nil, nil, fmt.Errorf("ConnectDB: %w", err)
+	}
+
 	return db, func() { db.Close(ctx) }, nil
 }
 
