@@ -20,9 +20,7 @@ func New(log *log.Logger, conn *pgx.Conn, bot *tgbotapi.BotAPI) (s *Service, err
 		return nil, errors.New("Service.New: bot api conn is nil")
 	}
 
-	s.log = log
-	s.bot = newTelegramBot(bot)
-	s.repo = newRepository(conn)
+	s = &Service{log: log, repo: newRepository(conn), bot: newTelegramBot(bot)}
 
 	return s, nil
 }
