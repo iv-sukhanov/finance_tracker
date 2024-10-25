@@ -1,8 +1,6 @@
 package inith
 
 import (
-	"os"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,16 +8,16 @@ const (
 	defaultLogLevel = logrus.DebugLevel
 )
 
-func NewLogger() *logrus.Logger {
-	log := logrus.New()
+func NewLogger(level string) *logrus.Logger {
+	log := (logrus.New())
 	log.SetFormatter(&logrus.TextFormatter{
 		ForceColors: true,
 	})
-	log.SetLevel(getLevelFromEnv())
+	log.SetLevel(getLevelFromEnv(level))
 	return log
 }
 
-func getLevelFromEnv() logrus.Level {
+func getLevelFromEnv(currentLevel string) logrus.Level {
 
 	levels := map[string]logrus.Level{
 		"DEBUG": logrus.DebugLevel,
@@ -29,8 +27,6 @@ func getLevelFromEnv() logrus.Level {
 		"FATAL": logrus.FatalLevel,
 		"PANIC": logrus.PanicLevel,
 	}
-
-	currentLevel := os.Getenv("LOG_LEVEL")
 
 	if level, ok := levels[currentLevel]; ok {
 		return level
