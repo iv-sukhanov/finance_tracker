@@ -1,6 +1,14 @@
 package repostitory
 
-import "github.com/jmoiron/sqlx"
+import (
+	"github.com/google/uuid"
+	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
+	"github.com/jmoiron/sqlx"
+)
+
+type User interface {
+	AddUser(user ftracker.User) (uuid.UUID, error)
+}
 
 type SpendingType interface {
 }
@@ -9,12 +17,13 @@ type SpendingRecord interface {
 }
 
 type Repostitory struct {
+	User
 	SpendingType
 	SpendingRecord
-
-	db *sqlx.DB
 }
 
 func NewRepostitory(db *sqlx.DB) *Repostitory {
-	return &Repostitory{db: db}
+	return &Repostitory{
+		User: NewUserRepository(db),
+	}
 }
