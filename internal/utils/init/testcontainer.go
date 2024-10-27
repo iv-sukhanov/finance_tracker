@@ -71,20 +71,18 @@ func NewPGContainer(filenames ...string) (db *sqlx.DB, shut func(), err error) {
 	ctx := context.Background()
 
 	const (
-		dbName   = "test-pg"
+		dbName   = "postgres"
 		user     = "postgres"
 		password = "postgres"
 		port     = "5432"
 	)
-
-	mounts := filenamesToMounts(filenames...)
 
 	container, err := StartConteiner(ctx,
 		WithPort(port),
 		WithInitialDatabase(user, password, dbName),
 		WithWaitStrategy(wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(time.Second*10)),
 		WithHostConfigModigier(func(hc *container.HostConfig) {
-			hc.Mounts = mounts
+			hc.Mounts = filenamesToMounts(filenames...)
 		}),
 	)
 	if err != nil {
@@ -129,13 +127,16 @@ func NewPGContainer(filenames ...string) (db *sqlx.DB, shut func(), err error) {
 
 func filenamesToMounts(filenames ...string) []mount.Mount {
 	mounts := make([]mount.Mount, 0, len(filenames))
+
 	for i, source := range filenames {
 		target := fmt.Sprintf("/docker-entrypoint-initdb.d/%05d.sql", i)
+
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: source,
 			Target: target,
 		})
 	}
+
 	return mounts
 }
