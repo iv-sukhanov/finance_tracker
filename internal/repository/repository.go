@@ -6,6 +6,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	usersTable           = "users"
+	spendingTypesTable   = "spending_types"
+	spendingRecordsTable = "spending_records"
+)
+
 type User interface {
 	AddUser(user ftracker.User) (uuid.UUID, error)
 }

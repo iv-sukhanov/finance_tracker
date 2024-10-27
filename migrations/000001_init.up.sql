@@ -2,8 +2,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 create table users (
     guid UUID not null default uuid_generate_v4() primary key,
-    username VARCHAR(255) not null,
-    telegram_id VARCHAR(255) not null,
+    username VARCHAR(255) not null unique,
+    telegram_id VARCHAR(255) not null unique,
     updated_at TIMESTAMP without time zone not null default now(),
     created_at TIMESTAMP without time zone not null default now()
 );

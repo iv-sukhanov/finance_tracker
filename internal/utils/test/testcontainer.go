@@ -1,4 +1,4 @@
-package inith
+package testh
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	inith "github.com/iv-sukhanov/finance_tracker/internal/utils/init"
 	"github.com/jmoiron/sqlx"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -105,7 +106,7 @@ func NewPGContainer(filenames ...string) (db *sqlx.DB, shut func(), err error) {
 		return nil, nil, err
 	}
 
-	db, err = NewPostgresDB(ParamsPostgresDB{
+	db, clostDB, err := inith.NewPostgresDB(inith.ParamsPostgresDB{
 		User:     user,
 		Password: password,
 		Host:     host,
@@ -118,7 +119,7 @@ func NewPGContainer(filenames ...string) (db *sqlx.DB, shut func(), err error) {
 	}
 
 	shut = func() {
-		_ = db.Close()
+		clostDB()
 		_ = container.Terminate(ctx)
 	}
 

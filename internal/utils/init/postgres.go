@@ -7,6 +7,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	driver = "pgx"
+)
+
 type ParamsPostgresDB struct {
 	User     string
 	Password string
@@ -15,22 +19,22 @@ type ParamsPostgresDB struct {
 	DBName   string
 }
 
-func NewPostgresDB(params ParamsPostgresDB) (*sqlx.DB, error) {
+func NewPostgresDB(params ParamsPostgresDB) (*sqlx.DB, func(), error) {
 
 	dbURL, err := composeURL(params)
 	if err != nil {
-		return nil, fmt.Errorf("NewPostgresDB: %w", err)
+		return nil, nil, fmt.Errorf("NewPostgresDB: %w", err)
 	}
 
-	db, err := sqlx.Open("postgres", dbURL)
+	db, err := sqlx.Open(driver, dbURL)
 	if err != nil {
-		return nil, fmt.Errorf("NewPostgresDB: %w", err)
+		return nil, nil, fmt.Errorf("NewPostgresDB: %w", err)
 	}
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("NewPostgresDB: %w", err)
+		return nil, nil, fmt.Errorf("NewPostgresDB: %w", err)
 	}
-	return db, nil
+	return db, func() { db.Close() }, nil
 }
 
 func composeURL(params ParamsPostgresDB) (url string, err error) {
