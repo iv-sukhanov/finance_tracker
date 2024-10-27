@@ -4,7 +4,7 @@ import (
 	"os"
 
 	tbot "github.com/iv-sukhanov/finance_tracker/internal/bot"
-	"github.com/iv-sukhanov/finance_tracker/internal/repostitory"
+	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	inith "github.com/iv-sukhanov/finance_tracker/internal/utils/init"
 )
@@ -41,7 +41,7 @@ func main() {
 		log.WithError(err).Fatal("Failed to initialize telegram bot")
 	}
 
-	repo := repostitory.NewRepostitory(db)
+	repo := repository.NewRepostitory(db)
 	src := service.New(repo, log)
 	telegramBot := tbot.NewTelegramBot(src, bot)
 

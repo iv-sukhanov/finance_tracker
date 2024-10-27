@@ -56,5 +56,5 @@ func composeURL(params ParamsPostgresDB) (url string, err error) {
 		return "", fmt.Errorf("composeURL: missing arguments %s", missingArgs.String())
 	}
 
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", params.User, params.Password, params.Host, params.Port, params.DBName), nil
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", params.User, params.Password, params.Host, params.Port, params.DBName), nil
 }

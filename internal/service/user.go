@@ -3,14 +3,14 @@ package service
 import (
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
-	"github.com/iv-sukhanov/finance_tracker/internal/repostitory"
+	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 )
 
 type UserService struct {
-	repo repostitory.User
+	repo repository.User
 }
 
-func NewUserService(repo repostitory.User) *UserService {
+func NewUserService(repo repository.User) *UserService {
 	return &UserService{
 		repo: repo,
 	}

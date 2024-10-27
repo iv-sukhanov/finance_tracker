@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
-	"github.com/iv-sukhanov/finance_tracker/internal/repostitory"
+	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 
 	"github.com/sirupsen/logrus"
 )
@@ -26,7 +26,7 @@ type Service struct {
 	log *logrus.Entry
 }
 
-func New(repo *repostitory.Repostitory, log *logrus.Entry) *Service {
+func New(repo *repository.Repostitory, log *logrus.Entry) *Service {
 	return &Service{
 		User: NewUserService(repo),
 		log:  log,
