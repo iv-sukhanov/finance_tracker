@@ -5,6 +5,8 @@ import (
 
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
+	sqlh "github.com/iv-sukhanov/finance_tracker/internal/utils/sql"
+	typesh "github.com/iv-sukhanov/finance_tracker/internal/utils/types"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -38,4 +40,9 @@ func (s *UserStorage) GetUsers() ([]ftracker.User, error) {
 		return nil, fmt.Errorf("Repository.GetUsers: %w", err)
 	}
 	return users, nil
+}
+
+func (s *UserStorage) GetUsersByGUIDs(guids []uuid.UUID) ([]ftracker.User, error) {
+	query := fmt.Sprintf("SELECT guid, username, telegram_id FROM %s %s", usersTable,
+		sqlh.MakeWhereIn("guid", typesh.UUIDsToStrings(guids)...))
 }
