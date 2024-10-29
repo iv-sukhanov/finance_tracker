@@ -1,4 +1,4 @@
-package typesh
+package utils
 
 import "github.com/google/uuid"
 

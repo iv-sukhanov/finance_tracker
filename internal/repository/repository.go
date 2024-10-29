@@ -14,9 +14,12 @@ const (
 
 type User interface {
 	AddUser(user ftracker.User) (uuid.UUID, error)
+	GetUsers() ([]ftracker.User, error)
+	GetUsersByGUIDs(guids []uuid.UUID) ([]ftracker.User, error)
 }
 
-type SpendingType interface {
+type SpendingCategory interface {
+	AddCategories(category []ftracker.SpendingCategory) ([]uuid.UUID, error)
 }
 
 type SpendingRecord interface {
@@ -24,7 +27,7 @@ type SpendingRecord interface {
 
 type Repostitory struct {
 	User
-	SpendingType
+	SpendingCategory
 	SpendingRecord
 }
 

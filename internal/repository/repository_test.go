@@ -4,11 +4,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
-	testh "github.com/iv-sukhanov/finance_tracker/internal/utils/test"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,15 +15,16 @@ func Test_AddUser(t *testing.T) {
 
 	path, err := os.Getwd()
 	require.NoError(t, err)
-	db, shut, err := testh.NewPGContainer(path + "/../../migrations/000001_init.up.sql")
+	db, shut, err := utils.NewPGContainer(path + "/../../migrations/000001_init.up.sql")
 	require.NoError(t, err)
 	defer shut()
 	repo := NewUserRepository(db)
 
 	tt := []struct {
-		name string
-		user []ftracker.User
-		want []ftracker.User
+		name      string
+		user      []ftracker.User
+		want      []ftracker.User
+		errorCode string
 	}{
 		{
 			name: "Single_user",
@@ -53,37 +53,34 @@ func Test_AddUser(t *testing.T) {
 		{
 			name: "Duplicate_users",
 			user: []ftracker.User{
-				{Username: "olegnicheporenko2022", TelegramID: "123456782"},
-				{Username: "olegnicheporenko2022", TelegramID: "123456782"},
+				{Username: "duplicate", TelegramID: "123456786"},
+				{Username: "duplicate", TelegramID: "123456786"},
 			},
 			want: []ftracker.User{
-				{Username: "olegnicheporenko2022", TelegramID: "123456782"},
+				{Username: "duplicate", TelegramID: "123456786"},
 			},
+			errorCode: utils.ErrSQLUniqueViolation,
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 
-			defer func() {
-				repo.db.Exec("DELETE FROM users")
-			}()
+			guids := make([]uuid.UUID, len(tc.user))
 
 			for i, u := range tc.user {
 				guid, err := repo.AddUser(u)
 				if err == nil {
+					guids[i] = guid
 					tc.want[i].GUID = guid
 				} else {
-					for err != nil {
-						err = errors.Unwrap(err)
-						if res, ok := err.(*pgconn.PgError); ok {
-							require.True(t, res.SQLState() == "23505")
-						}
-					}
+					err = utils.GetItitialError(err)
+					require.Equal(t, tc.errorCode, utils.GetSQLErrorCode(err))
+					return
 				}
 			}
 
-			users, err := repo.GetUsers()
+			users, err := repo.GetUsersByGUIDs(guids)
 			require.NoError(t, err)
 
 			require.Equal(t, tc.want, users)

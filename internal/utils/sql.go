@@ -1,4 +1,4 @@
-package sqlh
+package utils
 
 import (
 	"fmt"
@@ -9,13 +9,13 @@ func MakeWhereIn(col string, fields ...string) string {
 		return ""
 	}
 
-	where := fmt.Sprintf("WHERE (%s) IN (", col)
+	where := fmt.Sprintf(`WHERE (%s) IN ('`, col)
 	for i, field := range fields {
 		where += field
 		if i != len(fields)-1 {
-			where += ", "
+			where += "', '"
 		} else {
-			where += ")"
+			where += "')"
 		}
 	}
 	return where

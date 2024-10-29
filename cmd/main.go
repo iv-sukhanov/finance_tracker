@@ -6,7 +6,7 @@ import (
 	tbot "github.com/iv-sukhanov/finance_tracker/internal/bot"
 	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
-	inith "github.com/iv-sukhanov/finance_tracker/internal/utils/init"
+	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 )
 
 var (
@@ -23,9 +23,9 @@ var (
 
 func main() {
 
-	log := inith.NewLogger(argLoggerLevel).WithField("app", argAppName)
+	log := utils.NewLogger(argLoggerLevel).WithField("app", argAppName)
 
-	db, closeDB, err := inith.NewPostgresDB(inith.ParamsPostgresDB{
+	db, closeDB, err := utils.NewPostgresDB(utils.ParamsPostgresDB{
 		User:     argPostgresUser,
 		Password: argPostgresPassword,
 		Host:     argPostgresHost,
@@ -37,7 +37,7 @@ func main() {
 	}
 	defer closeDB()
 
-	bot, err := inith.NewBot(argTelegramBotToken, argTelegramBotMode == "true")
+	bot, err := utils.NewBot(argTelegramBotToken, argTelegramBotMode == "true")
 	if err != nil {
 		log.WithError(err).Fatal("Failed to initialize telegram bot")
 	}

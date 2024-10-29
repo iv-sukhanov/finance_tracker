@@ -5,33 +5,35 @@ import (
 
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
-	sqlh "github.com/iv-sukhanov/finance_tracker/internal/utils/sql"
-	typesh "github.com/iv-sukhanov/finance_tracker/internal/utils/types"
+	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/jmoiron/sqlx"
 )
 
-type UserStorage struct {
+type UserRepo struct {
 	db *sqlx.DB
 }
 
-func NewUserRepository(db *sqlx.DB) *UserStorage {
-	return &UserStorage{
+func NewUserRepository(db *sqlx.DB) *UserRepo {
+	return &UserRepo{
 		db: db,
 	}
 }
 
-func (s *UserStorage) AddUser(user ftracker.User) (uuid.UUID, error) {
+func (s *UserRepo) AddUser(user ftracker.User) (uuid.UUID, error) {
 
-	query := fmt.Sprintf("INSERT INTO %s (username, telegram_id) VALUES ($1, $2) RETURNING guid", usersTable)
+	stmt, err := s.db.PrepareNamed(fmt.Sprintf("INSERT INTO %s (username, telegram_id) VALUES (:username, :telegram_id) RETURNING guid", usersTable))
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("Repository.AddUser: %w", err)
+	}
 
 	var guid uuid.UUID
-	if err := s.db.Get(&guid, query, user.Username, user.TelegramID); err != nil {
+	if err := stmt.Get(&guid, user); err != nil {
 		return uuid.Nil, fmt.Errorf("Repository.AddUser: %w", err)
 	}
 	return guid, nil
 }
 
-func (s *UserStorage) GetUsers() ([]ftracker.User, error) {
+func (s *UserRepo) GetUsers() ([]ftracker.User, error) {
 
 	query := fmt.Sprintf("SELECT guid, username, telegram_id FROM %s", usersTable)
 	users := []ftracker.User{}
@@ -42,7 +44,13 @@ func (s *UserStorage) GetUsers() ([]ftracker.User, error) {
 	return users, nil
 }
 
-func (s *UserStorage) GetUsersByGUIDs(guids []uuid.UUID) ([]ftracker.User, error) {
+func (s *UserRepo) GetUsersByGUIDs(guids []uuid.UUID) ([]ftracker.User, error) {
 	query := fmt.Sprintf("SELECT guid, username, telegram_id FROM %s %s", usersTable,
-		sqlh.MakeWhereIn("guid", typesh.UUIDsToStrings(guids)...))
+		utils.MakeWhereIn("guid", utils.UUIDsToStrings(guids)...))
+	users := []ftracker.User{}
+
+	if err := s.db.Select(&users, query); err != nil {
+		return nil, fmt.Errorf("Repository.GetUsersByGUIDs: %w", err)
+	}
+	return users, nil
 }

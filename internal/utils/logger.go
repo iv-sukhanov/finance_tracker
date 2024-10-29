@@ -1,4 +1,4 @@
-package inith
+package utils
 
 import (
 	"github.com/sirupsen/logrus"
