@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
+	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -16,8 +17,8 @@ func NewCategoryRepository(db *sqlx.DB) *CategoryRepo {
 	return &CategoryRepo{db: db}
 }
 
-func (s *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]uuid.UUID, error) {
-	tx, err := s.db.Beginx()
+func (c *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]uuid.UUID, error) {
+	tx, err := c.db.Beginx()
 	if err != nil {
 		return nil, fmt.Errorf("Repostiory.AddCategory: %w", err)
 	}
@@ -44,4 +45,19 @@ func (s *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]
 	}
 
 	return guids, nil
+}
+
+func (c *CategoryRepo) GetCategoriesByGUIDs(guids []uuid.UUID) ([]ftracker.SpendingCategory, error) {
+
+	var categories []ftracker.SpendingCategory
+	err := c.db.Select(&categories, fmt.Sprintf(
+		"SELECT guid, user_guid, category, description, amount FROM %s %s",
+		spendingCategoriesTable,
+		utils.MakeWhereIn("guid", utils.UUIDsToStrings(guids)...)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("Repostiory.GetCategoriesByGUIDs: %w", err)
+	}
+
+	return categories, nil
 }

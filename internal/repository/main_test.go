@@ -16,6 +16,17 @@ var (
 	userGuids = []uuid.UUID{
 		uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 	}
+
+	categoryGuids = []uuid.UUID{
+		uuid.MustParse("00000000-0000-0000-0000-000000000011"),
+		uuid.MustParse("00000000-0000-0000-0000-000000000021"),
+		uuid.MustParse("00000000-0000-0000-0000-000000000031"),
+		uuid.MustParse("00000000-0000-0000-0000-000000000041"),
+	}
+
+	catRepo *CategoryRepo
+	recRepo *RecordRepo
+	usrRepo *UserRepo
 )
 
 func TestMain(m *testing.M) {
@@ -35,5 +46,10 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	defer stop()
+
+	catRepo = NewCategoryRepository(testContainerDB)
+	recRepo = NewRecordRepository(testContainerDB)
+	usrRepo = NewUserRepository(testContainerDB)
+
 	os.Exit(m.Run())
 }

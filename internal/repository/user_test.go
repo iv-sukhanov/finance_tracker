@@ -12,8 +12,6 @@ import (
 
 func Test_AddUser(t *testing.T) {
 
-	repo := NewUserRepository(testContainerDB)
-
 	tt := []struct {
 		name      string
 		user      []ftracker.User
@@ -63,7 +61,7 @@ func Test_AddUser(t *testing.T) {
 			guids := make([]uuid.UUID, len(tc.user))
 
 			for i, u := range tc.user {
-				guid, err := repo.AddUser(u)
+				guid, err := usrRepo.AddUser(u)
 				if err == nil {
 					guids[i] = guid
 					tc.want[i].GUID = guid
@@ -74,7 +72,7 @@ func Test_AddUser(t *testing.T) {
 				}
 			}
 
-			users, err := repo.GetUsersByGUIDs(guids)
+			users, err := usrRepo.GetUsersByGUIDs(guids)
 			require.NoError(t, err)
 
 			require.Equal(t, tc.want, users)

@@ -23,6 +23,7 @@ type SpendingCategory interface {
 }
 
 type SpendingRecord interface {
+	AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error)
 }
 
 type Repostitory struct {
@@ -35,5 +36,6 @@ func NewRepostitory(db *sqlx.DB) *Repostitory {
 	return &Repostitory{
 		User:             NewUserRepository(db),
 		SpendingCategory: NewCategoryRepository(db),
+		SpendingRecord:   NewRecordRepository(db),
 	}
 }

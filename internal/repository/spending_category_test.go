@@ -10,8 +10,6 @@ import (
 
 func TestCategoryRepo_AddCategories(t *testing.T) {
 
-	repo := NewCategoryRepository(testContainerDB)
-
 	tests := []struct {
 		name    string
 		args    []ftracker.SpendingCategory
@@ -51,21 +49,24 @@ func TestCategoryRepo_AddCategories(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.AddCategories(tt.args)
+			got, err := catRepo.AddCategories(tt.args)
 			if !tt.wantErr {
 				require.NoError(t, err)
 			} else {
-				t.Log(err)
+				// t.Log(err)
 				require.Error(t, err)
 				return
 			}
 
-			require.Len(t, got, len(tt.want))
+			res, err := catRepo.GetCategoriesByGUIDs(got)
+			require.NoError(t, err)
+
+			require.Len(t, res, len(tt.want))
 			for i, category := range tt.want {
-				require.Equal(t, category.UserGUID, tt.args[i].UserGUID)
-				require.Equal(t, category.Category, tt.args[i].Category)
-				require.Equal(t, category.Description, tt.args[i].Description)
-				require.Equal(t, category.Amount, tt.args[i].Amount)
+				require.Equal(t, category.UserGUID, res[i].UserGUID)
+				require.Equal(t, category.Category, res[i].Category)
+				require.Equal(t, category.Description, res[i].Description)
+				require.Equal(t, category.Amount, res[i].Amount)
 			}
 		})
 	}
