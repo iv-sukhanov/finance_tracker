@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -13,12 +12,7 @@ import (
 
 func Test_AddUser(t *testing.T) {
 
-	path, err := os.Getwd()
-	require.NoError(t, err)
-	db, shut, err := utils.NewPGContainer(path + "/../../migrations/000001_init.up.sql")
-	require.NoError(t, err)
-	defer shut()
-	repo := NewUserRepository(db)
+	repo := NewUserRepository(testContainerDB)
 
 	tt := []struct {
 		name      string

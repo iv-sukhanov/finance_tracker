@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	usersTable           = "users"
-	spendingTypesTable   = "spending_types"
-	spendingRecordsTable = "spending_records"
+	usersTable              = "users"
+	spendingCategoriesTable = "spending_categories"
+	spendingRecordsTable    = "spending_records"
 )
 
 type User interface {
@@ -33,6 +33,7 @@ type Repostitory struct {
 
 func NewRepostitory(db *sqlx.DB) *Repostitory {
 	return &Repostitory{
-		User: NewUserRepository(db),
+		User:             NewUserRepository(db),
+		SpendingCategory: NewCategoryRepository(db),
 	}
 }

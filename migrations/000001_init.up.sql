@@ -11,8 +11,8 @@ create table users (
 create table spending_categories (
     guid UUID not null default uuid_generate_v4() primary key,
     user_guid UUID references users (guid),
-    s_category VARCHAR(255) not null,
-    desctiption TEXT,
+    category VARCHAR(255) not null,
+    description TEXT,
     amount int default 0,
     updated_at TIMESTAMP without time zone not null default now(),
     created_at TIMESTAMP without time zone not null default now()
