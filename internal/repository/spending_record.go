@@ -60,6 +60,17 @@ func (r *RecordRepo) AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID,
 	return guids, nil
 }
 
+func (r *RecordRepo) GetAllRecords() ([]ftracker.SpendingRecord, error) {
+
+	var records []ftracker.SpendingRecord
+	err := r.db.Select(&records, fmt.Sprintf("SELECT guid, category_guid, amount, description FROM %s", spendingRecordsTable))
+	if err != nil {
+		return nil, fmt.Errorf("Repostiory.GetAllRecords: %w", err)
+	}
+
+	return records, nil
+}
+
 func (r *RecordRepo) GetRecordsByGUIDs(guids []uuid.UUID) ([]ftracker.SpendingRecord, error) {
 
 	var records []ftracker.SpendingRecord

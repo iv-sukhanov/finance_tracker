@@ -14,16 +14,19 @@ const (
 
 type User interface {
 	AddUser(user ftracker.User) (uuid.UUID, error)
-	GetUsers() ([]ftracker.User, error)
+	GetAllUsers() ([]ftracker.User, error)
 	GetUsersByGUIDs(guids []uuid.UUID) ([]ftracker.User, error)
 }
 
 type SpendingCategory interface {
 	AddCategories(category []ftracker.SpendingCategory) ([]uuid.UUID, error)
+	GetCategoriesByGUIDs(guids []uuid.UUID) ([]ftracker.SpendingCategory, error)
 }
 
 type SpendingRecord interface {
 	AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error)
+	GetAllRecords() ([]ftracker.SpendingRecord, error)
+	GetRecordsByGUIDs(guids []uuid.UUID) ([]ftracker.SpendingRecord, error)
 }
 
 type Repostitory struct {

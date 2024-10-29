@@ -33,7 +33,7 @@ func (s *UserRepo) AddUser(user ftracker.User) (uuid.UUID, error) {
 	return guid, nil
 }
 
-func (s *UserRepo) GetUsers() ([]ftracker.User, error) {
+func (s *UserRepo) GetAllUsers() ([]ftracker.User, error) {
 
 	query := fmt.Sprintf("SELECT guid, username, telegram_id FROM %s", usersTable)
 	users := []ftracker.User{}
