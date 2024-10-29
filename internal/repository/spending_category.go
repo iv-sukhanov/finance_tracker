@@ -53,7 +53,7 @@ func (c *CategoryRepo) GetCategoriesByGUIDs(guids []uuid.UUID) ([]ftracker.Spend
 	err := c.db.Select(&categories, fmt.Sprintf(
 		"SELECT guid, user_guid, category, description, amount FROM %s %s",
 		spendingCategoriesTable,
-		utils.MakeWhereIn("guid", utils.UUIDsToStrings(guids)...)),
+		utils.MakeWhereIn("guid", "", utils.UUIDsToStrings(guids)...)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Repostiory.GetCategoriesByGUIDs: %w", err)

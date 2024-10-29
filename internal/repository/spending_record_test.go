@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"reflect"
 	"sort"
 	"testing"
 
@@ -87,6 +88,30 @@ func TestRecordRepo_AddRecords(t *testing.T) {
 			}
 			for i := 0; i < len(totalAmounts); i++ {
 				require.Equal(t, tt.wantAmount[i], totalAmounts[i].Amount)
+			}
+		})
+	}
+}
+
+func TestRecordRepo_GetRecords(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		optoins []RecordOption
+		want    []ftracker.SpendingRecord
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := recRepo.GetRecords(tt.optoins...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RecordRepo.GetRecords() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("RecordRepo.GetRecords() = %v, want %v", got, tt.want)
 			}
 		})
 	}
