@@ -8,6 +8,7 @@ import (
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
 	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -16,7 +17,7 @@ type (
 	}
 
 	RecordOptions struct {
-		limit          int //-1 for no limit
+		limit          int
 		timeFrom       time.Time
 		timeTo         time.Time
 		byTime         bool
@@ -117,15 +118,19 @@ func (r *RecordRepo) GetRecords(optoins ...RecordOption) ([]ftracker.SpendingRec
 		o(&opts)
 	}
 
-	var records []ftracker.SpendingRecord
-	err := r.db.Select(&records, fmt.Sprintf(
-		"SELECT guid, category_guid, amount, description FROM %s %s %s %s %s",
+	query := fmt.Sprintf(
+		"SELECT guid, category_guid, amount, description FROM %s WHERE %s %s %s %s",
 		spendingRecordsTable,
-		utils.MakeWhereIn("guid", "AND", utils.UUIDsToStrings(opts.guids)...),
+		utils.MakeIn("guid", "", utils.UUIDsToStrings(opts.guids)...),
 		utils.MakeIn("category_guid", "AND", utils.UUIDsToStrings(opts.category_guids)...),
-		utils.MakeTimeFrame("created_at", opts.timeFrom, opts.timeTo, opts.byTime),
+		utils.MakeTimeFrame("created_at", "AND", opts.timeFrom, opts.timeTo, opts.byTime),
 		utils.MakeLimit(opts.limit),
-	))
+	)
+
+	logrus.Info(query)
+
+	var records []ftracker.SpendingRecord
+	err := r.db.Select(&records, query)
 	if err != nil {
 		return nil, fmt.Errorf("Repostiory.GetRecords: %w", err)
 	}
@@ -139,7 +144,7 @@ func (r *RecordRepo) GetRecordsByGUIDs(guids []uuid.UUID) ([]ftracker.SpendingRe
 	err := r.db.Select(&records, fmt.Sprintf(
 		"SELECT guid, category_guid, amount, description FROM %s %s",
 		spendingRecordsTable,
-		utils.MakeWhereIn("guid", "", utils.UUIDsToStrings(guids)...)),
+		utils.MakeWhereIn("guid", utils.UUIDsToStrings(guids)...)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Repostiory.GetRecordsByGUIDs: %w", err)

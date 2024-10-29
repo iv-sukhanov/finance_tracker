@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"reflect"
 	"sort"
 	"testing"
 
@@ -97,22 +96,52 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		optoins []RecordOption
+		options []RecordOption
 		want    []ftracker.SpendingRecord
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "By_guids",
+			options: []RecordOption{
+				WithGUIDs(recordGuids[:2]),
+				WithCategoryGUIDs(categoryGuids[4:]),
+			},
+			want: []ftracker.SpendingRecord{
+				{GUID: recordGuids[0], CategoryGUID: categoryGuids[4], Amount: 12.5, Description: "bla bla bla"},
+				{GUID: recordGuids[1], CategoryGUID: categoryGuids[4], Amount: 14.1, Description: "bla bla bla"},
+			},
+		},
+		{
+			name: "By_guids_limited",
+			options: []RecordOption{
+				WithGUIDs(recordGuids[2:]),
+				WithCategoryGUIDs(categoryGuids[4:]),
+				WithLimit(1),
+			},
+			want: []ftracker.SpendingRecord{
+				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
+			},
+		},
+		{
+			name: "By_timeframe",
+			options: []RecordOption{
+				WithGUIDs(recordGuids),
+				WithTimeFrame(timeFrom, timeTo),
+			},
+			want: []ftracker.SpendingRecord{
+				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
+				{GUID: recordGuids[3], CategoryGUID: categoryGuids[5], Amount: 8.91, Description: "bla bla bla"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := recRepo.GetRecords(tt.optoins...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("RecordRepo.GetRecords() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := recRepo.GetRecords(tt.options...)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RecordRepo.GetRecords() = %v, want %v", got, tt.want)
-			}
+			require.Equal(t, got, tt.want)
 		})
 	}
 }

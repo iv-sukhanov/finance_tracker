@@ -46,7 +46,7 @@ func (s *UserRepo) GetAllUsers() ([]ftracker.User, error) {
 
 func (s *UserRepo) GetUsersByGUIDs(guids []uuid.UUID) ([]ftracker.User, error) {
 	query := fmt.Sprintf("SELECT guid, username, telegram_id FROM %s %s", usersTable,
-		utils.MakeWhereIn("guid", "", utils.UUIDsToStrings(guids)...))
+		utils.MakeWhereIn("guid", utils.UUIDsToStrings(guids)...))
 	users := []ftracker.User{}
 
 	if err := s.db.Select(&users, query); err != nil {

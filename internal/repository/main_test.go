@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/jmoiron/sqlx"
@@ -22,7 +24,20 @@ var (
 		uuid.MustParse("00000000-0000-0000-0000-000000000021"),
 		uuid.MustParse("00000000-0000-0000-0000-000000000031"),
 		uuid.MustParse("00000000-0000-0000-0000-000000000041"),
+
+		uuid.MustParse("00000000-0000-0000-0000-000000000051"),
+		uuid.MustParse("00000000-0000-0000-0000-000000000061"),
 	}
+
+	recordGuids = []uuid.UUID{
+		uuid.MustParse("00000000-0000-0000-0000-000000000111"),
+		uuid.MustParse("00000000-0000-0000-0000-000000000211"),
+		uuid.MustParse("00000000-0000-0000-0000-000000000311"),
+		uuid.MustParse("00000000-0000-0000-0000-000000000411"),
+	}
+
+	timeFrom, _ = time.Parse("2006-01-02", "2024-10-25")
+	timeTo, _   = time.Parse("2006-01-02", "2024-10-27")
 
 	catRepo *CategoryRepo
 	recRepo *RecordRepo
