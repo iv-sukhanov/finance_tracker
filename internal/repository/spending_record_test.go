@@ -51,7 +51,7 @@ func TestRecordRepo_AddRecords(t *testing.T) {
 			name: "Errorous",
 			args: []ftracker.SpendingRecord{
 				{CategoryGUID: categoryGuids[3], Amount: 4.9, Description: "Bought pita pita for lunch"},
-				{CategoryGUID: uuid.MustParse("00000000-0000-0000-0000-000000000051"), Amount: 5, Description: "jelly candies"},
+				{CategoryGUID: uuid.MustParse("00000000-0000-0000-0000-100000000001"), Amount: 5, Description: "jelly candies"},
 			},
 			wantErr: true,
 		},
@@ -125,7 +125,6 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 		{
 			name: "By_timeframe",
 			options: []RecordOption{
-				WithGUIDs(recordGuids),
 				WithTimeFrame(timeFrom, timeTo),
 			},
 			want: []ftracker.SpendingRecord{

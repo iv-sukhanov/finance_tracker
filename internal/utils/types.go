@@ -9,3 +9,13 @@ func UUIDsToStrings(uuids []uuid.UUID) []string {
 	}
 	return strs
 }
+
+func OmmitEmptyStrings(strs []string) []string {
+	res := make([]string, 0, len(strs))
+	for _, s := range strs {
+		if s != "" {
+			res = append(res, s)
+		}
+	}
+	return res
+}
