@@ -9,12 +9,74 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type CategoryRepo struct {
-	db *sqlx.DB
-}
+type (
+	CategoryRepo struct {
+		db *sqlx.DB
+	}
+
+	CategoryOptions struct {
+		limit      int
+		guids      []uuid.UUID
+		userGUIDs  []uuid.UUID
+		categories []string
+	}
+
+	CategoryOption func(*CategoryOptions)
+)
 
 func NewCategoryRepository(db *sqlx.DB) *CategoryRepo {
 	return &CategoryRepo{db: db}
+}
+
+func (CategoryRepo) WithLimit(limit int) CategoryOption {
+	return func(o *CategoryOptions) {
+		o.limit = limit
+	}
+}
+
+func (CategoryRepo) WithGUIDs(guids []uuid.UUID) CategoryOption {
+	return func(o *CategoryOptions) {
+		o.guids = guids
+	}
+}
+
+func (CategoryRepo) WithUserGUIDs(guids []uuid.UUID) CategoryOption {
+	return func(o *CategoryOptions) {
+		o.userGUIDs = guids
+	}
+}
+
+func (CategoryRepo) WithCategories(categories []string) CategoryOption {
+	return func(o *CategoryOptions) {
+		o.categories = categories
+	}
+}
+
+func (c *CategoryRepo) GetCategories(options ...CategoryOption) ([]ftracker.SpendingCategory, error) {
+	var opts CategoryOptions
+	for _, opt := range options {
+		opt(&opts)
+	}
+
+	whereClause := utils.BindWithOp("AND", true,
+		utils.MakeIn("guid", utils.UUIDsToStrings(opts.guids)...),
+		utils.MakeIn("user_guid", utils.UUIDsToStrings(opts.userGUIDs)...),
+		utils.MakeIn("category", opts.categories...),
+	)
+
+	query := fmt.Sprintf("SELECT guid, user_guid, category, description, amount FROM %s %s %s",
+		spendingCategoriesTable,
+		whereClause,
+		utils.MakeLimit(opts.limit),
+	)
+
+	var categories []ftracker.SpendingCategory
+	err := c.db.Select(&categories, query)
+	if err != nil {
+		return nil, fmt.Errorf("Repostiory.GetCategories: %w", err)
+	}
+
+	return categories, nil
 }
 
 func (c *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]uuid.UUID, error) {
@@ -45,19 +107,4 @@ func (c *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]
 	}
 
 	return guids, nil
-}
-
-func (c *CategoryRepo) GetCategoriesByGUIDs(guids []uuid.UUID) ([]ftracker.SpendingCategory, error) {
-
-	var categories []ftracker.SpendingCategory
-	err := c.db.Select(&categories, fmt.Sprintf(
-		"SELECT guid, user_guid, category, description, amount FROM %s %s",
-		spendingCategoriesTable,
-		utils.MakeWhereIn("guid", utils.UUIDsToStrings(guids)...)),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("Repostiory.GetCategoriesByGUIDs: %w", err)
-	}
-
-	return categories, nil
 }

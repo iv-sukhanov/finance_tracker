@@ -70,10 +70,10 @@ func TestRecordRepo_AddRecords(t *testing.T) {
 				return
 			}
 
-			res, err := recRepo.GetRecordsByGUIDs(got)
+			res, err := recRepo.GetRecords(recRepo.WithGUIDs(got))
 			require.NoError(t, err)
 
-			totalAmounts, err := catRepo.GetCategoriesByGUIDs(tt.categoryGUIDs)
+			totalAmounts, err := catRepo.GetCategories(catRepo.WithGUIDs(tt.categoryGUIDs))
 			require.NoError(t, err)
 			sort.Slice(totalAmounts, func(i, j int) bool {
 				return totalAmounts[i].Category < totalAmounts[j].Category
@@ -94,6 +94,8 @@ func TestRecordRepo_AddRecords(t *testing.T) {
 
 func TestRecordRepo_GetRecords(t *testing.T) {
 
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		options []RecordOption
@@ -103,8 +105,8 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 		{
 			name: "By_guids",
 			options: []RecordOption{
-				WithGUIDs(recordGuids[:2]),
-				WithCategoryGUIDs(categoryGuids[4:]),
+				recRepo.WithGUIDs(recordGuids[:2]),
+				recRepo.WithCategoryGUIDs(categoryGuids[4:6]),
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[0], CategoryGUID: categoryGuids[4], Amount: 12.5, Description: "bla bla bla"},
@@ -114,9 +116,9 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 		{
 			name: "By_guids_limited",
 			options: []RecordOption{
-				WithGUIDs(recordGuids[2:]),
-				WithCategoryGUIDs(categoryGuids[4:]),
-				WithLimit(1),
+				recRepo.WithGUIDs(recordGuids[2:]),
+				recRepo.WithCategoryGUIDs(categoryGuids[4:6]),
+				recRepo.WithLimit(1),
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
@@ -125,7 +127,7 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 		{
 			name: "By_timeframe",
 			options: []RecordOption{
-				WithTimeFrame(timeFrom, timeTo),
+				recRepo.WithTimeFrame(timeFrom, timeTo),
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
@@ -133,14 +135,18 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := recRepo.GetRecords(tt.options...)
-			if tt.wantErr {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+
+			t.Parallel()
+
+			got, err := recRepo.GetRecords(tc.options...)
+			if tc.wantErr {
 				require.Error(t, err)
 				return
 			}
-			require.Equal(t, got, tt.want)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
 		})
 	}
 }

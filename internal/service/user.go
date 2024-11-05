@@ -17,5 +17,5 @@ func NewUserService(repo repository.User) *UserService {
 }
 
 func (s *UserService) AddUser(user ftracker.User) (uuid.UUID, error) {
-	return s.repo.AddUser(user)
+	return uuid.Nil, nil //s.repo.AddUser(user)
 }

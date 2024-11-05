@@ -10,6 +10,8 @@ import (
 
 func TestCategoryRepo_AddCategories(t *testing.T) {
 
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		args    []ftracker.SpendingCategory
@@ -42,13 +44,16 @@ func TestCategoryRepo_AddCategories(t *testing.T) {
 			name: "Errorous",
 			args: []ftracker.SpendingCategory{
 				{UserGUID: userGuids[0], Category: "Food", Description: "This category is for money spent on products", Amount: 0},
-				{UserGUID: uuid.MustParse("00000000-0000-0000-0000-000000000002"), Category: "Mental Helth", Description: "This category is for money spent to improve mental health", Amount: 0},
+				{UserGUID: uuid.MustParse("00000000-0000-0000-0000-100000000001"), Category: "Mental Helth", Description: "This category is for money spent to improve mental health", Amount: 0},
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			t.Parallel()
+
 			got, err := catRepo.AddCategories(tt.args)
 			if !tt.wantErr {
 				require.NoError(t, err)
@@ -58,7 +63,7 @@ func TestCategoryRepo_AddCategories(t *testing.T) {
 				return
 			}
 
-			res, err := catRepo.GetCategoriesByGUIDs(got)
+			res, err := catRepo.GetCategories(catRepo.WithGUIDs(got))
 			require.NoError(t, err)
 
 			require.Len(t, res, len(tt.want))
@@ -68,6 +73,67 @@ func TestCategoryRepo_AddCategories(t *testing.T) {
 				require.Equal(t, category.Description, res[i].Description)
 				require.Equal(t, category.Amount, res[i].Amount)
 			}
+		})
+	}
+}
+
+func TestCategoryRepo_GetCategories(t *testing.T) {
+
+	t.Parallel()
+
+	tt := []struct {
+		name    string
+		options []CategoryOption
+		want    []ftracker.SpendingCategory
+		wantErr bool
+	}{
+		{
+			name: "By_guids",
+			options: []CategoryOption{
+				catRepo.WithGUIDs(categoryGuids[6:10]),
+				catRepo.WithUserGUIDs([]uuid.UUID{userGuids[1]}),
+			},
+			want: []ftracker.SpendingCategory{
+				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},
+				{GUID: categoryGuids[9], UserGUID: userGuids[1], Category: "for_get_categories4", Description: "bla bla bla", Amount: 0},
+			},
+		},
+		{
+			name: "Limited",
+			options: []CategoryOption{
+				catRepo.WithGUIDs(categoryGuids[6:10]),
+				catRepo.WithUserGUIDs([]uuid.UUID{userGuids[0]}),
+				catRepo.WithLimit(1),
+			},
+			want: []ftracker.SpendingCategory{
+				{GUID: categoryGuids[6], UserGUID: userGuids[0], Category: "for_get_categories1", Description: "bla bla bla", Amount: 0},
+			},
+		},
+		{
+			name: "By_category",
+			options: []CategoryOption{
+				catRepo.WithGUIDs(categoryGuids[6:10]),
+				catRepo.WithUserGUIDs([]uuid.UUID{userGuids[1]}),
+				catRepo.WithCategories([]string{"for_get_categories2"}),
+			},
+			want: []ftracker.SpendingCategory{
+				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+
+			t.Parallel()
+
+			res, err := catRepo.GetCategories(tc.options...)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, res)
 		})
 	}
 }

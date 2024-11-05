@@ -16,12 +16,12 @@ type (
 	}
 
 	RecordOptions struct {
-		limit          int
-		timeFrom       time.Time
-		timeTo         time.Time
-		byTime         bool
-		guids          []uuid.UUID
-		category_guids []uuid.UUID
+		limit         int
+		timeFrom      time.Time
+		timeTo        time.Time
+		byTime        bool
+		GUIDs         []uuid.UUID
+		categoryGUIDs []uuid.UUID
 	}
 
 	RecordOption func(*RecordOptions)
@@ -29,6 +29,60 @@ type (
 
 func NewRecordRepository(db *sqlx.DB) *RecordRepo {
 	return &RecordRepo{db: db}
+}
+
+func (RecordRepo) WithLimit(limit int) RecordOption {
+	return func(o *RecordOptions) {
+		o.limit = limit
+	}
+}
+
+func (RecordRepo) WithTimeFrame(from, to time.Time) RecordOption {
+	return func(o *RecordOptions) {
+		o.timeFrom = from
+		o.timeTo = to
+		o.byTime = true
+	}
+}
+
+func (RecordRepo) WithGUIDs(guids []uuid.UUID) RecordOption {
+	return func(o *RecordOptions) {
+		o.GUIDs = guids
+	}
+}
+
+func (RecordRepo) WithCategoryGUIDs(guids []uuid.UUID) RecordOption {
+	return func(o *RecordOptions) {
+		o.categoryGUIDs = guids
+	}
+}
+
+func (r *RecordRepo) GetRecords(optoins ...RecordOption) ([]ftracker.SpendingRecord, error) {
+	var opts RecordOptions
+	for _, o := range optoins {
+		o(&opts)
+	}
+
+	whereClause := utils.BindWithOp("AND", true,
+		utils.MakeIn("guid", utils.UUIDsToStrings(opts.GUIDs)...),
+		utils.MakeIn("category_guid", utils.UUIDsToStrings(opts.categoryGUIDs)...),
+		utils.MakeTimeFrame("created_at", opts.timeFrom, opts.timeTo, opts.byTime),
+	)
+
+	query := fmt.Sprintf(
+		"SELECT guid, category_guid, amount, description FROM %s %s %s",
+		spendingRecordsTable,
+		whereClause,
+		utils.MakeLimit(opts.limit),
+	)
+
+	var records []ftracker.SpendingRecord
+	err := r.db.Select(&records, query)
+	if err != nil {
+		return nil, fmt.Errorf("Repostiory.GetRecords: %w", err)
+	}
+
+	return records, nil
 }
 
 func (r *RecordRepo) AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error) {
@@ -72,82 +126,4 @@ func (r *RecordRepo) AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID,
 	}
 
 	return guids, nil
-}
-
-func (r *RecordRepo) GetAllRecords() ([]ftracker.SpendingRecord, error) {
-
-	var records []ftracker.SpendingRecord
-	err := r.db.Select(&records, fmt.Sprintf("SELECT guid, category_guid, amount, description FROM %s", spendingRecordsTable))
-	if err != nil {
-		return nil, fmt.Errorf("Repostiory.GetAllRecords: %w", err)
-	}
-
-	return records, nil
-}
-
-func WithLimit(limit int) RecordOption {
-	return func(o *RecordOptions) {
-		o.limit = limit
-	}
-}
-
-func WithTimeFrame(from, to time.Time) RecordOption {
-	return func(o *RecordOptions) {
-		o.timeFrom = from
-		o.timeTo = to
-		o.byTime = true
-	}
-}
-
-func WithGUIDs(guids []uuid.UUID) RecordOption {
-	return func(o *RecordOptions) {
-		o.guids = guids
-	}
-}
-
-func WithCategoryGUIDs(guids []uuid.UUID) RecordOption {
-	return func(o *RecordOptions) {
-		o.category_guids = guids
-	}
-}
-
-func (r *RecordRepo) GetRecords(optoins ...RecordOption) ([]ftracker.SpendingRecord, error) {
-	var opts RecordOptions
-	for _, o := range optoins {
-		o(&opts)
-	}
-
-	whereClause := utils.BindWithOp("AND", true,
-		utils.MakeIn("guid", utils.UUIDsToStrings(opts.guids)...),
-		utils.MakeIn("category_guid", utils.UUIDsToStrings(opts.category_guids)...),
-		utils.MakeTimeFrame("created_at", opts.timeFrom, opts.timeTo, opts.byTime),
-	)
-
-	query := fmt.Sprintf(
-		"SELECT guid, category_guid, amount, description FROM %s %s %s",
-		spendingRecordsTable,
-		whereClause,
-		utils.MakeLimit(opts.limit),
-	)
-
-	var records []ftracker.SpendingRecord
-	err := r.db.Select(&records, query)
-	if err != nil {
-		return nil, fmt.Errorf("Repostiory.GetRecords: %w", err)
-	}
-
-	return records, nil
-}
-
-func (r *RecordRepo) GetRecordsByGUIDs(guids []uuid.UUID) ([]ftracker.SpendingRecord, error) {
-
-	records, err := r.GetRecords(
-		WithGUIDs(guids),
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("Repostiory.GetRecordsByGUIDs: %w", err)
-	}
-
-	return records, nil
 }
