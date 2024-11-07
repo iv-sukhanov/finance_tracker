@@ -63,7 +63,7 @@ func TestCategoryRepo_AddCategories(t *testing.T) {
 				return
 			}
 
-			res, err := catRepo.GetCategories(catRepo.WithGUIDs(got))
+			res, err := catRepo.GetCategories(CategoryOptions{guids: got})
 			require.NoError(t, err)
 
 			require.Len(t, res, len(tt.want))
@@ -83,15 +83,15 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 
 	tt := []struct {
 		name    string
-		options []CategoryOption
+		options CategoryOptions
 		want    []ftracker.SpendingCategory
 		wantErr bool
 	}{
 		{
 			name: "By_guids",
-			options: []CategoryOption{
-				catRepo.WithGUIDs(categoryGuids[6:10]),
-				catRepo.WithUserGUIDs([]uuid.UUID{userGuids[1]}),
+			options: CategoryOptions{
+				guids:     categoryGuids[6:10],
+				userGUIDs: []uuid.UUID{userGuids[1]},
 			},
 			want: []ftracker.SpendingCategory{
 				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},
@@ -100,10 +100,10 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 		},
 		{
 			name: "Limited",
-			options: []CategoryOption{
-				catRepo.WithGUIDs(categoryGuids[6:10]),
-				catRepo.WithUserGUIDs([]uuid.UUID{userGuids[0]}),
-				catRepo.WithLimit(1),
+			options: CategoryOptions{
+				guids:     categoryGuids[6:10],
+				userGUIDs: []uuid.UUID{userGuids[0]},
+				limit:     1,
 			},
 			want: []ftracker.SpendingCategory{
 				{GUID: categoryGuids[6], UserGUID: userGuids[0], Category: "for_get_categories1", Description: "bla bla bla", Amount: 0},
@@ -111,10 +111,10 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 		},
 		{
 			name: "By_category",
-			options: []CategoryOption{
-				catRepo.WithGUIDs(categoryGuids[6:10]),
-				catRepo.WithUserGUIDs([]uuid.UUID{userGuids[1]}),
-				catRepo.WithCategories([]string{"for_get_categories2"}),
+			options: CategoryOptions{
+				guids:      categoryGuids[6:10],
+				userGUIDs:  []uuid.UUID{userGuids[1]},
+				categories: []string{"for_get_categories2"},
 			},
 			want: []ftracker.SpendingCategory{
 				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},
@@ -127,7 +127,7 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 
 			t.Parallel()
 
-			res, err := catRepo.GetCategories(tc.options...)
+			res, err := catRepo.GetCategories(tc.options)
 			if tc.wantErr {
 				require.Error(t, err)
 				return

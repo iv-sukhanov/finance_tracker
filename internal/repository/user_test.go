@@ -11,6 +11,8 @@ import (
 
 func Test_AddUsers(t *testing.T) {
 
+	t.Parallel()
+
 	tt := []struct {
 		name      string
 		users     []ftracker.User
@@ -59,6 +61,8 @@ func Test_AddUsers(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 
+			t.Parallel()
+
 			got, err := usrRepo.AddUsers(tc.users)
 			if tc.wantError {
 				require.Error(t, err)
@@ -80,6 +84,9 @@ func Test_AddUsers(t *testing.T) {
 }
 
 func Test_GetUsers(t *testing.T) {
+
+	t.Parallel()
+
 	tt := []struct {
 		name      string
 		options   UserOptions
@@ -123,6 +130,8 @@ func Test_GetUsers(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
+
+			t.Parallel()
 
 			got, err := usrRepo.GetUsers(tc.options)
 			if tc.wantError {

@@ -57,11 +57,7 @@ func (RecordRepo) WithCategoryGUIDs(guids []uuid.UUID) RecordOption {
 	}
 }
 
-func (r *RecordRepo) GetRecords(optoins ...RecordOption) ([]ftracker.SpendingRecord, error) {
-	var opts RecordOptions
-	for _, o := range optoins {
-		o(&opts)
-	}
+func (r *RecordRepo) GetRecords(opts RecordOptions) ([]ftracker.SpendingRecord, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
 		utils.MakeIn("guid", utils.UUIDsToStrings(opts.GUIDs)...),

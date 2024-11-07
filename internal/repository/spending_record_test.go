@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRecordRepo_AddRecords(t *testing.T) {
+func Test_AddRecords(t *testing.T) {
 
 	t.Parallel()
 
@@ -70,10 +70,10 @@ func TestRecordRepo_AddRecords(t *testing.T) {
 				return
 			}
 
-			res, err := recRepo.GetRecords(recRepo.WithGUIDs(got))
+			res, err := recRepo.GetRecords(RecordOptions{GUIDs: got})
 			require.NoError(t, err)
 
-			totalAmounts, err := catRepo.GetCategories(catRepo.WithGUIDs(tt.categoryGUIDs))
+			totalAmounts, err := catRepo.GetCategories(CategoryOptions{guids: tt.categoryGUIDs})
 			require.NoError(t, err)
 			sort.Slice(totalAmounts, func(i, j int) bool {
 				return totalAmounts[i].Category < totalAmounts[j].Category
@@ -92,21 +92,21 @@ func TestRecordRepo_AddRecords(t *testing.T) {
 	}
 }
 
-func TestRecordRepo_GetRecords(t *testing.T) {
+func Test_GetRecords(t *testing.T) {
 
 	t.Parallel()
 
 	tests := []struct {
 		name    string
-		options []RecordOption
+		options RecordOptions
 		want    []ftracker.SpendingRecord
 		wantErr bool
 	}{
 		{
 			name: "By_guids",
-			options: []RecordOption{
-				recRepo.WithGUIDs(recordGuids[:2]),
-				recRepo.WithCategoryGUIDs(categoryGuids[4:6]),
+			options: RecordOptions{
+				GUIDs:         recordGuids[:2],
+				categoryGUIDs: categoryGuids[4:6],
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[0], CategoryGUID: categoryGuids[4], Amount: 12.5, Description: "bla bla bla"},
@@ -115,10 +115,10 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 		},
 		{
 			name: "By_guids_limited",
-			options: []RecordOption{
-				recRepo.WithGUIDs(recordGuids[2:]),
-				recRepo.WithCategoryGUIDs(categoryGuids[4:6]),
-				recRepo.WithLimit(1),
+			options: RecordOptions{
+				GUIDs:         recordGuids[2:4],
+				categoryGUIDs: categoryGuids[4:6],
+				limit:         1,
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
@@ -126,8 +126,10 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 		},
 		{
 			name: "By_timeframe",
-			options: []RecordOption{
-				recRepo.WithTimeFrame(timeFrom, timeTo),
+			options: RecordOptions{
+				timeFrom: timeFrom,
+				timeTo:   timeTo,
+				byTime:   true,
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
@@ -140,7 +142,7 @@ func TestRecordRepo_GetRecords(t *testing.T) {
 
 			t.Parallel()
 
-			got, err := recRepo.GetRecords(tc.options...)
+			got, err := recRepo.GetRecords(tc.options)
 			if tc.wantErr {
 				require.Error(t, err)
 				return

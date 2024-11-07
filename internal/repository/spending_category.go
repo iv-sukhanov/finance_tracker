@@ -52,11 +52,7 @@ func (CategoryRepo) WithCategories(categories []string) CategoryOption {
 	}
 }
 
-func (c *CategoryRepo) GetCategories(options ...CategoryOption) ([]ftracker.SpendingCategory, error) {
-	var opts CategoryOptions
-	for _, opt := range options {
-		opt(&opts)
-	}
+func (c *CategoryRepo) GetCategories(opts CategoryOptions) ([]ftracker.SpendingCategory, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
 		utils.MakeIn("guid", utils.UUIDsToStrings(opts.guids)...),

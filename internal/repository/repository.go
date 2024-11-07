@@ -13,18 +13,18 @@ const (
 )
 
 type User interface {
-	AddUsers(user ftracker.User) (uuid.UUID, error)
-	//GetUsers(opts ...UserOption) ([]ftracker.User, error)
+	AddUsers(users []ftracker.User) ([]uuid.UUID, error)
+	GetUsers(opts UserOptions) ([]ftracker.User, error)
 }
 
 type SpendingCategory interface {
 	AddCategories(category []ftracker.SpendingCategory) ([]uuid.UUID, error)
-	//GetCategories(opts ...CategoryOption) ([]ftracker.SpendingCategory, error)
+	GetCategories(opts CategoryOptions) ([]ftracker.SpendingCategory, error)
 }
 
 type SpendingRecord interface {
 	AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error)
-	GetRecords(opts ...RecordOption) ([]ftracker.SpendingRecord, error)
+	GetRecords(opts RecordOptions) ([]ftracker.SpendingRecord, error)
 }
 
 type Repostitory struct {
@@ -35,7 +35,7 @@ type Repostitory struct {
 
 func NewRepostitory(db *sqlx.DB) *Repostitory {
 	return &Repostitory{
-		//User:             NewUserRepository(db),
+		User:             NewUserRepository(db),
 		SpendingCategory: NewCategoryRepository(db),
 		SpendingRecord:   NewRecordRepository(db),
 	}
