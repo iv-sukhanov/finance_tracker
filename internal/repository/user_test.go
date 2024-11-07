@@ -68,13 +68,70 @@ func Test_AddUsers(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			res, err := usrRepo.GetUsers(usrRepo.WithGUIDs(got))
+			res, err := usrRepo.GetUsers(UserOptions{guids: got})
 			require.NoError(t, err)
 
 			for i, u := range res {
 				require.Equal(t, tc.want[i].Username, u.Username)
 				require.Equal(t, tc.want[i].TelegramID, u.TelegramID)
 			}
+		})
+	}
+}
+
+func Test_GetUsers(t *testing.T) {
+	tt := []struct {
+		name      string
+		options   UserOptions
+		want      []ftracker.User
+		wantError bool
+	}{
+		{
+			name:    "By_guids",
+			options: UserOptions{guids: userGuids[2:6]},
+			want: []ftracker.User{
+				{GUID: userGuids[2], Username: "for_get_users1", TelegramID: "00000003"},
+				{GUID: userGuids[3], Username: "for_get_users2", TelegramID: "00000004"},
+				{GUID: userGuids[4], Username: "for_get_users3", TelegramID: "00000005"},
+				{GUID: userGuids[5], Username: "for_get_users4", TelegramID: "00000006"},
+			},
+		},
+		{
+			name:    "By_guids_and_usernames",
+			options: UserOptions{guids: userGuids[2:6], usernames: []string{"for_get_users3", "for_get_users4"}},
+			want: []ftracker.User{
+				{GUID: userGuids[4], Username: "for_get_users3", TelegramID: "00000005"},
+				{GUID: userGuids[5], Username: "for_get_users4", TelegramID: "00000006"},
+			},
+		},
+		{
+			name:    "By_usernames_and_tg_id",
+			options: UserOptions{tetegramIDs: []string{"00000004"}, usernames: []string{"for_get_users2", "for_get_users4"}},
+			want: []ftracker.User{
+				{GUID: userGuids[3], Username: "for_get_users2", TelegramID: "00000004"},
+			},
+		},
+		{
+			name:    "With_limit",
+			options: UserOptions{guids: userGuids[2:6], limit: 2},
+			want: []ftracker.User{
+				{GUID: userGuids[2], Username: "for_get_users1", TelegramID: "00000003"},
+				{GUID: userGuids[3], Username: "for_get_users2", TelegramID: "00000004"},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+
+			got, err := usrRepo.GetUsers(tc.options)
+			if tc.wantError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want, got)
 		})
 	}
 }

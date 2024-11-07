@@ -52,11 +52,7 @@ func (UserRepo) WithTelegramIDs(telegramIDs []string) UserOption {
 	}
 }
 
-func (s *UserRepo) GetUsers(options ...UserOption) ([]ftracker.User, error) {
-	var opts UserOptions
-	for _, opt := range options {
-		opt(&opts)
-	}
+func (s *UserRepo) GetUsers(opts UserOptions) ([]ftracker.User, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
 		utils.MakeIn("guid", utils.UUIDsToStrings(opts.guids)...),

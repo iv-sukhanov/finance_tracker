@@ -57,10 +57,15 @@ func MakeTimeFrame(col string, from, to time.Time, byTime bool) string {
 }
 
 func BindWithOp(op string, needWhere bool, exprs ...string) string {
+
 	if len(exprs) == 0 {
 		return ""
 	}
+
 	nonEmptyExprs := OmmitEmptyStrings(exprs)
+	if len(nonEmptyExprs) == 0 {
+		return ""
+	}
 
 	var output strings.Builder
 	if needWhere {
