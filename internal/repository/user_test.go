@@ -113,7 +113,7 @@ func Test_GetUsers(t *testing.T) {
 		},
 		{
 			name:    "By_usernames_and_tg_id",
-			options: UserOptions{TetegramIDs: []string{"00000004"}, Usernames: []string{"for_get_users2", "for_get_users4"}},
+			options: UserOptions{TelegramIDs: []string{"00000004"}, Usernames: []string{"for_get_users2", "for_get_users4"}},
 			want: []ftracker.User{
 				{GUID: userGuids[3], Username: "for_get_users2", TelegramID: "00000004"},
 			},

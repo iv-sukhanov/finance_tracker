@@ -18,7 +18,7 @@ type (
 		Limit       int
 		GUIDs       []uuid.UUID
 		Usernames   []string
-		TetegramIDs []string
+		TelegramIDs []string
 	}
 )
 
@@ -31,7 +31,7 @@ func (s *UserRepo) GetUsers(opts UserOptions) ([]ftracker.User, error) {
 	whereClause := utils.BindWithOp("AND", true,
 		utils.MakeIn("guid", utils.UUIDsToStrings(opts.GUIDs)...),
 		utils.MakeIn("username", opts.Usernames...),
-		utils.MakeIn("telegram_id", opts.TetegramIDs...),
+		utils.MakeIn("telegram_id", opts.TelegramIDs...),
 	)
 
 	query := fmt.Sprintf(

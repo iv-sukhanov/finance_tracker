@@ -40,7 +40,7 @@ func (UserService) WithUsernames(usernames []string) UserOption {
 
 func (UserService) WithTelegramIDs(telegramIDs []string) UserOption {
 	return func(o *repository.UserOptions) {
-		o.TetegramIDs = telegramIDs
+		o.TelegramIDs = telegramIDs
 	}
 }
 

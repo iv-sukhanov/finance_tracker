@@ -5,4 +5,5 @@ run-dev:
 build-dev:
 	go build cmd/main.go
 test-dev:
-	go test ./internal/repository/...
+	go test ./internal/repository/*.go
+	go test ./internal/service/*.go
