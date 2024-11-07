@@ -15,10 +15,10 @@ type (
 	}
 
 	CategoryOptions struct {
-		limit      int
-		guids      []uuid.UUID
-		userGUIDs  []uuid.UUID
-		categories []string
+		Limit      int
+		GUIDs      []uuid.UUID
+		UserGUIDs  []uuid.UUID
+		Categories []string
 	}
 
 	CategoryOption func(*CategoryOptions)
@@ -28,42 +28,18 @@ func NewCategoryRepository(db *sqlx.DB) *CategoryRepo {
 	return &CategoryRepo{db: db}
 }
 
-func (CategoryRepo) WithLimit(limit int) CategoryOption {
-	return func(o *CategoryOptions) {
-		o.limit = limit
-	}
-}
-
-func (CategoryRepo) WithGUIDs(guids []uuid.UUID) CategoryOption {
-	return func(o *CategoryOptions) {
-		o.guids = guids
-	}
-}
-
-func (CategoryRepo) WithUserGUIDs(guids []uuid.UUID) CategoryOption {
-	return func(o *CategoryOptions) {
-		o.userGUIDs = guids
-	}
-}
-
-func (CategoryRepo) WithCategories(categories []string) CategoryOption {
-	return func(o *CategoryOptions) {
-		o.categories = categories
-	}
-}
-
 func (c *CategoryRepo) GetCategories(opts CategoryOptions) ([]ftracker.SpendingCategory, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
-		utils.MakeIn("guid", utils.UUIDsToStrings(opts.guids)...),
-		utils.MakeIn("user_guid", utils.UUIDsToStrings(opts.userGUIDs)...),
-		utils.MakeIn("category", opts.categories...),
+		utils.MakeIn("guid", utils.UUIDsToStrings(opts.GUIDs)...),
+		utils.MakeIn("user_guid", utils.UUIDsToStrings(opts.UserGUIDs)...),
+		utils.MakeIn("category", opts.Categories...),
 	)
 
 	query := fmt.Sprintf("SELECT guid, user_guid, category, description, amount FROM %s %s %s",
 		spendingCategoriesTable,
 		whereClause,
-		utils.MakeLimit(opts.limit),
+		utils.MakeLimit(opts.Limit),
 	)
 
 	var categories []ftracker.SpendingCategory

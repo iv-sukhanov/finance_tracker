@@ -73,7 +73,7 @@ func Test_AddRecords(t *testing.T) {
 			res, err := recRepo.GetRecords(RecordOptions{GUIDs: got})
 			require.NoError(t, err)
 
-			totalAmounts, err := catRepo.GetCategories(CategoryOptions{guids: tt.categoryGUIDs})
+			totalAmounts, err := catRepo.GetCategories(CategoryOptions{GUIDs: tt.categoryGUIDs})
 			require.NoError(t, err)
 			sort.Slice(totalAmounts, func(i, j int) bool {
 				return totalAmounts[i].Category < totalAmounts[j].Category
@@ -106,7 +106,7 @@ func Test_GetRecords(t *testing.T) {
 			name: "By_guids",
 			options: RecordOptions{
 				GUIDs:         recordGuids[:2],
-				categoryGUIDs: categoryGuids[4:6],
+				CategoryGUIDs: categoryGuids[4:6],
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[0], CategoryGUID: categoryGuids[4], Amount: 12.5, Description: "bla bla bla"},
@@ -117,8 +117,8 @@ func Test_GetRecords(t *testing.T) {
 			name: "By_guids_limited",
 			options: RecordOptions{
 				GUIDs:         recordGuids[2:4],
-				categoryGUIDs: categoryGuids[4:6],
-				limit:         1,
+				CategoryGUIDs: categoryGuids[4:6],
+				Limit:         1,
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
@@ -127,9 +127,9 @@ func Test_GetRecords(t *testing.T) {
 		{
 			name: "By_timeframe",
 			options: RecordOptions{
-				timeFrom: timeFrom,
-				timeTo:   timeTo,
-				byTime:   true,
+				TimeFrom: timeFrom,
+				TimeTo:   timeTo,
+				ByTime:   true,
 			},
 			want: []ftracker.SpendingRecord{
 				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},

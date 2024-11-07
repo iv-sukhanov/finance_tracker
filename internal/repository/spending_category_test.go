@@ -63,7 +63,7 @@ func TestCategoryRepo_AddCategories(t *testing.T) {
 				return
 			}
 
-			res, err := catRepo.GetCategories(CategoryOptions{guids: got})
+			res, err := catRepo.GetCategories(CategoryOptions{GUIDs: got})
 			require.NoError(t, err)
 
 			require.Len(t, res, len(tt.want))
@@ -90,8 +90,8 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 		{
 			name: "By_guids",
 			options: CategoryOptions{
-				guids:     categoryGuids[6:10],
-				userGUIDs: []uuid.UUID{userGuids[1]},
+				GUIDs:     categoryGuids[6:10],
+				UserGUIDs: []uuid.UUID{userGuids[1]},
 			},
 			want: []ftracker.SpendingCategory{
 				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},
@@ -101,9 +101,9 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 		{
 			name: "Limited",
 			options: CategoryOptions{
-				guids:     categoryGuids[6:10],
-				userGUIDs: []uuid.UUID{userGuids[0]},
-				limit:     1,
+				GUIDs:     categoryGuids[6:10],
+				UserGUIDs: []uuid.UUID{userGuids[0]},
+				Limit:     1,
 			},
 			want: []ftracker.SpendingCategory{
 				{GUID: categoryGuids[6], UserGUID: userGuids[0], Category: "for_get_categories1", Description: "bla bla bla", Amount: 0},
@@ -112,9 +112,9 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 		{
 			name: "By_category",
 			options: CategoryOptions{
-				guids:      categoryGuids[6:10],
-				userGUIDs:  []uuid.UUID{userGuids[1]},
-				categories: []string{"for_get_categories2"},
+				GUIDs:      categoryGuids[6:10],
+				UserGUIDs:  []uuid.UUID{userGuids[1]},
+				Categories: []string{"for_get_categories2"},
 			},
 			want: []ftracker.SpendingCategory{
 				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},

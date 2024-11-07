@@ -15,56 +15,30 @@ type (
 	}
 
 	UserOptions struct {
-		limit       int
-		guids       []uuid.UUID
-		usernames   []string
-		tetegramIDs []string
+		Limit       int
+		GUIDs       []uuid.UUID
+		Usernames   []string
+		TetegramIDs []string
 	}
-
-	UserOption func(*UserOptions)
 )
 
 func NewUserRepository(db *sqlx.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (UserRepo) WithLimit(limit int) UserOption {
-	return func(o *UserOptions) {
-		o.limit = limit
-	}
-}
-
-func (UserRepo) WithGUIDs(guids []uuid.UUID) UserOption {
-	return func(o *UserOptions) {
-		o.guids = guids
-	}
-}
-
-func (UserRepo) WithUsernames(usernames []string) UserOption {
-	return func(o *UserOptions) {
-		o.usernames = usernames
-	}
-}
-
-func (UserRepo) WithTelegramIDs(telegramIDs []string) UserOption {
-	return func(o *UserOptions) {
-		o.tetegramIDs = telegramIDs
-	}
-}
-
 func (s *UserRepo) GetUsers(opts UserOptions) ([]ftracker.User, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
-		utils.MakeIn("guid", utils.UUIDsToStrings(opts.guids)...),
-		utils.MakeIn("username", opts.usernames...),
-		utils.MakeIn("telegram_id", opts.tetegramIDs...),
+		utils.MakeIn("guid", utils.UUIDsToStrings(opts.GUIDs)...),
+		utils.MakeIn("username", opts.Usernames...),
+		utils.MakeIn("telegram_id", opts.TetegramIDs...),
 	)
 
 	query := fmt.Sprintf(
 		"SELECT guid, username, telegram_id FROM %s %s %s",
 		usersTable,
 		whereClause,
-		utils.MakeLimit(opts.limit),
+		utils.MakeLimit(opts.Limit),
 	)
 
 	var users []ftracker.User

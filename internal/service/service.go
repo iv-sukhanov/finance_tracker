@@ -9,18 +9,23 @@ import (
 )
 
 type User interface {
-	AddUser(user ftracker.User) (uuid.UUID, error)
+	AddUsers(users []ftracker.User) ([]uuid.UUID, error)
+	GetUsers(opts ...UserOption) ([]ftracker.User, error)
 }
 
-type SpendingType interface {
+type SpendingCategory interface {
+	AddCategories(categories []ftracker.SpendingCategory) ([]uuid.UUID, error)
+	GetCategories(opts ...CategoryOption) ([]ftracker.SpendingCategory, error)
 }
 
 type SpendingRecord interface {
+	AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error)
+	GetRecords(opts ...RecordOption) ([]ftracker.SpendingRecord, error)
 }
 
 type Service struct {
 	User
-	SpendingType
+	SpendingCategory
 	SpendingRecord
 
 	log *logrus.Entry
@@ -28,7 +33,9 @@ type Service struct {
 
 func New(repo *repository.Repostitory, log *logrus.Entry) *Service {
 	return &Service{
-		User: NewUserService(repo),
-		log:  log,
+		User:             NewUserService(repo),
+		SpendingCategory: NewCategoryService(repo),
+		SpendingRecord:   NewRecordService(repo),
+		log:              log,
 	}
 }

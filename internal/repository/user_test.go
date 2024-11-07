@@ -72,7 +72,7 @@ func Test_AddUsers(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			res, err := usrRepo.GetUsers(UserOptions{guids: got})
+			res, err := usrRepo.GetUsers(UserOptions{GUIDs: got})
 			require.NoError(t, err)
 
 			for i, u := range res {
@@ -95,7 +95,7 @@ func Test_GetUsers(t *testing.T) {
 	}{
 		{
 			name:    "By_guids",
-			options: UserOptions{guids: userGuids[2:6]},
+			options: UserOptions{GUIDs: userGuids[2:6]},
 			want: []ftracker.User{
 				{GUID: userGuids[2], Username: "for_get_users1", TelegramID: "00000003"},
 				{GUID: userGuids[3], Username: "for_get_users2", TelegramID: "00000004"},
@@ -105,7 +105,7 @@ func Test_GetUsers(t *testing.T) {
 		},
 		{
 			name:    "By_guids_and_usernames",
-			options: UserOptions{guids: userGuids[2:6], usernames: []string{"for_get_users3", "for_get_users4"}},
+			options: UserOptions{GUIDs: userGuids[2:6], Usernames: []string{"for_get_users3", "for_get_users4"}},
 			want: []ftracker.User{
 				{GUID: userGuids[4], Username: "for_get_users3", TelegramID: "00000005"},
 				{GUID: userGuids[5], Username: "for_get_users4", TelegramID: "00000006"},
@@ -113,14 +113,14 @@ func Test_GetUsers(t *testing.T) {
 		},
 		{
 			name:    "By_usernames_and_tg_id",
-			options: UserOptions{tetegramIDs: []string{"00000004"}, usernames: []string{"for_get_users2", "for_get_users4"}},
+			options: UserOptions{TetegramIDs: []string{"00000004"}, Usernames: []string{"for_get_users2", "for_get_users4"}},
 			want: []ftracker.User{
 				{GUID: userGuids[3], Username: "for_get_users2", TelegramID: "00000004"},
 			},
 		},
 		{
 			name:    "With_limit",
-			options: UserOptions{guids: userGuids[2:6], limit: 2},
+			options: UserOptions{GUIDs: userGuids[2:6], Limit: 2},
 			want: []ftracker.User{
 				{GUID: userGuids[2], Username: "for_get_users1", TelegramID: "00000003"},
 				{GUID: userGuids[3], Username: "for_get_users2", TelegramID: "00000004"},
