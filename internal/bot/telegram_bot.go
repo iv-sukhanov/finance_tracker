@@ -9,23 +9,23 @@ import (
 var (
 	kb1 = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add catregories"),
+			tgbotapi.NewKeyboardButton("add catregory"),
 		),
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("show catregories"),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add records"),
+			tgbotapi.NewKeyboardButton("add record"),
 		),
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("show records"),
 		),
 	)
 
-	commands = map[string]struct{}{
-		"add catregories":  {},
+	baseCommands = map[string]struct{}{
+		"add catregory":    {},
 		"show catregories": {},
-		"add records":      {},
+		"add record":       {},
 		"show records":     {},
 	}
 )
@@ -56,17 +56,20 @@ func (b *TelegramBot) Start() {
 			continue
 		}
 
+		logrus.Info(update.Message)
+
 		if op, ok := b.inProcess[update.Message.Chat.ID]; ok {
 			op.DeliverMessage(update.Message.Text)
 			continue
 		}
 
-		if _, ok := commands[update.Message.Text]; !ok {
+		if _, ok := baseCommands[update.Message.Text]; !ok {
 			//no such command
 			continue
 		}
+		logrus.Info("here")
 
-		newOp := NewOperation(update.Message.Chat.ID, update.Message.Text)
+		newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, update.Message.Text)
 		b.inProcess[update.Message.Chat.ID] = newOp
 
 		go newOp.Process()
