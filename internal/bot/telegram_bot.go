@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"time"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/sirupsen/logrus"
@@ -9,10 +11,10 @@ import (
 var (
 	kb1 = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add catregory"),
+			tgbotapi.NewKeyboardButton("add category"),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("show catregories"),
+			tgbotapi.NewKeyboardButton("show categories"),
 		),
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("add record"),
@@ -21,13 +23,6 @@ var (
 			tgbotapi.NewKeyboardButton("show records"),
 		),
 	)
-
-	baseCommands = map[string]struct{}{
-		"add catregory":    {},
-		"show catregories": {},
-		"add record":       {},
-		"show records":     {},
-	}
 )
 
 type TelegramBot struct {
@@ -49,6 +44,9 @@ func (b *TelegramBot) Start() {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
 
+	//for debuging
+	go b.displayMap()
+
 	updates := b.bot.GetUpdatesChan(updateConfig)
 	for update := range updates {
 
@@ -56,30 +54,62 @@ func (b *TelegramBot) Start() {
 			continue
 		}
 
-		logrus.Info(update.Message)
+		logrus.Info(update.Message.Text)
+		recievedText := update.Message.Text
+		//mb mutex
+		op, isInMap := b.inProcess[update.Message.Chat.ID]
 
-		if op, ok := b.inProcess[update.Message.Chat.ID]; ok {
-			op.DeliverMessage(update.Message.Text)
+		if isInMap && op.isBusy && op.expectInput {
+			logrus.Info(op)
+			op.expectInput = false
+			op.TransmitInput(recievedText)
 			continue
 		}
 
-		if _, ok := baseCommands[update.Message.Text]; !ok {
-			//no such command
+		logrus.Info("Command check")
+		//check command
+		command, ok := commands[recievedText]
+		if !ok {
+			logrus.Info("wrong command")
+			//wrong command
+			continue
+		} else if !command.isBase {
+			//not base command
+			logrus.Info("not base command")
 			continue
 		}
 		logrus.Info("here")
 
-		newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, update.Message.Text)
-		b.inProcess[update.Message.Chat.ID] = newOp
+		if !isInMap {
+			newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, command)
+			b.inProcess[update.Message.Chat.ID] = newOp
+			op = newOp
+		} else {
+			op.command = command
+		}
+		op.isBusy = true
+		go op.Process()
 
-		go newOp.Process()
-
-		logrus.Info(update.Message.Text)
+		logrus.Info(recievedText)
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 		msg.ReplyToMessageID = update.Message.MessageID
 		msg.ReplyMarkup = kb1
 
 		b.bot.Send(msg)
+	}
+}
+
+func (b *TelegramBot) displayMap() {
+	ticker := time.NewTicker(15 * time.Second)
+
+	for range ticker.C {
+		for k, v := range b.inProcess {
+			logrus.WithFields(logrus.Fields{
+				"operation":   v.command,
+				"expectInput": v.expectInput,
+				"isBusy":      v.isBusy,
+			}).Info("id: ", k)
+		}
 	}
 }
