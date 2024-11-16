@@ -5,11 +5,12 @@ import (
 	"regexp"
 	"time"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
 
 type (
-	Operation struct {
+	Client struct {
 		chanID      int64
 		userID      int64
 		expectInput bool
@@ -17,6 +18,7 @@ type (
 		command     Command
 
 		messageChanel chan string
+		api           *tgbotapi.BotAPI
 	}
 
 	Command struct {
@@ -29,7 +31,7 @@ type (
 )
 
 const (
-	timeout = 30 * time.Second
+	timeout = 1 * time.Minute
 )
 
 var (
@@ -43,31 +45,50 @@ var (
 		"add description": {
 			ID:     2,
 			isBase: false,
-			rgx:    regexp.MustCompile(`^([a-zA-Z]+)$`),
+			rgx:    regexp.MustCompile(`^([a-zA-Z0-9 ]+)$`),
 			child:  "",
 		},
 	}
 
-	actions = map[int]func(args []string){
-		1: func(args []string) {
+	actions = map[int]func(cl *Client, args []string){
+		1: func(cl *Client, args []string) {
+			if len(args) != 2 {
+				logrus.Info("wrong input for add category command action")
+				return
+			}
+
 			logrus.Info("action on add category command")
+			msg := tgbotapi.NewMessage(cl.chanID,
+				fmt.Sprintf("Please, type description to a new %s category", args[1]),
+			)
+			cl.api.Send(msg)
 		},
-		2: func(args []string) {
+		2: func(cl *Client, args []string) {
+			if len(args) != 2 {
+				logrus.Info("wrong input for add description command action")
+				return
+			}
+
 			logrus.Info("action on add description command")
+			msg := tgbotapi.NewMessage(cl.chanID,
+				"Category added successfully",
+			)
+			cl.api.Send(msg)
 		},
 	}
 )
 
-func NewOperation(id, userID int64, cmd Command) *Operation {
-	return &Operation{
+func NewOperation(id, userID int64, cmd Command, api *tgbotapi.BotAPI) *Client {
+	return &Client{
 		chanID:        id,
 		command:       cmd,
 		userID:        userID,
 		messageChanel: make(chan string),
+		api:           api,
 	}
 }
 
-func (o *Operation) Process() {
+func (o *Client) Process() {
 	defer func() {
 		logrus.Info(fmt.Sprintf("goroutine for %d finished", o.chanID))
 	}()
@@ -85,7 +106,11 @@ func (o *Operation) Process() {
 			timer.Stop()
 
 			logrus.Info("got message: ", msg)
-			o.processInput(msg)
+			if o.processInput(msg) {
+				logrus.Info("last command reached")
+				o.isBusy = false
+				return
+			}
 
 			timer.Reset(timeout)
 		case <-timer.C:
@@ -98,20 +123,23 @@ func (o *Operation) Process() {
 	}
 }
 
-func (o *Operation) TransmitInput(msg string) {
+func (o *Client) TransmitInput(msg string) {
 	o.messageChanel <- msg
 }
 
-func (o *Operation) processInput(msg string) {
+func (o *Client) processInput(msg string) (finished bool) {
 	matches := o.command.rgx.FindAllStringSubmatch(msg, 1)
 	if len(matches) != 1 {
 		logrus.Info("wrong input")
-		return
+		o.expectInput = true
+		return false
 	}
 	logrus.Info(matches)
-	go actions[o.command.ID](matches[0])
+	actions[o.command.ID](o, matches[0])
 	if chld := o.command.child; chld != "" {
 		o.command = commands[chld]
 		o.expectInput = true
+		return false
 	}
+	return true
 }

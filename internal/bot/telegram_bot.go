@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	kb1 = tgbotapi.NewReplyKeyboard(
+	baseKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("add category"),
 		),
@@ -23,20 +23,24 @@ var (
 			tgbotapi.NewKeyboardButton("show records"),
 		),
 	)
+
+	commandReplies = map[int]string{
+		1: "Please, input category name",
+	}
 )
 
 type TelegramBot struct {
 	service *service.Service
 	bot     *tgbotapi.BotAPI
 
-	inProcess map[int64]*Operation
+	inProcess map[int64]*Client
 }
 
 func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI) *TelegramBot {
 	return &TelegramBot{
 		service:   service,
 		bot:       api,
-		inProcess: make(map[int64]*Operation),
+		inProcess: make(map[int64]*Client),
 	}
 }
 
@@ -80,8 +84,15 @@ func (b *TelegramBot) Start() {
 		}
 		logrus.Info("here")
 
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+			commandReplies[command.ID],
+		)
+		msg.ReplyToMessageID = update.Message.MessageID
+		msg.ReplyMarkup = baseKeyboard
+		b.bot.Send(msg)
+
 		if !isInMap {
-			newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, command)
+			newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, command, b.bot)
 			b.inProcess[update.Message.Chat.ID] = newOp
 			op = newOp
 		} else {
@@ -91,12 +102,6 @@ func (b *TelegramBot) Start() {
 		go op.Process()
 
 		logrus.Info(recievedText)
-
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		msg.ReplyToMessageID = update.Message.MessageID
-		msg.ReplyMarkup = kb1
-
-		b.bot.Send(msg)
 	}
 }
 
