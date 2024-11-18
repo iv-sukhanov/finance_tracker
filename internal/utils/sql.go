@@ -84,3 +84,8 @@ func BindWithOp(op string, needWhere bool, exprs ...string) string {
 
 	return output.String()
 }
+
+func IsUniqueConstrainViolation(err error) bool {
+	initialErr := GetItitialError(err)
+	return GetSQLErrorCode(initialErr) == "23505"
+}

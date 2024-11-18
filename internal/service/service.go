@@ -11,6 +11,10 @@ import (
 type User interface {
 	AddUsers(users []ftracker.User) ([]uuid.UUID, error)
 	GetUsers(opts ...UserOption) ([]ftracker.User, error)
+	WithLimit(limit int) UserOption
+	WithGUIDs(guids []uuid.UUID) UserOption
+	WithUsernames(usernames []string) UserOption
+	WithTelegramIDs(telegramIDs []string) UserOption
 }
 
 type SpendingCategory interface {

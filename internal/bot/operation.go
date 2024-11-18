@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
+	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -71,28 +72,49 @@ var (
 			var msg tgbotapi.MessageConfig
 			var guid []uuid.UUID
 
-			guid, err := cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
+			defer func() {
+				cl.api.Send(msg)
+			}()
+
+			user, err := cl.srvc.GetUsers(cl.srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
 			if err != nil {
-				logrus.WithError(err).Error("error on add user")
+				logrus.WithError(err).Error("error on get user")
+				msg = tgbotapi.NewMessage(cl.chanID, "Unable to load users")
+				return
+			}
+
+			if len(user) == 0 {
+				guid, err = cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
+				if err != nil {
+					logrus.WithError(err).Error("error on add user")
+					msg = tgbotapi.NewMessage(cl.chanID, "Unable to add user")
+					return
+				}
+			} else {
+				guid = []uuid.UUID{user[0].GUID}
+			}
+
+			categoryToAdd := *cl.batch.(*ftracker.SpendingCategory)
+			categoryToAdd.UserGUID = guid[0]
+			_, err = cl.srvc.AddCategories([]ftracker.SpendingCategory{categoryToAdd})
+			if err != nil {
+
+				if utils.IsUniqueConstrainViolation(err) {
+					msg = tgbotapi.NewMessage(cl.chanID,
+						"Category with that name already exists",
+					)
+					return
+				}
+
+				logrus.WithError(err).Error("error on add category")
 				msg = tgbotapi.NewMessage(cl.chanID,
-					"Error on adding user",
+					"Error on adding category",
 				)
 			} else {
-				categoryToAdd := *cl.batch.(*ftracker.SpendingCategory)
-				categoryToAdd.UserGUID = guid[0]
-				_, err := cl.srvc.AddCategories([]ftracker.SpendingCategory{categoryToAdd})
-				if err != nil {
-					logrus.WithError(err).Error("error on add category")
-					msg = tgbotapi.NewMessage(cl.chanID,
-						"Error on adding category",
-					)
-				} else {
-					msg = tgbotapi.NewMessage(cl.chanID,
-						"Category added successfully",
-					)
-				}
+				msg = tgbotapi.NewMessage(cl.chanID,
+					"Category added successfully",
+				)
 			}
-			cl.api.Send(msg)
 		},
 	}
 )

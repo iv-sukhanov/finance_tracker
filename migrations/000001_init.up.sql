@@ -15,7 +15,8 @@ create table spending_categories (
     description TEXT,
     amount NUMERIC(20, 2) default 0,
     updated_at TIMESTAMP without time zone not null default now(),
-    created_at TIMESTAMP without time zone not null default now()
+    created_at TIMESTAMP without time zone not null default now(),
+    CONSTRAINT unique_columns UNIQUE (user_guid, category)
 );
 
 create table spending_records (
