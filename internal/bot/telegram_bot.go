@@ -92,7 +92,7 @@ func (b *TelegramBot) Start() {
 		b.bot.Send(msg)
 
 		if !isInMap {
-			newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, command, b.bot)
+			newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, update.Message.From.UserName, command, b.bot, b.service)
 			b.inProcess[update.Message.Chat.ID] = newOp
 			op = newOp
 		} else {

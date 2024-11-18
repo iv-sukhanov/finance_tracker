@@ -6,6 +6,9 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
+	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
+	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/sirupsen/logrus"
 )
 
@@ -13,12 +16,16 @@ type (
 	Client struct {
 		chanID      int64
 		userID      int64
+		username    string
 		expectInput bool
 		isBusy      bool
 		command     Command
 
+		batch any
+
 		messageChanel chan string
 		api           *tgbotapi.BotAPI
+		srvc          *service.Service
 	}
 
 	Command struct {
@@ -50,41 +57,54 @@ var (
 		},
 	}
 
-	actions = map[int]func(cl *Client, args []string){
-		1: func(cl *Client, args []string) {
-			if len(args) != 2 {
-				logrus.Info("wrong input for add category command action")
-				return
-			}
+	actions = map[int]func(cl *Client){
+		1: func(cl *Client) {
 
 			logrus.Info("action on add category command")
 			msg := tgbotapi.NewMessage(cl.chanID,
-				fmt.Sprintf("Please, type description to a new %s category", args[1]),
+				"Please, type description to a new category",
 			)
 			cl.api.Send(msg)
 		},
-		2: func(cl *Client, args []string) {
-			if len(args) != 2 {
-				logrus.Info("wrong input for add description command action")
-				return
-			}
-
+		2: func(cl *Client) {
 			logrus.Info("action on add description command")
-			msg := tgbotapi.NewMessage(cl.chanID,
-				"Category added successfully",
-			)
+			var msg tgbotapi.MessageConfig
+			var guid []uuid.UUID
+
+			guid, err := cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
+			if err != nil {
+				logrus.WithError(err).Error("error on add user")
+				msg = tgbotapi.NewMessage(cl.chanID,
+					"Error on adding user",
+				)
+			} else {
+				categoryToAdd := *cl.batch.(*ftracker.SpendingCategory)
+				categoryToAdd.UserGUID = guid[0]
+				_, err := cl.srvc.AddCategories([]ftracker.SpendingCategory{categoryToAdd})
+				if err != nil {
+					logrus.WithError(err).Error("error on add category")
+					msg = tgbotapi.NewMessage(cl.chanID,
+						"Error on adding category",
+					)
+				} else {
+					msg = tgbotapi.NewMessage(cl.chanID,
+						"Category added successfully",
+					)
+				}
+			}
 			cl.api.Send(msg)
 		},
 	}
 )
 
-func NewOperation(id, userID int64, cmd Command, api *tgbotapi.BotAPI) *Client {
+func NewOperation(id, userID int64, username string, cmd Command, api *tgbotapi.BotAPI, srvc *service.Service) *Client {
 	return &Client{
 		chanID:        id,
 		command:       cmd,
 		userID:        userID,
 		messageChanel: make(chan string),
 		api:           api,
+		srvc:          srvc,
 	}
 }
 
@@ -128,18 +148,59 @@ func (o *Client) TransmitInput(msg string) {
 }
 
 func (o *Client) processInput(msg string) (finished bool) {
-	matches := o.command.rgx.FindAllStringSubmatch(msg, 1)
-	if len(matches) != 1 {
-		logrus.Info("wrong input")
-		o.expectInput = true
-		return false
+
+	if o.command.isBase {
+		o.initBatch()
 	}
-	logrus.Info(matches)
-	actions[o.command.ID](o, matches[0])
+
+	matches := o.validateInput(msg)
+	o.fillBatch(matches)
+
+	actions[o.command.ID](o)
 	if chld := o.command.child; chld != "" {
 		o.command = commands[chld]
 		o.expectInput = true
 		return false
 	}
 	return true
+}
+
+func (o *Client) initBatch() {
+	switch o.command.ID {
+	case 1:
+		o.batch = &ftracker.SpendingCategory{}
+	}
+}
+
+func (o *Client) fillBatch(msg []string) {
+	switch o.batch.(type) {
+	case *ftracker.SpendingCategory:
+
+		if len(msg) != 2 {
+			logrus.WithField("got", msg).Info("wrong input for fillBatch")
+		}
+
+		cat := o.batch.(*ftracker.SpendingCategory)
+
+		switch o.command.ID {
+		case 1:
+			cat.Category = msg[0]
+		case 2:
+			cat.Description = msg[0]
+		default:
+			logrus.Info("something went really wrong with command in fillBatch")
+		}
+	default:
+		logrus.Info("something went really wrong with batch type in fillBatch")
+	}
+}
+
+func (o *Client) validateInput(input string) []string {
+	matches := o.command.rgx.FindAllStringSubmatch(input, 1)
+	if len(matches) != 1 {
+		logrus.Info("wrong input")
+		o.expectInput = true
+		return nil
+	}
+	return matches[0]
 }
