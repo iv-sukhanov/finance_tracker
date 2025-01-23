@@ -9,26 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	baseKeyboard = tgbotapi.NewReplyKeyboard(
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add category"),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("show categories"),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add record"),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("show records"),
-		),
-	)
-
-	commandReplies = map[int]string{
-		1: "Please, input category name",
-	}
-)
+var ()
 
 type TelegramBot struct {
 	service *service.Service
@@ -88,11 +69,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 		logrus.Info("here")
 
 		//rewrite this
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-			commandReplies[command.ID],
-		)
-		msg.ReplyToMessageID = update.Message.MessageID
-		msg.ReplyMarkup = baseKeyboard
+		msg := composeBaseReply(command.ID, update.Message)
 		sender.Send(msg)
 
 		if !isInMap {
@@ -112,7 +89,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 			client.command = command
 		}
 		client.isBusy = true
-		go client.Process()
+		go client.Process(ctx)
 
 		logrus.Info(recievedText)
 	}
@@ -130,4 +107,33 @@ func (b *TelegramBot) displayMap() {
 			}).Info("id: ", k)
 		}
 	}
+}
+
+func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.MessageConfig {
+
+	baseKeyboard := tgbotapi.NewReplyKeyboard(
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("add category"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("show categories"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("add record"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("show records"),
+		),
+	)
+
+	commandReplies := map[int]string{
+		1: "Please, input category name",
+	}
+
+	msg := tgbotapi.NewMessage(replyTo.Chat.ID,
+		commandReplies[commandID],
+	)
+	msg.ReplyToMessageID = replyTo.MessageID
+	msg.ReplyMarkup = baseKeyboard
+	return msg
 }

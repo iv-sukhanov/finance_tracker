@@ -147,7 +147,7 @@ func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.Bot
 	}
 }
 
-func (o *Client) Process() {
+func (o *Client) Process(ctx context.Context) {
 	defer func() {
 		logrus.Info(fmt.Sprintf("goroutine for %d finished", o.chanID))
 	}()
@@ -177,6 +177,9 @@ func (o *Client) Process() {
 			//mutex.Lock()
 			o.isBusy = false
 			//mutex.Unlock()
+			return
+		case <-ctx.Done():
+			logrus.Info("context done")
 			return
 		}
 	}
