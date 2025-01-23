@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -44,9 +45,11 @@ func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI) *TelegramBot
 	}
 }
 
-func (b *TelegramBot) Start() {
+func (b *TelegramBot) Start(ctx context.Context) {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
+	sender := NewMessageSender(b.bot)
+	go sender.Run(ctx)
 
 	//for debuging
 	go b.displayMap()
@@ -90,7 +93,7 @@ func (b *TelegramBot) Start() {
 		)
 		msg.ReplyToMessageID = update.Message.MessageID
 		msg.ReplyMarkup = baseKeyboard
-		b.bot.Send(msg)
+		sender.Send(msg)
 
 		if !isInMap {
 			logrus.Info("new client: ", update.Message.From.UserName)
@@ -101,6 +104,7 @@ func (b *TelegramBot) Start() {
 				command,
 				b.bot,
 				b.service,
+				sender,
 			)
 			b.clientsCache[update.Message.Chat.ID] = newClient
 			client = newClient

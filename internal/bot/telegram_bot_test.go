@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -34,5 +35,5 @@ func Test_Run(t *testing.T) {
 	bot := NewTelegramBot(srv, tgbot)
 
 	// Run the bot
-	bot.Start()
+	bot.Start(context.Background())
 }

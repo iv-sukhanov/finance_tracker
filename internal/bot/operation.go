@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"time"
@@ -27,6 +28,7 @@ type (
 		messageChanel chan string
 		api           *tgbotapi.BotAPI
 		srvc          *service.Service
+		Sender
 	}
 
 	Command struct {
@@ -35,6 +37,15 @@ type (
 		rgx    *regexp.Regexp
 
 		child string
+	}
+
+	Sender interface {
+		Send(msg tgbotapi.MessageConfig)
+	}
+
+	MessageSender struct {
+		messagesChan chan tgbotapi.MessageConfig
+		api          *tgbotapi.BotAPI
 	}
 )
 
@@ -65,7 +76,7 @@ var (
 			msg := tgbotapi.NewMessage(cl.chanID,
 				"Please, type description to a new category",
 			)
-			cl.api.Send(msg)
+			cl.Send(msg)
 		},
 		2: func(cl *Client) {
 			logrus.Info("action on add description command")
@@ -73,7 +84,7 @@ var (
 			var guid []uuid.UUID
 
 			defer func() {
-				cl.api.Send(msg)
+				cl.Send(msg)
 			}()
 
 			user, err := cl.srvc.GetUsers(cl.srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
@@ -120,7 +131,7 @@ var (
 	}
 )
 
-func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.BotAPI, srvc *service.Service) *Client {
+func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.BotAPI, srvc *service.Service, sender Sender) *Client {
 
 	logrus.Info("inside new client", username)
 
@@ -132,6 +143,7 @@ func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.Bot
 		messageChanel: make(chan string),
 		api:           api,
 		srvc:          srvc,
+		Sender:        sender,
 	}
 }
 
@@ -205,6 +217,7 @@ func (o *Client) fillBatch(msg []string) {
 
 		if len(msg) != 2 {
 			logrus.WithField("got", msg).Info("wrong input for fillBatch")
+			return
 		}
 
 		cat := o.batch.(*ftracker.SpendingCategory)
@@ -230,4 +243,24 @@ func (o *Client) validateInput(input string) []string {
 		return nil
 	}
 	return matches[0]
+}
+
+func NewMessageSender(api *tgbotapi.BotAPI) *MessageSender {
+	return &MessageSender{
+		messagesChan: make(chan tgbotapi.MessageConfig),
+		api:          api,
+	}
+}
+
+func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
+	s.messagesChan <- msg
+}
+
+func (s *MessageSender) Run(ctx context.Context) {
+	for msg := range s.messagesChan {
+		_, err := s.api.Send(msg)
+		if err != nil {
+			logrus.WithError(err).Error("error on send message")
+		}
+	}
 }

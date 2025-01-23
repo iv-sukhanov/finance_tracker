@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	tbot "github.com/iv-sukhanov/finance_tracker/internal/bot"
@@ -46,5 +47,5 @@ func main() {
 	src := service.New(repo, log)
 	telegramBot := tbot.NewTelegramBot(src, bot)
 
-	telegramBot.Start()
+	telegramBot.Start(context.Background())
 }
