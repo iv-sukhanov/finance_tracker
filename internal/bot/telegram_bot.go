@@ -33,14 +33,14 @@ type TelegramBot struct {
 	service *service.Service
 	bot     *tgbotapi.BotAPI
 
-	inProcess map[int64]*Client
+	clientsCache map[int64]*Client
 }
 
 func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI) *TelegramBot {
 	return &TelegramBot{
-		service:   service,
-		bot:       api,
-		inProcess: make(map[int64]*Client),
+		service:      service,
+		bot:          api,
+		clientsCache: make(map[int64]*Client),
 	}
 }
 
@@ -61,12 +61,12 @@ func (b *TelegramBot) Start() {
 		logrus.Info(update.Message.Text)
 		recievedText := update.Message.Text
 		//mb mutex
-		op, isInMap := b.inProcess[update.Message.Chat.ID]
+		client, isInMap := b.clientsCache[update.Message.Chat.ID]
 
-		if isInMap && op.isBusy && op.expectInput {
-			logrus.Info(op)
-			op.expectInput = false
-			op.TransmitInput(recievedText)
+		if isInMap && client.isBusy && client.expectInput {
+			logrus.Info(client)
+			client.expectInput = false
+			client.TransmitInput(recievedText)
 			continue
 		}
 
@@ -84,6 +84,7 @@ func (b *TelegramBot) Start() {
 		}
 		logrus.Info("here")
 
+		//rewrite this
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID,
 			commandReplies[command.ID],
 		)
@@ -92,14 +93,22 @@ func (b *TelegramBot) Start() {
 		b.bot.Send(msg)
 
 		if !isInMap {
-			newOp := NewOperation(update.Message.Chat.ID, update.Message.From.ID, update.Message.From.UserName, command, b.bot, b.service)
-			b.inProcess[update.Message.Chat.ID] = newOp
-			op = newOp
+			logrus.Info("new client: ", update.Message.From.UserName)
+			newClient := NewClient(
+				update.Message.Chat.ID,
+				update.Message.From.ID,
+				update.Message.From.UserName,
+				command,
+				b.bot,
+				b.service,
+			)
+			b.clientsCache[update.Message.Chat.ID] = newClient
+			client = newClient
 		} else {
-			op.command = command
+			client.command = command
 		}
-		op.isBusy = true
-		go op.Process()
+		client.isBusy = true
+		go client.Process()
 
 		logrus.Info(recievedText)
 	}
@@ -109,7 +118,7 @@ func (b *TelegramBot) displayMap() {
 	ticker := time.NewTicker(15 * time.Second)
 
 	for range ticker.C {
-		for k, v := range b.inProcess {
+		for k, v := range b.clientsCache {
 			logrus.WithFields(logrus.Fields{
 				"operation":   v.command,
 				"expectInput": v.expectInput,

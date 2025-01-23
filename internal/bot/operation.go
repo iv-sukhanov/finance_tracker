@@ -84,6 +84,7 @@ var (
 			}
 
 			if len(user) == 0 {
+				logrus.Info("adding user with username: ", cl.username)
 				guid, err = cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
 				if err != nil {
 					logrus.WithError(err).Error("error on add user")
@@ -119,11 +120,15 @@ var (
 	}
 )
 
-func NewOperation(id, userID int64, username string, cmd Command, api *tgbotapi.BotAPI, srvc *service.Service) *Client {
+func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.BotAPI, srvc *service.Service) *Client {
+
+	logrus.Info("inside new client", username)
+
 	return &Client{
 		chanID:        id,
 		command:       cmd,
 		userID:        userID,
+		username:      username,
 		messageChanel: make(chan string),
 		api:           api,
 		srvc:          srvc,
