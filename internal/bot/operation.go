@@ -59,27 +59,48 @@ var (
 			ID:     1,
 			isBase: true,
 			rgx:    regexp.MustCompile(`^([a-zA-Z0-9]{1,10})$`),
-			child:  "add description",
+			child:  "add category description",
 		},
-		"add description": {
+		"add category description": {
 			ID:     2,
 			isBase: false,
 			rgx:    regexp.MustCompile(`^([a-zA-Z0-9 ]+)$`),
 			child:  "",
 		},
+		"add record": {
+			ID:     3,
+			isBase: true,
+			rgx:    regexp.MustCompile(`^\s*([a-zA-Z0-9]{1,10})\s*(\d+(\.\d+)?)\s*$`),
+			child:  "",
+		},
 	}
 
-	actions = map[int]func(cl *Client){
-		1: func(cl *Client) {
+	actions = map[int]func(cl *Client, input []string){
+		1: func(cl *Client, input []string) {
 
+			if len(input) != 2 {
+				logrus.Info("wrong input for add category command")
+				return
+			}
+
+			cl.batch.(*ftracker.SpendingCategory).Category = input[0]
 			logrus.Info("action on add category command")
 			msg := tgbotapi.NewMessage(cl.chanID,
 				"Please, type description to a new category",
 			)
 			cl.Send(msg)
 		},
-		2: func(cl *Client) {
-			logrus.Info("action on add description command")
+		2: func(cl *Client, input []string) {
+
+			if len(input) != 2 {
+				logrus.Info("wrong input for add category command")
+				return
+			}
+
+			logrus.Info("action on add category description command")
+
+			cl.batch.(*ftracker.SpendingCategory).Description = input[0]
+
 			var msg tgbotapi.MessageConfig
 			var guid []uuid.UUID
 
@@ -201,9 +222,7 @@ func (cl *Client) processInput(msg string) (finished bool) {
 		return false
 	}
 
-	cl.fillBatch(matches)
-
-	actions[cl.command.ID](cl)
+	actions[cl.command.ID](cl, matches)
 	if chld := cl.command.child; chld != "" {
 		cl.command = commands[chld]
 		cl.expectInput = true
@@ -216,30 +235,8 @@ func (cl *Client) initBatch() {
 	switch cl.command.ID {
 	case 1:
 		cl.batch = &ftracker.SpendingCategory{}
-	}
-}
-
-func (cl *Client) fillBatch(msg []string) {
-	switch cl.batch.(type) {
-	case *ftracker.SpendingCategory:
-
-		if len(msg) != 2 {
-			logrus.WithField("got", msg).Info("wrong input for fillBatch")
-			return
-		}
-
-		cat := cl.batch.(*ftracker.SpendingCategory)
-
-		switch cl.command.ID {
-		case 1:
-			cat.Category = msg[0]
-		case 2:
-			cat.Description = msg[0]
-		default:
-			logrus.Info("something went really wrong with command in fillBatch")
-		}
-	default:
-		logrus.Info("something went really wrong with batch type in fillBatch")
+	case 3:
+		cl.batch = &ftracker.SpendingRecord{}
 	}
 }
 
@@ -269,8 +266,8 @@ func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
 
 func (s *MessageSender) Run(ctx context.Context) {
 	for msg := range s.messagesChan {
-		returned, err := s.api.Send(msg)
-		logrus.Info(returned)
+		_, err := s.api.Send(msg)
+		// logrus.Info(returned)
 		if err != nil {
 			logrus.WithError(err).Error("error on send message")
 		}

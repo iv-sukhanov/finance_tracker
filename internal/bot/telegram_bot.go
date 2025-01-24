@@ -71,11 +71,14 @@ func (b *TelegramBot) Start(ctx context.Context) {
 			switch command {
 			case "start":
 				msg = composeStartReply(update.Message)
+			case "abort":
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Sory, not implemented yet")
 			default:
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Unknown command")
 			}
 
 			sender.Send(msg)
+			continue
 		}
 
 		//do something about it later
@@ -99,11 +102,14 @@ func (b *TelegramBot) Start(ctx context.Context) {
 		//check command
 		command, ok := commands[recievedText]
 		if !ok {
-			logrus.Info("wrong command")
 			//wrong command
+			sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Unknown command"))
 			continue
 		} else if !command.isBase {
 			//not base command
+			sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID,
+				"TODO: implement not base command (or delete)",
+			))
 			logrus.Info("not base command")
 			continue
 		}
@@ -163,6 +169,7 @@ func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.Message
 
 	commandReplies := map[int]string{
 		1: "Please, input category name",
+		3: "Please, input category name and amount",
 	}
 
 	msg := tgbotapi.NewMessage(replyTo.Chat.ID,
