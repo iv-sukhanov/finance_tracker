@@ -84,6 +84,7 @@ var (
 			var guid []uuid.UUID
 
 			defer func() {
+				msg.ReplyMarkup = baseKeyboard
 				cl.Send(msg)
 			}()
 
@@ -147,9 +148,9 @@ func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.Bot
 	}
 }
 
-func (o *Client) Process(ctx context.Context) {
+func (cl *Client) Process(ctx context.Context) {
 	defer func() {
-		logrus.Info(fmt.Sprintf("goroutine for %d finished", o.chanID))
+		logrus.Info(fmt.Sprintf("goroutine for %d finished", cl.chanID))
 	}()
 
 	logrus.Info("start processing")
@@ -157,17 +158,17 @@ func (o *Client) Process(ctx context.Context) {
 	timer := time.NewTimer(timeout)
 
 	//filter by commands
-	o.expectInput = true
+	cl.expectInput = true
 
 	for {
 		select {
-		case msg := <-o.messageChanel:
+		case msg := <-cl.messageChanel:
 			timer.Stop()
 
 			logrus.Info("got message: ", msg)
-			if o.processInput(msg) {
+			if cl.processInput(msg) {
 				logrus.Info("last command reached")
-				o.isBusy = false
+				cl.isBusy = false
 				return
 			}
 
@@ -175,7 +176,7 @@ func (o *Client) Process(ctx context.Context) {
 		case <-timer.C:
 			logrus.Info("timeout")
 			//mutex.Lock()
-			o.isBusy = false
+			cl.isBusy = false
 			//mutex.Unlock()
 			return
 		case <-ctx.Done():
@@ -185,37 +186,41 @@ func (o *Client) Process(ctx context.Context) {
 	}
 }
 
-func (o *Client) TransmitInput(msg string) {
-	o.messageChanel <- msg
+func (cl *Client) TransmitInput(msg string) {
+	cl.messageChanel <- msg
 }
 
-func (o *Client) processInput(msg string) (finished bool) {
+func (cl *Client) processInput(msg string) (finished bool) {
 
-	if o.command.isBase {
-		o.initBatch()
+	if cl.command.isBase {
+		cl.initBatch()
 	}
 
-	matches := o.validateInput(msg)
-	o.fillBatch(matches)
+	matches := cl.validateInput(msg)
+	if matches == nil {
+		return false
+	}
 
-	actions[o.command.ID](o)
-	if chld := o.command.child; chld != "" {
-		o.command = commands[chld]
-		o.expectInput = true
+	cl.fillBatch(matches)
+
+	actions[cl.command.ID](cl)
+	if chld := cl.command.child; chld != "" {
+		cl.command = commands[chld]
+		cl.expectInput = true
 		return false
 	}
 	return true
 }
 
-func (o *Client) initBatch() {
-	switch o.command.ID {
+func (cl *Client) initBatch() {
+	switch cl.command.ID {
 	case 1:
-		o.batch = &ftracker.SpendingCategory{}
+		cl.batch = &ftracker.SpendingCategory{}
 	}
 }
 
-func (o *Client) fillBatch(msg []string) {
-	switch o.batch.(type) {
+func (cl *Client) fillBatch(msg []string) {
+	switch cl.batch.(type) {
 	case *ftracker.SpendingCategory:
 
 		if len(msg) != 2 {
@@ -223,9 +228,9 @@ func (o *Client) fillBatch(msg []string) {
 			return
 		}
 
-		cat := o.batch.(*ftracker.SpendingCategory)
+		cat := cl.batch.(*ftracker.SpendingCategory)
 
-		switch o.command.ID {
+		switch cl.command.ID {
 		case 1:
 			cat.Category = msg[0]
 		case 2:
@@ -238,11 +243,14 @@ func (o *Client) fillBatch(msg []string) {
 	}
 }
 
-func (o *Client) validateInput(input string) []string {
-	matches := o.command.rgx.FindAllStringSubmatch(input, 1)
+func (cl *Client) validateInput(input string) []string {
+	matches := cl.command.rgx.FindAllStringSubmatch(input, 1)
 	if len(matches) != 1 {
 		logrus.Info("wrong input")
-		o.expectInput = true
+		cl.Send(
+			tgbotapi.NewMessage(cl.chanID, "Wrong input, please try again"),
+		)
+		cl.expectInput = true
 		return nil
 	}
 	return matches[0]
@@ -261,7 +269,8 @@ func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
 
 func (s *MessageSender) Run(ctx context.Context) {
 	for msg := range s.messagesChan {
-		_, err := s.api.Send(msg)
+		returned, err := s.api.Send(msg)
+		logrus.Info(returned)
 		if err != nil {
 			logrus.WithError(err).Error("error on send message")
 		}

@@ -9,7 +9,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var ()
+var (
+	baseKeyboard = tgbotapi.NewOneTimeReplyKeyboard(
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("add category"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("show categories"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("add record"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("show records"),
+		),
+	)
+)
 
 type TelegramBot struct {
 	service *service.Service
@@ -29,6 +44,17 @@ func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI) *TelegramBot
 func (b *TelegramBot) Start(ctx context.Context) {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
+
+	//FIXME: set commands
+	// botCommands := tgbotapi.NewSetMyCommands(
+	// 	tgbotapi.BotCommand{Command: "start", Description: "Start using bot"},
+	// )
+	// resp, err := b.bot.Request(botCommands)
+	// if err != nil {
+	// 	logrus.Error("error setting commands: ", err)
+	// }
+	// logrus.Info("commands set: ", resp)
+
 	sender := NewMessageSender(b.bot)
 	go sender.Run(ctx)
 
@@ -38,6 +64,17 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	updates := b.bot.GetUpdatesChan(updateConfig)
 	for update := range updates {
 
+		if command := update.Message.Command(); command != "" {
+			logrus.Info("command: ", update.Message.Command())
+			var msg tgbotapi.MessageConfig
+			switch command {
+			case "start":
+				msg = composeStartReply(update.Message)
+			}
+			sender.Send(msg)
+		}
+
+		//do something about it later
 		if update.Message == nil {
 			continue
 		}
@@ -109,22 +146,16 @@ func (b *TelegramBot) displayMap() {
 	}
 }
 
-func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.MessageConfig {
+func composeStartReply(replyTo *tgbotapi.Message) tgbotapi.MessageConfig {
 
-	baseKeyboard := tgbotapi.NewReplyKeyboard(
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add category"),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("show categories"),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add record"),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("show records"),
-		),
+	msg := tgbotapi.NewMessage(replyTo.Chat.ID,
+		"Hello! I'm finance tracker bot. Please, select an option:",
 	)
+	msg.ReplyMarkup = baseKeyboard
+	return msg
+}
+
+func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.MessageConfig {
 
 	commandReplies := map[int]string{
 		1: "Please, input category name",
@@ -134,6 +165,6 @@ func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.Message
 		commandReplies[commandID],
 	)
 	msg.ReplyToMessageID = replyTo.MessageID
-	msg.ReplyMarkup = baseKeyboard
+	// msg.ReplyMarkup = baseKeyboard
 	return msg
 }
