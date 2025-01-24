@@ -20,6 +20,10 @@ type User interface {
 type SpendingCategory interface {
 	AddCategories(categories []ftracker.SpendingCategory) ([]uuid.UUID, error)
 	GetCategories(opts ...CategoryOption) ([]ftracker.SpendingCategory, error)
+	WithLimit(limit int) CategoryOption
+	WithGUIDs(guids []uuid.UUID) CategoryOption
+	WithUserGUIDs(guids []uuid.UUID) CategoryOption
+	WithCategories(categories []string) CategoryOption
 }
 
 type SpendingRecord interface {

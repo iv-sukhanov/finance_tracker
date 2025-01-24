@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -112,7 +113,7 @@ var (
 			user, err := cl.srvc.GetUsers(cl.srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
 			if err != nil {
 				logrus.WithError(err).Error("error on get user")
-				msg = tgbotapi.NewMessage(cl.chanID, "Unable to load users")
+				msg = tgbotapi.NewMessage(cl.chanID, "Sorry, something went wrong with the database :(")
 				return
 			}
 
@@ -149,6 +150,37 @@ var (
 					"Category added successfully",
 				)
 			}
+		},
+		3: func(cl *Client, input []string) {
+
+			if len(input) != 3 {
+				logrus.Info("wrong input for add record command")
+				return
+			}
+
+			category, err := cl.srvc.GetCategories(cl.srvc.SpendingCategory.WithCategories(input[1:2]))
+			if err != nil {
+				logrus.WithError(err).Error("error on get category")
+				//TODO: send message
+			}
+
+			if len(category) == 0 {
+				//TODO: send message no such category
+			}
+
+			cl.batch.(*ftracker.SpendingRecord).CategoryGUID = category[0].GUID
+			amount, err := strconv.ParseFloat(input[1], 32)
+			if err != nil {
+				logrus.WithError(err).Error("error on parsing amount")
+				//TODO: send message
+				return
+			}
+			cl.batch.(*ftracker.SpendingRecord).Amount = float32(amount)
+
+			msg := tgbotapi.NewMessage(cl.chanID,
+				"Please, type description to a new record",
+			)
+			cl.Send(msg)
 		},
 	}
 )
