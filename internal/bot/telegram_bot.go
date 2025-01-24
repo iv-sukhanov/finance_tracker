@@ -45,15 +45,16 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
 
-	//FIXME: set commands
-	// botCommands := tgbotapi.NewSetMyCommands(
-	// 	tgbotapi.BotCommand{Command: "start", Description: "Start using bot"},
-	// )
-	// resp, err := b.bot.Request(botCommands)
-	// if err != nil {
-	// 	logrus.Error("error setting commands: ", err)
-	// }
-	// logrus.Info("commands set: ", resp)
+	botCommands := tgbotapi.NewSetMyCommands(
+		tgbotapi.BotCommand{Command: "start", Description: "Start using bot"},
+		//TODO: implement abort
+		tgbotapi.BotCommand{Command: "abort", Description: "Quit current operation"},
+	)
+	resp, err := b.bot.Request(botCommands)
+	if err != nil {
+		logrus.Error("error setting commands: ", err)
+	}
+	logrus.Info("commands set: ", resp)
 
 	sender := NewMessageSender(b.bot)
 	go sender.Run(ctx)
@@ -70,7 +71,10 @@ func (b *TelegramBot) Start(ctx context.Context) {
 			switch command {
 			case "start":
 				msg = composeStartReply(update.Message)
+			default:
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Unknown command")
 			}
+
 			sender.Send(msg)
 		}
 
