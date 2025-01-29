@@ -59,19 +59,19 @@ var (
 		"add category": {
 			ID:     1,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^([a-zA-Z0-9]{1,10})$`),
+			rgx:    regexp.MustCompile(`^([a-zA-Z0-9]{1,10})$`), //TODO: update
 			child:  "add category description",
 		},
 		"add category description": {
 			ID:     2,
 			isBase: false,
-			rgx:    regexp.MustCompile(`^([a-zA-Z0-9 ]+)$`),
+			rgx:    regexp.MustCompile(`^([a-zA-Z0-9 ]+)$`), //TODO: update
 			child:  "",
 		},
 		"add record": {
 			ID:     3,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^\s*([a-zA-Z0-9]{1,10})\s*(\d+(\.\d+)?)\s*$`),
+			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d+)?)\s*$`),
 			child:  "",
 		},
 	}
@@ -84,7 +84,7 @@ var (
 				return
 			}
 
-			cl.batch.(*ftracker.SpendingCategory).Category = input[0]
+			cl.batch.(*ftracker.SpendingCategory).Category = input[1]
 			logrus.Info("action on add category command")
 			msg := tgbotapi.NewMessage(cl.chanID,
 				"Please, type description to a new category",
@@ -100,20 +100,19 @@ var (
 
 			logrus.Info("action on add category description command")
 
-			cl.batch.(*ftracker.SpendingCategory).Description = input[0]
+			cl.batch.(*ftracker.SpendingCategory).Description = input[1]
 
-			var msg tgbotapi.MessageConfig
-			var guid []uuid.UUID
-
+			msg := tgbotapi.NewMessage(cl.chanID, "")
+			msg.ReplyMarkup = baseKeyboard
 			defer func() {
-				msg.ReplyMarkup = baseKeyboard
 				cl.Send(msg)
 			}()
 
+			var guid []uuid.UUID
 			user, err := cl.srvc.GetUsers(cl.srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
 			if err != nil {
 				logrus.WithError(err).Error("error on get user")
-				msg = tgbotapi.NewMessage(cl.chanID, "Sorry, something went wrong with the database :(")
+				msg.Text = "Sorry, something went wrong with the database getting the user :("
 				return
 			}
 
@@ -122,7 +121,7 @@ var (
 				guid, err = cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
 				if err != nil {
 					logrus.WithError(err).Error("error on add user")
-					msg = tgbotapi.NewMessage(cl.chanID, "Unable to add user")
+					msg.Text = "Sorry, something went wrong with the database adding the user :("
 					return
 				}
 			} else {
@@ -135,52 +134,61 @@ var (
 			if err != nil {
 
 				if utils.IsUniqueConstrainViolation(err) {
-					msg = tgbotapi.NewMessage(cl.chanID,
-						"Category with that name already exists",
-					)
+					msg.Text = "Category with that name already exists"
 					return
 				}
 
 				logrus.WithError(err).Error("error on add category")
-				msg = tgbotapi.NewMessage(cl.chanID,
-					"Error on adding category",
-				)
+				msg.Text = "Sorry, something went wrong with the database adding the category:("
 			} else {
-				msg = tgbotapi.NewMessage(cl.chanID,
-					"Category added successfully",
-				)
+				msg.Text = "Category added successfully"
 			}
 		},
 		3: func(cl *Client, input []string) {
 
 			if len(input) != 3 {
-				logrus.Info("wrong input for add record command")
+				logrus.Info("wrong tocken number for add record command")
+				return
+			}
+			categoryToLookup := input[1:2]
+			recordAmount := input[2]
+
+			msg := tgbotapi.NewMessage(cl.chanID, "")
+			msg.ReplyMarkup = baseKeyboard
+			defer func() {
+				cl.Send(msg)
+			}()
+
+			logrus.Info("category to lookup: ", categoryToLookup)
+
+			categories, err := cl.srvc.GetCategories(cl.srvc.SpendingCategory.WithCategories(categoryToLookup))
+			if err != nil {
+				logrus.WithError(err).Error("error on get category")
+				msg.Text = "Sorry, something went wrong with the database getting the category :("
+			}
+
+			if len(categories) == 0 {
+				msg.Text = "There is no such category"
 				return
 			}
 
-			category, err := cl.srvc.GetCategories(cl.srvc.SpendingCategory.WithCategories(input[1:2]))
-			if err != nil {
-				logrus.WithError(err).Error("error on get category")
-				//TODO: send message
-			}
-
-			if len(category) == 0 {
-				//TODO: send message no such category
-			}
-
-			cl.batch.(*ftracker.SpendingRecord).CategoryGUID = category[0].GUID
-			amount, err := strconv.ParseFloat(input[1], 32)
+			cl.batch.(*ftracker.SpendingRecord).CategoryGUID = categories[0].GUID
+			amount, err := strconv.ParseFloat(recordAmount, 32)
 			if err != nil {
 				logrus.WithError(err).Error("error on parsing amount")
-				//TODO: send message
+				msg.Text = "Wow, there is something wrong with the amount you've entered"
 				return
 			}
 			cl.batch.(*ftracker.SpendingRecord).Amount = float32(amount)
 
-			msg := tgbotapi.NewMessage(cl.chanID,
-				"Please, type description to a new record",
-			)
-			cl.Send(msg)
+			recordToAdd := *cl.batch.(*ftracker.SpendingRecord)
+			_, err = cl.srvc.AddRecords([]ftracker.SpendingRecord{recordToAdd})
+			if err != nil {
+				logrus.WithError(err).Error("error on add record")
+				msg.Text = "Sorry, something went wrong with the database adding the record :("
+			} else {
+				msg.Text = "Record added successfully"
+			}
 		},
 	}
 )
