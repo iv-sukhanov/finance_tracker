@@ -169,7 +169,7 @@ func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.Message
 
 	commandReplies := map[int]string{
 		1: "Please, input category name",
-		3: "Please, input category name and amount",
+		3: "Please, input category name and amount e.g. 'category 100.5'\nOptionally you can add description e.g. 'category 100.5 description'",
 	}
 
 	msg := tgbotapi.NewMessage(replyTo.Chat.ID,

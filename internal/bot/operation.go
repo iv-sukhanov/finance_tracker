@@ -71,7 +71,7 @@ var (
 		"add record": {
 			ID:     3,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d+)?)\s*$`),
+			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d+)?)\s*(?<description>[a-zA-Z0-9 ]+)?$`),
 			child:  "",
 		},
 	}
@@ -146,12 +146,17 @@ var (
 		},
 		3: func(cl *Client, input []string) {
 
-			if len(input) != 3 {
+			if len(input) != 4 {
 				logrus.Info("wrong tocken number for add record command")
 				return
 			}
-			categoryToLookup := input[1:2]
+			recordCategory := input[1:2]
 			recordAmount := input[2]
+
+			recordDescription := input[3]
+			if len(recordDescription) == 0 {
+				recordDescription = "empty :&"
+			}
 
 			msg := tgbotapi.NewMessage(cl.chanID, "")
 			msg.ReplyMarkup = baseKeyboard
@@ -159,9 +164,9 @@ var (
 				cl.Send(msg)
 			}()
 
-			logrus.Info("category to lookup: ", categoryToLookup)
+			logrus.Info("category to lookup: ", recordCategory)
 
-			categories, err := cl.srvc.GetCategories(cl.srvc.SpendingCategory.WithCategories(categoryToLookup))
+			categories, err := cl.srvc.GetCategories(cl.srvc.SpendingCategory.WithCategories(recordCategory))
 			if err != nil {
 				logrus.WithError(err).Error("error on get category")
 				msg.Text = "Sorry, something went wrong with the database getting the category :("
@@ -180,6 +185,7 @@ var (
 				return
 			}
 			cl.batch.(*ftracker.SpendingRecord).Amount = float32(amount)
+			cl.batch.(*ftracker.SpendingRecord).Description = recordDescription
 
 			recordToAdd := *cl.batch.(*ftracker.SpendingRecord)
 			_, err = cl.srvc.AddRecords([]ftracker.SpendingRecord{recordToAdd})
