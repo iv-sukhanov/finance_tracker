@@ -28,6 +28,7 @@ type (
 
 		messageChanel chan string
 		api           *tgbotapi.BotAPI
+		log           *logrus.Logger
 		srvc          *service.Service
 		Sender
 	}
@@ -47,6 +48,7 @@ type (
 	MessageSender struct {
 		messagesChan chan tgbotapi.MessageConfig
 		api          *tgbotapi.BotAPI
+		log          *logrus.Logger
 	}
 )
 
@@ -80,12 +82,12 @@ var (
 		1: func(cl *Client, input []string) {
 
 			if len(input) != 2 {
-				logrus.Info("wrong input for add category command")
+				cl.log.Debug("wrong input for add category command")
 				return
 			}
 
 			cl.batch.(*ftracker.SpendingCategory).Category = input[1]
-			logrus.Info("action on add category command")
+			cl.log.Debug("action on add category command")
 			msg := tgbotapi.NewMessage(cl.chanID,
 				"Please, type description to a new category",
 			)
@@ -94,11 +96,11 @@ var (
 		2: func(cl *Client, input []string) {
 
 			if len(input) != 2 {
-				logrus.Info("wrong input for add category command")
+				cl.log.Debug("wrong input for add category command")
 				return
 			}
 
-			logrus.Info("action on add category description command")
+			cl.log.Debug("action on add category description command")
 
 			cl.batch.(*ftracker.SpendingCategory).Description = input[1]
 
@@ -111,16 +113,16 @@ var (
 			var guid []uuid.UUID
 			user, err := cl.srvc.GetUsers(cl.srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
 			if err != nil {
-				logrus.WithError(err).Error("error on get user")
+				cl.log.WithError(err).Error("error on get user")
 				msg.Text = "Sorry, something went wrong with the database getting the user :("
 				return
 			}
 
 			if len(user) == 0 {
-				logrus.Info("adding user with username: ", cl.username)
+				cl.log.Debug("adding user with username: ", cl.username)
 				guid, err = cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
 				if err != nil {
-					logrus.WithError(err).Error("error on add user")
+					cl.log.WithError(err).Error("error on add user")
 					msg.Text = "Sorry, something went wrong with the database adding the user :("
 					return
 				}
@@ -138,7 +140,7 @@ var (
 					return
 				}
 
-				logrus.WithError(err).Error("error on add category")
+				cl.log.WithError(err).Error("error on add category")
 				msg.Text = "Sorry, something went wrong with the database adding the category:("
 			} else {
 				msg.Text = "Category added successfully"
@@ -147,7 +149,7 @@ var (
 		3: func(cl *Client, input []string) {
 
 			if len(input) != 4 {
-				logrus.Info("wrong tocken number for add record command")
+				cl.log.Debug("wrong tocken number for add record command")
 				return
 			}
 			recordCategory := input[1:2]
@@ -164,11 +166,11 @@ var (
 				cl.Send(msg)
 			}()
 
-			logrus.Info("category to lookup: ", recordCategory)
+			cl.log.Debug("category to lookup: ", recordCategory)
 
 			categories, err := cl.srvc.GetCategories(cl.srvc.SpendingCategory.WithCategories(recordCategory))
 			if err != nil {
-				logrus.WithError(err).Error("error on get category")
+				cl.log.WithError(err).Error("error on get category")
 				msg.Text = "Sorry, something went wrong with the database getting the category :("
 			}
 
@@ -180,7 +182,7 @@ var (
 			cl.batch.(*ftracker.SpendingRecord).CategoryGUID = categories[0].GUID
 			amount, err := strconv.ParseFloat(recordAmount, 32)
 			if err != nil {
-				logrus.WithError(err).Error("error on parsing amount")
+				cl.log.WithError(err).Error("error on parsing amount")
 				msg.Text = "Wow, there is something wrong with the amount you've entered"
 				return
 			}
@@ -190,7 +192,7 @@ var (
 			recordToAdd := *cl.batch.(*ftracker.SpendingRecord)
 			_, err = cl.srvc.AddRecords([]ftracker.SpendingRecord{recordToAdd})
 			if err != nil {
-				logrus.WithError(err).Error("error on add record")
+				cl.log.WithError(err).Error("error on add record")
 				msg.Text = "Sorry, something went wrong with the database adding the record :("
 			} else {
 				msg.Text = "Record added successfully"
@@ -199,9 +201,7 @@ var (
 	}
 )
 
-func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.BotAPI, srvc *service.Service, sender Sender) *Client {
-
-	logrus.Info("inside new client", username)
+func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.BotAPI, srvc *service.Service, log *logrus.Logger, sender Sender) *Client {
 
 	return &Client{
 		chanID:        id,
@@ -211,16 +211,17 @@ func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.Bot
 		messageChanel: make(chan string),
 		api:           api,
 		srvc:          srvc,
+		log:           log,
 		Sender:        sender,
 	}
 }
 
 func (cl *Client) Process(ctx context.Context) {
 	defer func() {
-		logrus.Info(fmt.Sprintf("goroutine for %d finished", cl.chanID))
+		cl.log.Debug(fmt.Sprintf("goroutine for %d finished", cl.chanID))
 	}()
 
-	logrus.Info("start processing")
+	cl.log.Debug("start processing")
 
 	timer := time.NewTimer(timeout)
 
@@ -232,22 +233,22 @@ func (cl *Client) Process(ctx context.Context) {
 		case msg := <-cl.messageChanel:
 			timer.Stop()
 
-			logrus.Info("got message: ", msg)
+			cl.log.Debug("got message: ", msg)
 			if cl.processInput(msg) {
-				logrus.Info("last command reached")
+				cl.log.Debug("last command reached")
 				cl.isBusy = false
 				return
 			}
 
 			timer.Reset(timeout)
 		case <-timer.C:
-			logrus.Info("timeout")
+			cl.log.Debug("timeout")
 			//mutex.Lock()
 			cl.isBusy = false
 			//mutex.Unlock()
 			return
 		case <-ctx.Done():
-			logrus.Info("context done")
+			cl.log.Debug("context done")
 			return
 		}
 	}
@@ -289,7 +290,7 @@ func (cl *Client) initBatch() {
 func (cl *Client) validateInput(input string) []string {
 	matches := cl.command.rgx.FindAllStringSubmatch(input, 1)
 	if len(matches) != 1 {
-		logrus.Info("wrong input")
+		cl.log.Debug("wrong input")
 		cl.Send(
 			tgbotapi.NewMessage(cl.chanID, "Wrong input, please try again"),
 		)
@@ -299,9 +300,10 @@ func (cl *Client) validateInput(input string) []string {
 	return matches[0]
 }
 
-func NewMessageSender(api *tgbotapi.BotAPI) *MessageSender {
+func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
 	return &MessageSender{
 		messagesChan: make(chan tgbotapi.MessageConfig),
+		log:          log,
 		api:          api,
 	}
 }
@@ -313,9 +315,9 @@ func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
 func (s *MessageSender) Run(ctx context.Context) {
 	for msg := range s.messagesChan {
 		_, err := s.api.Send(msg)
-		// logrus.Info(returned)
+		// cl.log.Debug(returned)
 		if err != nil {
-			logrus.WithError(err).Error("error on send message")
+			s.log.WithError(err).Error("error on send message")
 		}
 	}
 }

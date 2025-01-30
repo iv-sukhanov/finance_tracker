@@ -45,7 +45,7 @@ func main() {
 
 	repo := repository.NewRepostitory(db)
 	src := service.New(repo, log)
-	telegramBot := tbot.NewTelegramBot(src, bot)
+	telegramBot := tbot.NewTelegramBot(src, bot, log.Logger)
 
 	telegramBot.Start(context.Background())
 }

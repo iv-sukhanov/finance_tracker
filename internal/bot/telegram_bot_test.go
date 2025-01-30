@@ -32,7 +32,9 @@ func Test_Run(t *testing.T) {
 	tgbot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_BOT_TOKEN"))
 	require.NoError(t, err)
 	// Create a new bot
-	bot := NewTelegramBot(srv, tgbot)
+	log := logrus.New()
+	log.SetLevel(logrus.DebugLevel)
+	bot := NewTelegramBot(srv, tgbot, log)
 
 	// Run the bot
 	bot.Start(context.Background())

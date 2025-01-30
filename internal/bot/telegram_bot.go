@@ -29,15 +29,17 @@ var (
 type TelegramBot struct {
 	service *service.Service
 	bot     *tgbotapi.BotAPI
+	log     *logrus.Logger
 
 	clientsCache map[int64]*Client
 }
 
-func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI) *TelegramBot {
+func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI, log *logrus.Logger) *TelegramBot {
 	return &TelegramBot{
 		service:      service,
 		bot:          api,
 		clientsCache: make(map[int64]*Client),
+		log:          log,
 	}
 }
 
@@ -52,11 +54,11 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	)
 	resp, err := b.bot.Request(botCommands)
 	if err != nil {
-		logrus.Error("error setting commands: ", err)
+		b.log.Error("error setting commands: ", err)
 	}
-	logrus.Info("commands set: ", resp)
+	b.log.Debug("commands set: ", resp)
 
-	sender := NewMessageSender(b.bot)
+	sender := NewMessageSender(b.bot, b.log)
 	go sender.Run(ctx)
 
 	//for debuging
@@ -66,7 +68,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	for update := range updates {
 
 		if command := update.Message.Command(); command != "" {
-			logrus.Info("command: ", update.Message.Command())
+			b.log.Debug("command: ", update.Message.Command())
 			var msg tgbotapi.MessageConfig
 			switch command {
 			case "start":
@@ -86,41 +88,41 @@ func (b *TelegramBot) Start(ctx context.Context) {
 			continue
 		}
 
-		logrus.Info(update.Message.Text)
+		b.log.Debug(update.Message.Text)
 		recievedText := update.Message.Text
 		//mb mutex
 		client, isInMap := b.clientsCache[update.Message.Chat.ID]
 
 		if isInMap && client.isBusy && client.expectInput {
-			logrus.Info(client)
+			b.log.Debug(client)
 			client.expectInput = false
 			client.TransmitInput(recievedText)
 			continue
 		}
 
-		logrus.Info("Command check")
+		b.log.Debug("Command check")
 		//check command
 		command, ok := commands[recievedText]
 		if !ok {
 			//wrong command
 			sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Unknown command"))
 			continue
-		} else if !command.isBase {
+		} else if !command.isBase { //FIXME
 			//not base command
 			sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID,
 				"TODO: implement not base command (or delete)",
 			))
-			logrus.Info("not base command")
+			b.log.Debug("not base command")
 			continue
 		}
-		logrus.Info("here")
+		b.log.Debug("here")
 
 		//rewrite this
 		msg := composeBaseReply(command.ID, update.Message)
 		sender.Send(msg)
 
 		if !isInMap {
-			logrus.Info("new client: ", update.Message.From.UserName)
+			b.log.Debug("new client: ", update.Message.From.UserName)
 			newClient := NewClient(
 				update.Message.Chat.ID,
 				update.Message.From.ID,
@@ -128,6 +130,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 				command,
 				b.bot,
 				b.service,
+				b.log,
 				sender,
 			)
 			b.clientsCache[update.Message.Chat.ID] = newClient
@@ -138,7 +141,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 		client.isBusy = true
 		go client.Process(ctx)
 
-		logrus.Info(recievedText)
+		b.log.Debug(recievedText)
 	}
 }
 
@@ -147,11 +150,11 @@ func (b *TelegramBot) displayMap() {
 
 	for range ticker.C {
 		for k, v := range b.clientsCache {
-			logrus.WithFields(logrus.Fields{
+			b.log.WithFields(logrus.Fields{
 				"operation":   v.command,
 				"expectInput": v.expectInput,
 				"isBusy":      v.isBusy,
-			}).Info("id: ", k)
+			}).Debug("id: ", k)
 		}
 	}
 }
