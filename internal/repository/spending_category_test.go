@@ -120,6 +120,19 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},
 			},
 		},
+		{
+			name: "Ordered",
+			options: CategoryOptions{
+				GUIDs: categoryGuids[6:10],
+				Order: AlphabeticalOrder,
+			},
+			want: []ftracker.SpendingCategory{
+				{GUID: categoryGuids[6], UserGUID: userGuids[0], Category: "for_get_categories1", Description: "bla bla bla", Amount: 0},
+				{GUID: categoryGuids[7], UserGUID: userGuids[1], Category: "for_get_categories2", Description: "bla bla bla", Amount: 0},
+				{GUID: categoryGuids[8], UserGUID: userGuids[0], Category: "for_get_categories3", Description: "bla bla bla", Amount: 0},
+				{GUID: categoryGuids[9], UserGUID: userGuids[1], Category: "for_get_categories4", Description: "bla bla bla", Amount: 0},
+			},
+		},
 	}
 
 	for _, tc := range tt {

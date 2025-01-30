@@ -19,9 +19,18 @@ type (
 		GUIDs      []uuid.UUID
 		UserGUIDs  []uuid.UUID
 		Categories []string
+		Order      CategoryOrder
 	}
 
 	CategoryOption func(*CategoryOptions)
+	CategoryOrder  int
+)
+
+const (
+	DefaultOrder CategoryOrder = iota
+	LastModifiedOrder
+	AmountOrder
+	AlphabeticalOrder
 )
 
 func NewCategoryRepository(db *sqlx.DB) *CategoryRepo {
@@ -36,9 +45,10 @@ func (c *CategoryRepo) GetCategories(opts CategoryOptions) ([]ftracker.SpendingC
 		utils.MakeIn("category", opts.Categories...),
 	)
 
-	query := fmt.Sprintf("SELECT guid, user_guid, category, description, amount FROM %s %s %s",
+	query := fmt.Sprintf("SELECT guid, user_guid, category, description, amount FROM %s %s %s %s",
 		spendingCategoriesTable,
 		whereClause,
+		makeOrderBy(opts.Order),
 		utils.MakeLimit(opts.Limit),
 	)
 
@@ -79,4 +89,19 @@ func (c *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]
 	}
 
 	return guids, nil
+}
+
+func makeOrderBy(order CategoryOrder) string {
+	switch order {
+	case DefaultOrder:
+		return ""
+	case LastModifiedOrder:
+		return "ORDER BY updated_at DESC"
+	case AmountOrder:
+		return "ORDER BY amount DESC"
+	case AlphabeticalOrder:
+		return "ORDER BY category ASC"
+	default:
+		return ""
+	}
 }

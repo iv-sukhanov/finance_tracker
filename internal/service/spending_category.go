@@ -26,6 +26,12 @@ func (CategoryService) WithLimit(limit int) CategoryOption {
 	}
 }
 
+func (CategoryService) WithOrder(order repository.CategoryOrder) CategoryOption {
+	return func(o *repository.CategoryOptions) {
+		o.Order = order
+	}
+}
+
 func (CategoryService) WithGUIDs(guids []uuid.UUID) CategoryOption {
 	return func(o *repository.CategoryOptions) {
 		o.GUIDs = guids

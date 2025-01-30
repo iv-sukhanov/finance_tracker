@@ -91,8 +91,9 @@ func Test_GetCategories(t *testing.T) {
 				ctgSrvc.WithLimit(2),
 				ctgSrvc.WithCategories([]string{"beer", "gym", "daytona"}),
 				ctgSrvc.WithUserGUIDs(randomGUIDs[2:]),
+				ctgSrvc.WithOrder(repository.AlphabeticalOrder),
 			},
-			want: repository.CategoryOptions{GUIDs: randomGUIDs[:2], Limit: 2, Categories: []string{"beer", "gym", "daytona"}, UserGUIDs: randomGUIDs[2:]},
+			want: repository.CategoryOptions{GUIDs: randomGUIDs[:2], Limit: 2, Categories: []string{"beer", "gym", "daytona"}, UserGUIDs: randomGUIDs[2:], Order: repository.AlphabeticalOrder},
 		},
 		{
 			name: "Empty_(all)",
