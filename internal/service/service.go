@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
 	"github.com/iv-sukhanov/finance_tracker/internal/repository"
@@ -30,6 +32,10 @@ type SpendingCategory interface {
 type SpendingRecord interface {
 	AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error)
 	GetRecords(opts ...RecordOption) ([]ftracker.SpendingRecord, error)
+	WithLimit(limit int) RecordOption
+	WithGUIDs(guids []uuid.UUID) RecordOption
+	WithCategoryGUIDs(guids []uuid.UUID) RecordOption
+	WithTimeFrame(from, to time.Time) RecordOption
 }
 
 type Service struct {

@@ -81,7 +81,19 @@ var (
 		"show categories": {
 			ID:     4,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^(?:(\d+)|([a-zA-Z0-9]{1,10}))\s*(full)?$`),
+			rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category>[a-zA-Z0-9]{1,10}))\s*(?P<isfull>full)?$`),
+			child:  "",
+		},
+		"show records": {
+			ID:     5,
+			isBase: true,
+			rgx:    regexp.MustCompile(`^(?P<category>[a-zA-Z0-9]{1,10})$`),
+			child:  "set time boundaries",
+		},
+		"set time boundaries": {
+			ID:     6,
+			isBase: false,
+			rgx:    regexp.MustCompile(`^(?P<timefrom>\d{2}-\d{2}-\d{4}) (?P<timeto>\d{2}-\d{2}-\d{4})$`),
 			child:  "",
 		},
 	}
@@ -96,10 +108,9 @@ var (
 
 			cl.batch.(*ftracker.SpendingCategory).Category = input[1]
 			cl.log.Debug("action on add category command")
-			msg := tgbotapi.NewMessage(cl.chanID,
-				"Please, type description to a new category",
+			cl.Send(
+				tgbotapi.NewMessage(cl.chanID, "Please, type description to a new category"),
 			)
-			cl.Send(msg)
 		},
 		2: func(cl *Client, input []string) {
 
@@ -167,6 +178,7 @@ var (
 			if err != nil {
 				cl.log.WithError(err).Error("error on get category")
 				msg.Text = "Sorry, something went wrong with the database getting the category :("
+				return
 			}
 
 			if len(categories) == 0 {
@@ -264,6 +276,67 @@ var (
 				}
 			}
 		},
+		5: func(cl *Client, input []string) {
+			if len(input) != 2 {
+				cl.log.Debug("wrong tocken number for show records command")
+				return
+			}
+			recordCategory := input[1:2]
+
+			msg := tgbotapi.NewMessage(cl.chanID, "")
+			msg.ReplyMarkup = baseKeyboard
+			defer func() {
+				cl.Send(msg)
+			}()
+
+			categories, err := cl.srvc.GetCategories(cl.srvc.SpendingCategory.WithCategories(recordCategory))
+			if err != nil {
+				cl.log.WithError(err).Error("error on get category")
+				msg.Text = "Sorry, something went wrong with the database getting the category :("
+				return
+			}
+
+			if len(categories) == 0 {
+				msg.Text = "There is no such category"
+				return
+			}
+			cl.batch.(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
+
+			cl.Send(
+				tgbotapi.NewMessage(cl.chanID, "Please, type the time period for the records ('from' 'to') in dd-mm-yyyy format:\n'dd-mm-yyyy dd-mm-yyyy'"),
+			)
+		},
+		6: func(cl *Client, input []string) {
+			if len(input) != 3 {
+				cl.log.Debug("wrong tocken number for set time boundaries command")
+				return
+			}
+
+			msg := tgbotapi.NewMessage(cl.chanID, "")
+			msg.ReplyMarkup = baseKeyboard
+			defer func() {
+				cl.Send(msg)
+			}()
+
+			timeFrom, err := time.Parse("02-01-2006", input[1])
+			if err != nil {
+				cl.log.WithError(err).Error("error on parsing time from")
+				msg.Text = "Wow, there is something wrong with the 'from' date you've entered"
+				return
+			}
+			timeTo, err := time.Parse("02-01-2006", input[2])
+			if err != nil {
+				cl.log.WithError(err).Error("error on parsing time to")
+				msg.Text = "Wow, there is something wrong with the 'to' date you've entered"
+				return
+			}
+
+			recordOption := *cl.batch.(*repository.RecordOptions)
+			records, err := cl.srvc.GetRecords(
+				cl.srvc.SpendingRecord.WithCategoryGUIDs(recordOption.CategoryGUIDs),
+				cl.srvc.SpendingRecord.WithTimeFrame(timeFrom, timeTo),
+			)
+		},
 	}
 )
 
@@ -350,6 +423,8 @@ func (cl *Client) initBatch() {
 		cl.batch = &ftracker.SpendingCategory{}
 	case 3:
 		cl.batch = &ftracker.SpendingRecord{}
+	case 5:
+		cl.batch = &repository.RecordOptions{}
 	}
 }
 

@@ -178,6 +178,7 @@ func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.Message
 			" - 'all' for all categories\n" +
 			" - 'category name' for one specific category\n\n" +
 			"Optionally you can add 'full' to see descriptions as well",
+		5: "Please, input the category name",
 	}
 
 	msg := tgbotapi.NewMessage(replyTo.Chat.ID,
