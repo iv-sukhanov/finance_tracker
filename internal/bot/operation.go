@@ -19,6 +19,7 @@ type (
 	Client struct {
 		chanID      int64
 		userID      int64
+		userGUID    uuid.UUID
 		username    string
 		expectInput bool
 		isBusy      bool
@@ -76,6 +77,12 @@ var (
 			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d+)?)\s*(?<description>[a-zA-Z0-9 ]+)?$`),
 			child:  "",
 		},
+		"show categories": {
+			ID:     4,
+			isBase: true,
+			rgx:    regexp.MustCompile(`^(?:([a-zA-Z0-9]{1,10})|(\d+))\s*(full)?$`),
+			child:  "",
+		},
 	}
 
 	actions = map[int]func(cl *Client, input []string){
@@ -110,28 +117,15 @@ var (
 				cl.Send(msg)
 			}()
 
-			var guid []uuid.UUID
-			user, err := cl.srvc.GetUsers(cl.srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
+			err := cl.populateUserGUID()
 			if err != nil {
-				cl.log.WithError(err).Error("error on get user")
-				msg.Text = "Sorry, something went wrong with the database getting the user :("
+				cl.log.WithError(err).Error("error on fill user guid")
+				msg.Text = "Sorry, something went wrong with the users database :("
 				return
 			}
 
-			if len(user) == 0 {
-				cl.log.Debug("adding user with username: ", cl.username)
-				guid, err = cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
-				if err != nil {
-					cl.log.WithError(err).Error("error on add user")
-					msg.Text = "Sorry, something went wrong with the database adding the user :("
-					return
-				}
-			} else {
-				guid = []uuid.UUID{user[0].GUID}
-			}
-
 			categoryToAdd := *cl.batch.(*ftracker.SpendingCategory)
-			categoryToAdd.UserGUID = guid[0]
+			categoryToAdd.UserGUID = cl.userGUID
 			_, err = cl.srvc.AddCategories([]ftracker.SpendingCategory{categoryToAdd})
 			if err != nil {
 
@@ -196,6 +190,76 @@ var (
 				msg.Text = "Sorry, something went wrong with the database adding the record :("
 			} else {
 				msg.Text = "Record added successfully"
+			}
+		},
+		4: func(cl *Client, input []string) {
+			if len(input) != 4 {
+				cl.log.Debug("wrong tocken number for add record command")
+				return
+			}
+
+			msg := tgbotapi.NewMessage(cl.chanID, "")
+			msg.ReplyMarkup = baseKeyboard
+			defer func() {
+				cl.Send(msg)
+			}()
+
+			var categoriesLimit int
+			var categoryNames []string
+			var err error
+
+			switch input[1] {
+			case "":
+				categoriesLimit, err = strconv.Atoi(input[2])
+				if err != nil {
+					cl.log.WithError(err).Error("error on parsing limit")
+					msg.Text = "Ooopsie, there is something wrong with the limit you've entered"
+					return
+				}
+			case "all":
+				categoriesLimit = 0
+			default:
+				categoriesLimit = 1
+				categoryNames = []string{input[1]}
+			}
+			addDescription := input[3] == "full"
+
+			cl.populateUserGUID()
+			categories, err := cl.srvc.GetCategories(
+				cl.srvc.SpendingCategory.WithUserGUIDs([]uuid.UUID{cl.userGUID}),
+				cl.srvc.SpendingCategory.WithLimit(categoriesLimit),
+				cl.srvc.SpendingCategory.WithCategories(categoryNames),
+			)
+			if err != nil {
+				cl.log.WithError(err).Error("error on get categories")
+				msg.Text = "Sorry, something went wrong with the database getting the categories :("
+				return
+			}
+
+			if len(categories) == 0 {
+				if len(categoryNames) == 0 {
+					msg.Text = "You don't have any categories yet"
+				} else {
+					msg.Text = "There is no such category"
+				}
+				return
+			}
+
+			msg.Text = "Your categories:\n"
+			var format string
+			if addDescription {
+				format += "%d. %s - %f\n%s\n\n"
+			} else {
+				format += "%d. %s - %f\n"
+			}
+			if addDescription {
+				for i, category := range categories {
+					msg.Text += fmt.Sprintf("%d. %s - %.3f\n%s\n\n", i+1, category.Category, category.Amount, category.Description)
+				}
+			} else {
+				for i, category := range categories {
+					msg.Text += fmt.Sprintf("%d. %s - %.3f\n", i+1, category.Category, category.Amount)
+				}
 			}
 		},
 	}
@@ -298,6 +362,31 @@ func (cl *Client) validateInput(input string) []string {
 		return nil
 	}
 	return matches[0]
+}
+
+func (cl *Client) populateUserGUID() error {
+	if cl.userGUID == uuid.Nil {
+		user, err := cl.srvc.GetUsers(cl.srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
+		if err != nil {
+			cl.log.WithError(err).Error("error on get user")
+			return fmt.Errorf("fillUserGUID: %w", err)
+		}
+
+		if len(user) == 0 {
+			cl.log.Debug("adding user with username: ", cl.username)
+			var addedUserGUID []uuid.UUID
+			addedUserGUID, err = cl.srvc.AddUsers([]ftracker.User{{TelegramID: fmt.Sprint(cl.userID), Username: cl.username}})
+			if err != nil {
+				cl.log.WithError(err).Error("error on add user")
+				return fmt.Errorf("fillUserGUID: %w", err)
+			}
+			cl.userGUID = addedUserGUID[0]
+		} else {
+			cl.userGUID = user[0].GUID
+		}
+	}
+
+	return nil
 }
 
 func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
