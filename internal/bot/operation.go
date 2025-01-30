@@ -81,7 +81,7 @@ var (
 		"show categories": {
 			ID:     4,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^(?:([a-zA-Z0-9]{1,10})|(\d+))\s*(full)?$`),
+			rgx:    regexp.MustCompile(`^(?:(\d+)|([a-zA-Z0-9]{1,10}))\s*(full)?$`),
 			child:  "",
 		},
 	}
@@ -209,9 +209,9 @@ var (
 			var categoryNames []string
 			var err error
 
-			switch input[1] {
+			switch instruction := input[2]; instruction {
 			case "":
-				categoriesLimit, err = strconv.Atoi(input[2])
+				categoriesLimit, err = strconv.Atoi(input[1])
 				if err != nil {
 					cl.log.WithError(err).Error("error on parsing limit")
 					msg.Text = "Ooopsie, there is something wrong with the limit you've entered"
@@ -221,7 +221,7 @@ var (
 				categoriesLimit = 0
 			default:
 				categoriesLimit = 1
-				categoryNames = []string{input[1]}
+				categoryNames = []string{instruction}
 			}
 			addDescription := input[3] == "full"
 
