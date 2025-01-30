@@ -24,6 +24,7 @@ type SpendingCategory interface {
 	WithGUIDs(guids []uuid.UUID) CategoryOption
 	WithUserGUIDs(guids []uuid.UUID) CategoryOption
 	WithCategories(categories []string) CategoryOption
+	WithOrder(order repository.CategoryOrder) CategoryOption
 }
 
 type SpendingRecord interface {

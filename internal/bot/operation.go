@@ -10,6 +10,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
+	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/sirupsen/logrus"
@@ -229,6 +230,7 @@ var (
 				cl.srvc.SpendingCategory.WithUserGUIDs([]uuid.UUID{cl.userGUID}),
 				cl.srvc.SpendingCategory.WithLimit(categoriesLimit),
 				cl.srvc.SpendingCategory.WithCategories(categoryNames),
+				cl.srvc.SpendingCategory.WithOrder(repository.LastModifiedOrder),
 			)
 			if err != nil {
 				cl.log.WithError(err).Error("error on get categories")
