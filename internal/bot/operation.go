@@ -273,11 +273,11 @@ var (
 			}
 			if addDescription {
 				for i, category := range categories {
-					msg.Text += fmt.Sprintf("%d. %s - %.3f\n%s\n\n", i+1, category.Category, category.Amount, category.Description)
+					msg.Text += fmt.Sprintf("%d. %s - %.3f eu\n%s\n\n", i+1, category.Category, category.Amount, category.Description)
 				}
 			} else {
 				for i, category := range categories {
-					msg.Text += fmt.Sprintf("%d. %s - %.3f\n", i+1, category.Category, category.Amount)
+					msg.Text += fmt.Sprintf("%d. %s - %.3f eu\n", i+1, category.Category, category.Amount)
 				}
 			}
 		},
@@ -399,17 +399,17 @@ var (
 			var subtotal float64 = 0
 			if addDescription {
 				for _, record := range records {
-					msg.Text += fmt.Sprintf("[%s] %s - %.3f\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Description, record.Amount) //mb updated?
+					msg.Text += fmt.Sprintf("[%s] %s - %.3f eu\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Description, record.Amount) //mb updated?
 					subtotal += float64(record.Amount)
 				}
 			} else {
 				for _, record := range records {
-					msg.Text += fmt.Sprintf("[%s] %.3f\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount)
+					msg.Text += fmt.Sprintf("[%s] %.3f eu\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount)
 					subtotal += float64(record.Amount)
 				}
 			}
 
-			msg.Text = fmt.Sprintf("Subtotal: %.3f\n\n", subtotal) + msg.Text
+			msg.Text = fmt.Sprintf("Subtotal: %.3f eu\n\n", subtotal) + msg.Text
 		},
 	}
 )
