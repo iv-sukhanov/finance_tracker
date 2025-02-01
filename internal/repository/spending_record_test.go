@@ -148,7 +148,13 @@ func Test_GetRecords(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.want, got)
+			require.Len(t, got, len(tc.want))
+			for i := range tc.want {
+				require.Equal(t, tc.want[i].GUID, got[i].GUID)
+				require.Equal(t, tc.want[i].CategoryGUID, got[i].CategoryGUID)
+				require.Equal(t, tc.want[i].Amount, got[i].Amount)
+				require.Equal(t, tc.want[i].Description, got[i].Description)
+			}
 		})
 	}
 }

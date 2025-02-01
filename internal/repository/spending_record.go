@@ -36,11 +36,11 @@ func (r *RecordRepo) GetRecords(opts RecordOptions) ([]ftracker.SpendingRecord, 
 	whereClause := utils.BindWithOp("AND", true,
 		utils.MakeIn("guid", utils.UUIDsToStrings(opts.GUIDs)...),
 		utils.MakeIn("category_guid", utils.UUIDsToStrings(opts.CategoryGUIDs)...),
-		utils.MakeTimeFrame("created_at", opts.TimeFrom, opts.TimeTo, opts.ByTime),
+		utils.MakeTimeFrame("updated_at", opts.TimeFrom, opts.TimeTo, opts.ByTime),
 	)
 
 	query := fmt.Sprintf(
-		"SELECT guid, category_guid, amount, description FROM %s %s %s",
+		"SELECT guid, category_guid, amount, description, created_at, updated_at FROM %s %s %s",
 		spendingRecordsTable,
 		whereClause,
 		utils.MakeLimit(opts.Limit),
