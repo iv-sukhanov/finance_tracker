@@ -140,7 +140,12 @@ func Test_GetUsers(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			require.Equal(t, tc.want, got)
+			require.Equal(t, len(tc.want), len(got))
+			for i := range got {
+				require.Equal(t, tc.want[i].GUID, got[i].GUID)
+				require.Equal(t, tc.want[i].Username, got[i].Username)
+				require.Equal(t, tc.want[i].TelegramID, got[i].TelegramID)
+			}
 		})
 	}
 }

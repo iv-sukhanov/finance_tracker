@@ -35,7 +35,7 @@ func (s *UserRepo) GetUsers(opts UserOptions) ([]ftracker.User, error) {
 	)
 
 	query := fmt.Sprintf(
-		"SELECT guid, username, telegram_id FROM %s %s %s",
+		"SELECT guid, username, telegram_id, created_at, updated_at FROM %s %s %s",
 		usersTable,
 		whereClause,
 		utils.MakeLimit(opts.Limit),
