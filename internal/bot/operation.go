@@ -168,7 +168,7 @@ var (
 
 			recordDescription := input[3]
 			if len(recordDescription) == 0 {
-				recordDescription = "empty :&"
+				recordDescription = "spending"
 			}
 
 			msg := tgbotapi.NewMessage(cl.chanID, "")
@@ -398,13 +398,13 @@ var (
 
 			var subtotal float64 = 0
 			if addDescription {
-				for _, record := range records { //TODO: add updated at to the record
-					msg.Text += fmt.Sprintf("%s %s - %.3f\n", `[date]`, record.Description, record.Amount)
+				for _, record := range records {
+					msg.Text += fmt.Sprintf("[%s] %s - %.3f\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Description, record.Amount) //mb updated?
 					subtotal += float64(record.Amount)
 				}
 			} else {
 				for _, record := range records {
-					msg.Text += fmt.Sprintf("%s %.3f\n", `[date]`, record.Amount)
+					msg.Text += fmt.Sprintf("[%s] %.3f\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount)
 					subtotal += float64(record.Amount)
 				}
 			}
