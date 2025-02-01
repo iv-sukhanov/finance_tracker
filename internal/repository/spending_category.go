@@ -45,7 +45,7 @@ func (c *CategoryRepo) GetCategories(opts CategoryOptions) ([]ftracker.SpendingC
 		utils.MakeIn("category", opts.Categories...),
 	)
 
-	query := fmt.Sprintf("SELECT guid, user_guid, category, description, amount FROM %s %s %s %s",
+	query := fmt.Sprintf("SELECT guid, user_guid, category, description, amount, created_at, updated_at FROM %s %s %s %s",
 		spendingCategoriesTable,
 		whereClause,
 		makeOrderBy(opts.Order),

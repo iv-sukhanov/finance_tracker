@@ -146,7 +146,14 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.want, res)
+			require.Len(t, res, len(tc.want))
+			for i, category := range tc.want {
+				require.Equal(t, category.GUID, res[i].GUID)
+				require.Equal(t, category.UserGUID, res[i].UserGUID)
+				require.Equal(t, category.Category, res[i].Category)
+				require.Equal(t, category.Description, res[i].Description)
+				require.Equal(t, category.Amount, res[i].Amount)
+			}
 		})
 	}
 }
