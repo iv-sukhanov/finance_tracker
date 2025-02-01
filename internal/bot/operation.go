@@ -88,13 +88,18 @@ var (
 			ID:     5,
 			isBase: true,
 			rgx:    regexp.MustCompile(`^(?P<category>[a-zA-Z0-9]{1,10})$`),
-			child:  "set time boundaries",
+			child:  "get time boundaries",
 		},
-		"set time boundaries": {
+		"get time boundaries": {
 			ID:     6,
 			isBase: false,
-			rgx:    regexp.MustCompile(`^(?P<timefrom>\d{2}-\d{2}-\d{4}) (?P<timeto>\d{2}-\d{2}-\d{4})$`),
-			child:  "",
+			rgx: regexp.MustCompile(
+				`^(?P<number>(?:\d+)|(?:all))\s*` +
+					`(?:(?:(?:last)?\s*(?P<ymd>(?:year)|(?:month)|(?:day)))|` +
+					`(?:(?P<from>\d{2}.\d{2}.\d{4})\s*(?P<to>\d{2}.\d{2}.\d{4})?))` +
+					`\s*(?P<full>full)?$`,
+			),
+			child: "",
 		},
 	}
 
@@ -277,6 +282,9 @@ var (
 			}
 		},
 		5: func(cl *Client, input []string) {
+
+			cl.log.Debug("command child: ", cl.command.child)
+
 			if len(input) != 2 {
 				cl.log.Debug("wrong tocken number for show records command")
 				return
@@ -284,7 +292,6 @@ var (
 			recordCategory := input[1:2]
 
 			msg := tgbotapi.NewMessage(cl.chanID, "")
-			msg.ReplyMarkup = baseKeyboard
 			defer func() {
 				cl.Send(msg)
 			}()
@@ -298,16 +305,18 @@ var (
 
 			if len(categories) == 0 {
 				msg.Text = "There is no such category"
+				msg.ReplyMarkup = baseKeyboard
+				cl.command.child = ""
 				return
 			}
 			cl.batch.(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
 
 			cl.Send(
-				tgbotapi.NewMessage(cl.chanID, "Please, type the time period for the records ('from' 'to') in dd-mm-yyyy format:\n'dd-mm-yyyy dd-mm-yyyy'"),
+				tgbotapi.NewMessage(cl.chanID, "Please, type the time period for the records ('from' 'to') in dd.mm.yyyy format:\n'dd.mm.yyyy dd.mm.yyyy'"),
 			)
 		},
 		6: func(cl *Client, input []string) {
-			if len(input) != 3 {
+			if len(input) != 6 {
 				cl.log.Debug("wrong tocken number for set time boundaries command")
 				return
 			}
@@ -318,24 +327,89 @@ var (
 				cl.Send(msg)
 			}()
 
-			timeFrom, err := time.Parse("02-01-2006", input[1])
-			if err != nil {
-				cl.log.WithError(err).Error("error on parsing time from")
-				msg.Text = "Wow, there is something wrong with the 'from' date you've entered"
-				return
+			addDescription := input[5] == "full"
+			var recordsLimit int
+			var err error
+			if input[1] == "all" {
+				recordsLimit = 0
+			} else {
+				recordsLimit, err = strconv.Atoi(input[1])
+				if err != nil {
+					cl.log.WithError(err).Error("error on parsing limit")
+					msg.Text = "Ooopsie, there is something wrong with the number of records you've entered"
+					return
+				}
 			}
-			timeTo, err := time.Parse("02-01-2006", input[2])
-			if err != nil {
-				cl.log.WithError(err).Error("error on parsing time to")
-				msg.Text = "Wow, there is something wrong with the 'to' date you've entered"
-				return
+
+			var timeFrom, timeTo time.Time
+			if input[2] == "" {
+				timeFrom, err = time.Parse("02.01.2006", input[3])
+				if err != nil {
+					cl.log.WithError(err).Error("error on parsing time from")
+					msg.Text = "Wow, there is something wrong with the 'from' date you've entered"
+					return
+				}
+
+				if input[4] != "" {
+					timeTo = time.Now()
+				} else {
+					timeTo, err = time.Parse("02.01.2006", input[4])
+					if err != nil {
+						cl.log.WithError(err).Error("error on parsing time to")
+						msg.Text = "Wow, there is something wrong with the 'to' date you've entered"
+						return
+					}
+				}
+			} else {
+				switch input[2] {
+				case "year":
+					timeTo = time.Now()
+					timeFrom = timeTo.AddDate(-1, 0, 0)
+				case "month":
+					timeTo = time.Now()
+					timeFrom = timeTo.AddDate(0, -1, 0)
+				case "day":
+					timeTo = time.Now()
+					timeFrom = timeTo.AddDate(0, 0, -1)
+				default:
+					cl.log.Debug("invalid token for ymd time boundaries")
+					msg.Text = "Wow, there is something wrong with the time period you've entered"
+					return
+				}
 			}
 
 			recordOption := *cl.batch.(*repository.RecordOptions)
 			records, err := cl.srvc.GetRecords(
 				cl.srvc.SpendingRecord.WithCategoryGUIDs(recordOption.CategoryGUIDs),
 				cl.srvc.SpendingRecord.WithTimeFrame(timeFrom, timeTo),
+				cl.srvc.SpendingRecord.WithLimit(recordsLimit),
+				//add ordered by
 			)
+			if err != nil {
+				cl.log.WithError(err).Error("error on get records")
+				msg.Text = "Sorry, something went wrong with the database getting the records :("
+				return
+			}
+
+			if len(records) == 0 {
+				msg.Text = "There are no records for this category and time period"
+				return
+			}
+
+			var subtotal float64 = 0
+			if addDescription {
+				for _, record := range records { //TODO: add updated at to the record
+					msg.Text += fmt.Sprintf("%s %s - %.3f\n", `[date]`, record.Description, record.Amount)
+					subtotal += float64(record.Amount)
+				}
+			} else {
+				for _, record := range records {
+					msg.Text += fmt.Sprintf("%s %.3f\n", `[date]`, record.Amount)
+					subtotal += float64(record.Amount)
+				}
+			}
+
+			msg.Text = fmt.Sprintf("Subtotal: %.3f\n\n", subtotal) + msg.Text
 		},
 	}
 )
