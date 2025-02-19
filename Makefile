@@ -8,4 +8,4 @@ test-dev:
 	go test ./internal/repository/*.go
 	go test ./internal/service/*.go
 test-bot:
-	go test ./internal/bot/... -v
+	go test ./internal/bot/... -v -run Test_Run

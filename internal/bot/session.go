@@ -16,7 +16,24 @@ const (
 	timeout = 1 * time.Minute
 )
 
-type SessionsCache map[int64]*Session
+type (
+	SessionsCache map[int64]*Session
+
+	Session struct {
+		client *Client
+
+		isActive      bool
+		expectInput   bool
+		messageChanel chan string
+	}
+
+	Client struct {
+		chanID   int64
+		userID   int64
+		userGUID uuid.UUID
+		username string
+	}
+)
 
 func NewSessionsCache() *SessionsCache {
 	return &SessionsCache{}
@@ -44,14 +61,6 @@ func (s *SessionsCache) AddSession(chatID int64, userID int64, username string) 
 	return newSession
 }
 
-type Session struct {
-	client *Client
-
-	isActive      bool
-	expectInput   bool
-	messageChanel chan string
-}
-
 func (s *Session) TransmitInput(input string) {
 	s.messageChanel <- input
 }
@@ -63,16 +72,11 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 	log.Debug(fmt.Sprintf("processing goroutine for %s started", s.client.username))
 	defer func() {
 		log.Debug(fmt.Sprintf("processing goroutine for %s finished", s.client.username))
+		s.expectInput = false
 		s.isActive = false
 	}()
 
 	batch := initBatch(cmd.ID)
-	if batch == nil {
-		log.Debug("batch is nil")
-		sender.Send(tgbotapi.NewMessage(s.client.chanID, "Sory, internal error")) //change this
-		return
-	}
-
 	timer := time.NewTimer(timeout)
 	for {
 		select {
@@ -90,9 +94,11 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 			timer.Reset(timeout)
 		case <-timer.C:
 			log.Debugf("timeout for goroutine for %s", s.client.username)
+			sender.Send(tgbotapi.NewMessage(s.client.chanID, "You were thinking too long, the operation was aborted"))
 			return
 		case <-ctx.Done():
 			log.Debugf("interrupted goroutine for %s because of the context", s.client.username)
+			sender.Send(tgbotapi.NewMessage(s.client.chanID, "The operation was aborted"))
 			return
 		}
 	}
@@ -113,13 +119,6 @@ func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, s
 	*cmd = cmd.next()
 
 	return false
-}
-
-type Client struct {
-	chanID   int64
-	userID   int64
-	userGUID uuid.UUID
-	username string
 }
 
 func (cl *Client) populateUserGUID(srvc *service.Service, log *logrus.Logger) error {

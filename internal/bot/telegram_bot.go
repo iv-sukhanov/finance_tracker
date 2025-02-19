@@ -47,6 +47,7 @@ func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI, log *logrus.
 }
 
 func (b *TelegramBot) Start(ctx context.Context) {
+	b.log.Debug("bot started")
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
 
@@ -64,8 +65,8 @@ func (b *TelegramBot) Start(ctx context.Context) {
 
 func (b *TelegramBot) ProcessInput(ctx context.Context, update tgbotapi.Update) {
 
-	b.log.Debug("goroutine started for update: ", update.UpdateID)
-	defer b.log.Debug("goroutine finished for update: ", update.UpdateID)
+	b.log.Debug("processing started for update: ", update.UpdateID)
+	defer b.log.Debug("processing finished for update: ", update.UpdateID)
 
 	if command := update.Message.Command(); command != "" {
 		b.log.Debug("command: ", update.Message.Command())
@@ -89,13 +90,18 @@ func (b *TelegramBot) ProcessInput(ctx context.Context, update tgbotapi.Update) 
 		return
 	}
 
-	b.log.Debug(update.Message.Text)
+	b.log.Debug("recieved text: ", update.Message.Text)
 	recievedText := update.Message.Text
 	session := b.sessions.GetSession(update.Message.Chat.ID)
 
 	if session != nil && session.isActive {
-		b.log.Debugf("transmiting %s to %s", recievedText, session.client.username)
-		session.TransmitInput(recievedText)
+		if session.expectInput {
+			b.log.Debugf("transmiting %s to %s", recievedText, session.client.username)
+			session.TransmitInput(recievedText)
+			return
+		}
+		b.log.Debug("session is active, but not expecting input")
+		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Please, wait, I'm still processing your previous request"))
 		return
 	}
 
