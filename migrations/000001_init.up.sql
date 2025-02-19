@@ -13,7 +13,7 @@ create table spending_categories (
     user_guid UUID references users (guid),
     category VARCHAR(255) not null,
     description TEXT,
-    amount NUMERIC(20, 2) default 0,
+    amount NUMERIC(15, 0) default 0,
     updated_at TIMESTAMP without time zone not null default now(),
     created_at TIMESTAMP without time zone not null default now(),
     CONSTRAINT unique_columns UNIQUE (user_guid, category)
@@ -22,7 +22,7 @@ create table spending_categories (
 create table spending_records (
     guid UUID not null default uuid_generate_v4() primary key,
     category_guid UUID references spending_categories (guid),
-    amount NUMERIC(10, 2) default 0,
+    amount NUMERIC(10, 0) default 0,
     description TEXT,
     updated_at TIMESTAMP without time zone not null default now(),
     created_at TIMESTAMP without time zone not null default now()

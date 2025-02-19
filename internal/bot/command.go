@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -66,7 +67,7 @@ var (
 		3: {
 			ID:     3,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d{2})?)(?<description>\s+[a-zA-Z0-9 ]+)?$`),
+			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d{1,2})?)(?<description>\s+[a-zA-Z0-9 ]+)?$`),
 			action: addRecordAction,
 			child:  0,
 		},
@@ -160,6 +161,13 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	}
 	recordCategory := input[1:2]
 	recordAmount := input[2]
+	if splitedAmount := strings.Split(recordAmount, "."); len(splitedAmount) == 1 {
+		recordAmount += "00"
+	} else if len(splitedAmount[1]) == 1 {
+		recordAmount = strings.Join(splitedAmount, "") + "0"
+	} else {
+		recordAmount = strings.Join(splitedAmount, "")
+	}
 
 	recordDescription := input[3]
 	if len(recordDescription) == 0 {
@@ -187,13 +195,13 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	}
 
 	batch.(*ftracker.SpendingRecord).CategoryGUID = categories[0].GUID
-	amount, err := strconv.ParseFloat(recordAmount, 32)
+	amount, err := strconv.ParseUint(recordAmount, 10, 16)
 	if err != nil {
 		log.WithError(err).Error("error on parsing amount")
 		msg.Text = "Wow, there is something wrong with the amount you've entered\n" + internalErrorAditionalInfo
 		return
 	}
-	batch.(*ftracker.SpendingRecord).Amount = float32(amount)
+	batch.(*ftracker.SpendingRecord).Amount = uint16(amount)
 	batch.(*ftracker.SpendingRecord).Description = recordDescription
 
 	recordToAdd := *batch.(*ftracker.SpendingRecord)
@@ -269,11 +277,11 @@ func showCategoriesAction(input []string, batch any, srvc *service.Service, log 
 	}
 	if addDescription {
 		for i, category := range categories {
-			msg.Text += fmt.Sprintf("%d. %s - %.3f eu\n%s\n\n", i+1, category.Category, category.Amount, category.Description)
+			msg.Text += fmt.Sprintf("%d. %s - %d.%d\u20AC\n%s\n\n", i+1, category.Category, category.Amount/100, category.Amount%100, category.Description)
 		}
 	} else {
 		for i, category := range categories {
-			msg.Text += fmt.Sprintf("%d. %s - %.3f eu\n", i+1, category.Category, category.Amount)
+			msg.Text += fmt.Sprintf("%d. %s - %d.%d\u20AC\n", i+1, category.Category, category.Amount/100, category.Amount%100)
 		}
 	}
 }
@@ -392,20 +400,20 @@ func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, l
 		return
 	}
 
-	var subtotal float64 = 0
+	var subtotal uint32 = 0
 	if addDescription {
 		for _, record := range records {
-			msg.Text += fmt.Sprintf("[%s] %.2feu - %s\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount, record.Description) //mb updated?
-			subtotal += float64(record.Amount)
+			msg.Text += fmt.Sprintf("[%s] %d.%d\u20AC - %s\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount/100, record.Amount%100, record.Description) //mb updated?
+			subtotal += uint32(record.Amount)
 		}
 	} else {
 		for _, record := range records {
-			msg.Text += fmt.Sprintf("[%s] %.2feu\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount)
-			subtotal += float64(record.Amount)
+			msg.Text += fmt.Sprintf("[%s] %d.%d\u20AC\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount/100, record.Amount%100)
+			subtotal += uint32(record.Amount)
 		}
 	}
 
-	msg.Text = fmt.Sprintf("Subtotal: %.3f eu\n\n", subtotal) + msg.Text
+	msg.Text = fmt.Sprintf("Subtotal: %d.%d\u20AC\n\n", subtotal/100, subtotal%100) + msg.Text
 }
 
 func (c *command) validateInput(input string) []string {

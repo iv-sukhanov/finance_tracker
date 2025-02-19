@@ -18,40 +18,40 @@ func Test_AddRecords(t *testing.T) {
 		args          []ftracker.SpendingRecord
 		categoryGUIDs []uuid.UUID
 		want          []ftracker.SpendingRecord
-		wantAmount    []float64
+		wantAmount    []uint32
 		wantErr       bool
 	}{
 		{
 			name: "Single_record",
 			args: []ftracker.SpendingRecord{
-				{CategoryGUID: categoryGuids[0], Amount: 12.5, Description: "Spent some money on beer"},
+				{CategoryGUID: categoryGuids[0], Amount: 1250, Description: "Spent some money on beer"},
 			},
 			categoryGUIDs: []uuid.UUID{categoryGuids[0]},
 			want: []ftracker.SpendingRecord{
-				{CategoryGUID: categoryGuids[0], Amount: 12.5, Description: "Spent some money on beer"},
+				{CategoryGUID: categoryGuids[0], Amount: 1250, Description: "Spent some money on beer"},
 			},
-			wantAmount: []float64{12.5},
+			wantAmount: []uint32{1250},
 		},
 		{
 			name: "Multiple_record",
 			args: []ftracker.SpendingRecord{
-				{CategoryGUID: categoryGuids[1], Amount: 17.6, Description: "Spent some more money on beer"},
-				{CategoryGUID: categoryGuids[1], Amount: 61.9, Description: "Bought some tequila shots on the afterparty"},
-				{CategoryGUID: categoryGuids[2], Amount: 8.2, Description: "ogh..... i bought some water and snacks to handle hangover"},
+				{CategoryGUID: categoryGuids[1], Amount: 1760, Description: "Spent some more money on beer"},
+				{CategoryGUID: categoryGuids[1], Amount: 6190, Description: "Bought some tequila shots on the afterparty"},
+				{CategoryGUID: categoryGuids[2], Amount: 820, Description: "ogh..... i bought some water and snacks to handle hangover"},
 			},
 			categoryGUIDs: []uuid.UUID{categoryGuids[1], categoryGuids[2]},
 			want: []ftracker.SpendingRecord{
-				{CategoryGUID: categoryGuids[1], Amount: 17.6, Description: "Spent some more money on beer"},
-				{CategoryGUID: categoryGuids[1], Amount: 61.9, Description: "Bought some tequila shots on the afterparty"},
-				{CategoryGUID: categoryGuids[2], Amount: 8.2, Description: "ogh..... i bought some water and snacks to handle hangover"},
+				{CategoryGUID: categoryGuids[1], Amount: 1760, Description: "Spent some more money on beer"},
+				{CategoryGUID: categoryGuids[1], Amount: 6190, Description: "Bought some tequila shots on the afterparty"},
+				{CategoryGUID: categoryGuids[2], Amount: 820, Description: "ogh..... i bought some water and snacks to handle hangover"},
 			},
-			wantAmount: []float64{79.5, 8.2},
+			wantAmount: []uint32{7950, 820},
 		},
 		{
 			name: "Errorous",
 			args: []ftracker.SpendingRecord{
-				{CategoryGUID: categoryGuids[3], Amount: 4.9, Description: "Bought pita pita for lunch"},
-				{CategoryGUID: uuid.MustParse("00000000-0000-0000-0000-100000000001"), Amount: 5, Description: "jelly candies"},
+				{CategoryGUID: categoryGuids[3], Amount: 490, Description: "Bought pita pita for lunch"},
+				{CategoryGUID: uuid.MustParse("00000000-0000-0000-0000-100000000001"), Amount: 500, Description: "jelly candies"},
 			},
 			wantErr: true,
 		},
@@ -109,8 +109,8 @@ func Test_GetRecords(t *testing.T) {
 				CategoryGUIDs: categoryGuids[4:6],
 			},
 			want: []ftracker.SpendingRecord{
-				{GUID: recordGuids[0], CategoryGUID: categoryGuids[4], Amount: 12.5, Description: "bla bla bla"},
-				{GUID: recordGuids[1], CategoryGUID: categoryGuids[4], Amount: 14.1, Description: "bla bla bla"},
+				{GUID: recordGuids[0], CategoryGUID: categoryGuids[4], Amount: 1250, Description: "bla bla bla"},
+				{GUID: recordGuids[1], CategoryGUID: categoryGuids[4], Amount: 1410, Description: "bla bla bla"},
 			},
 		},
 		{
@@ -121,7 +121,7 @@ func Test_GetRecords(t *testing.T) {
 				Limit:         1,
 			},
 			want: []ftracker.SpendingRecord{
-				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
+				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 2710, Description: "bla bla bla"},
 			},
 		},
 		{
@@ -132,8 +132,8 @@ func Test_GetRecords(t *testing.T) {
 				ByTime:   true,
 			},
 			want: []ftracker.SpendingRecord{
-				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 27.1, Description: "bla bla bla"},
-				{GUID: recordGuids[3], CategoryGUID: categoryGuids[5], Amount: 8.91, Description: "bla bla bla"},
+				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 2710, Description: "bla bla bla"},
+				{GUID: recordGuids[3], CategoryGUID: categoryGuids[5], Amount: 891, Description: "bla bla bla"},
 			},
 		},
 	}
