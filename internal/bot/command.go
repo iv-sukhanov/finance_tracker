@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -24,75 +25,79 @@ type command struct {
 	child int
 }
 
-var commandsToIDs = map[string]int{
-	"add category":             1,
-	"add category description": 2,
-	"add record":               3,
-	"show categories":          4,
-	"show records":             5,
-	"get time boundaries":      6,
-}
+var (
+	internalErrorAditionalInfo = fmt.Sprintf("Please, contact @%s to share this interesting case", os.Getenv("TELEGRAM_USERNAME"))
 
-var commandReplies = map[int]string{
-	1: "Please, input category name",
-	3: "Please, input category name and amount e.g. 'category 100.5'\nOptionally you can add description e.g. 'category 100.5 description'",
-	4: "Please, input the number of categories you want to see:\n\n" +
-		" - 'n' for n number of categories\n" +
-		" - 'all' for all categories\n" +
-		" - 'category name' for one specific category\n\n" +
-		"Optionally you can add 'full' to see descriptions as well",
-	5: "Please, input the category name",
-}
+	commandsToIDs = map[string]int{
+		"add category":             1,
+		"add category description": 2,
+		"add record":               3,
+		"show categories":          4,
+		"show records":             5,
+		"get time boundaries":      6,
+	}
 
-var commandsByIDs = map[int]command{
-	1: {
-		ID:     1,
-		isBase: true,
-		rgx:    regexp.MustCompile(`^([a-zA-Z0-9]{1,10})$`), //TODO: update
-		action: addCategoryAction,
-		child:  2,
-	},
-	2: {
-		ID:     2,
-		isBase: false,
-		rgx:    regexp.MustCompile(`^([a-zA-Z0-9 ]+)$`), //TODO: update
-		action: addCategoryDescriptionAction,
-		child:  0,
-	},
-	3: {
-		ID:     3,
-		isBase: true,
-		rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d+)?)\s*(?<description>[a-zA-Z0-9 ]+)?$`),
-		action: addRecordAction,
-		child:  0,
-	},
-	4: {
-		ID:     4,
-		isBase: true,
-		rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category>[a-zA-Z0-9]{1,10}))\s*(?P<isfull>full)?$`),
-		action: showCategoriesAction,
-		child:  0,
-	},
-	5: {
-		ID:     5,
-		isBase: true,
-		rgx:    regexp.MustCompile(`^(?P<category>[a-zA-Z0-9]{1,10})$`),
-		action: showRecordsAction,
-		child:  6,
-	},
-	6: {
-		ID:     6,
-		isBase: false,
-		rgx: regexp.MustCompile(
-			`^(?P<number>(?:\d+)|(?:all))\s*` +
-				`(?:(?:(?:last)?\s*(?P<ymd>(?:year)|(?:month)|(?:day)))|` +
-				`(?:(?P<from>\d{2}.\d{2}.\d{4})\s*(?P<to>\d{2}.\d{2}.\d{4})?))` +
-				`\s*(?P<full>full)?$`,
-		),
-		action: getTimeBoundariesAction,
-		child:  0,
-	},
-}
+	commandReplies = map[int]string{
+		1: "Please, input category name",
+		3: "Please, input category name and amount e.g. 'category 100.5'\nOptionally you can add description e.g. 'category 100.5 description'",
+		4: "Please, input the number of categories you want to see:\n\n" +
+			" - 'n' for n number of categories\n" +
+			" - 'all' for all categories\n" +
+			" - 'category name' for one specific category\n\n" +
+			"Optionally you can add 'full' to see descriptions as well",
+		5: "Please, input the category name",
+	}
+
+	commandsByIDs = map[int]command{
+		1: {
+			ID:     1,
+			isBase: true,
+			rgx:    regexp.MustCompile(`^([a-zA-Z0-9]{1,10})$`), //TODO: update
+			action: addCategoryAction,
+			child:  2,
+		},
+		2: {
+			ID:     2,
+			isBase: false,
+			rgx:    regexp.MustCompile(`^([a-zA-Z0-9 ]+)$`), //TODO: update
+			action: addCategoryDescriptionAction,
+			child:  0,
+		},
+		3: {
+			ID:     3,
+			isBase: true,
+			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d+)?)\s*(?<description>[a-zA-Z0-9 ]+)?$`),
+			action: addRecordAction,
+			child:  0,
+		},
+		4: {
+			ID:     4,
+			isBase: true,
+			rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category>[a-zA-Z0-9]{1,10}))\s*(?P<isfull>full)?$`),
+			action: showCategoriesAction,
+			child:  0,
+		},
+		5: {
+			ID:     5,
+			isBase: true,
+			rgx:    regexp.MustCompile(`^(?P<category>[a-zA-Z0-9]{1,10})$`),
+			action: showRecordsAction,
+			child:  6,
+		},
+		6: {
+			ID:     6,
+			isBase: false,
+			rgx: regexp.MustCompile(
+				`^(?P<number>(?:\d+)|(?:all))\s*` +
+					`(?:(?:(?:last)?\s*(?P<ymd>(?:year)|(?:month)|(?:day)))|` +
+					`(?:(?P<from>\d{2}.\d{2}.\d{4})\s*(?P<to>\d{2}.\d{2}.\d{4})?))` +
+					`\s*(?P<full>full)?$`,
+			),
+			action: getTimeBoundariesAction,
+			child:  0,
+		},
+	}
+)
 
 func addCategoryAction(input []string, batch any, _ *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command) {
 	if len(input) != 2 {
@@ -127,7 +132,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc *service.Servi
 	err := cl.populateUserGUID(srvc, log)
 	if err != nil {
 		log.WithError(err).Error("error on fill user guid")
-		msg.Text = "Sorry, something went wrong with the users database :("
+		msg.Text = "Sorry, something went wrong with the users database :(\n" + internalErrorAditionalInfo
 		return
 	}
 
@@ -142,7 +147,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc *service.Servi
 		}
 
 		log.WithError(err).Error("error on add category")
-		msg.Text = "Sorry, something went wrong with the database adding the category:("
+		msg.Text = "Sorry, something went wrong with the database adding the category:(\n" + internalErrorAditionalInfo
 	} else {
 		msg.Text = "Category added successfully"
 	}
@@ -172,7 +177,7 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	categories, err := srvc.GetCategories(srvc.SpendingCategory.WithCategories(recordCategory))
 	if err != nil {
 		log.WithError(err).Error("error on get category")
-		msg.Text = "Sorry, something went wrong with the database getting the category :("
+		msg.Text = "Sorry, something went wrong with the database getting the category :(\n" + internalErrorAditionalInfo
 		return
 	}
 
@@ -185,7 +190,7 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	amount, err := strconv.ParseFloat(recordAmount, 32)
 	if err != nil {
 		log.WithError(err).Error("error on parsing amount")
-		msg.Text = "Wow, there is something wrong with the amount you've entered"
+		msg.Text = "Wow, there is something wrong with the amount you've entered\n" + internalErrorAditionalInfo
 		return
 	}
 	batch.(*ftracker.SpendingRecord).Amount = float32(amount)
@@ -195,7 +200,7 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	_, err = srvc.AddRecords([]ftracker.SpendingRecord{recordToAdd})
 	if err != nil {
 		log.WithError(err).Error("error on add record")
-		msg.Text = "Sorry, something went wrong with the database adding the record :("
+		msg.Text = "Sorry, something went wrong with the database adding the record :(\n" + internalErrorAditionalInfo
 	} else {
 		msg.Text = "Record added successfully"
 	}
@@ -222,7 +227,7 @@ func showCategoriesAction(input []string, batch any, srvc *service.Service, log 
 		categoriesLimit, err = strconv.Atoi(input[1])
 		if err != nil {
 			log.WithError(err).Error("error on parsing limit")
-			msg.Text = "Ooopsie, there is something wrong with the limit you've entered"
+			msg.Text = "Ooopsie, there is something wrong with the limit you've entered\n" + internalErrorAditionalInfo
 			return
 		}
 	case "all":
@@ -242,7 +247,7 @@ func showCategoriesAction(input []string, batch any, srvc *service.Service, log 
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get categories")
-		msg.Text = "Sorry, something went wrong with the database getting the categories :("
+		msg.Text = "Sorry, something went wrong with the database getting the categories :(\n" + internalErrorAditionalInfo
 		return
 	}
 
@@ -289,7 +294,7 @@ func showRecordsAction(input []string, batch any, srvc *service.Service, log *lo
 	categories, err := srvc.GetCategories(srvc.SpendingCategory.WithCategories(recordCategory))
 	if err != nil {
 		log.WithError(err).Error("error on get category")
-		msg.Text = "Sorry, something went wrong with the database getting the category :("
+		msg.Text = "Sorry, something went wrong with the database getting the category :(\n" + internalErrorAditionalInfo
 		return
 	}
 
@@ -302,7 +307,7 @@ func showRecordsAction(input []string, batch any, srvc *service.Service, log *lo
 	batch.(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
 
 	sender.Send(
-		tgbotapi.NewMessage(cl.chanID, "Please, type the time period for the records ('from' 'to') in dd.mm.yyyy format:\n'dd.mm.yyyy dd.mm.yyyy'"),
+		tgbotapi.NewMessage(cl.chanID, "Please, type the time period for the records ('from' 'to') in dd.mm.yyyy format:\n'dd.mm.yyyy dd.mm.yyyy'"), //update
 	)
 }
 
@@ -327,7 +332,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, l
 		recordsLimit, err = strconv.Atoi(input[1])
 		if err != nil {
 			log.WithError(err).Error("error on parsing limit")
-			msg.Text = "Ooopsie, there is something wrong with the number of records you've entered"
+			msg.Text = "Ooopsie, there is something wrong with the number of records you've entered\n" + internalErrorAditionalInfo
 			return
 		}
 	}
@@ -378,7 +383,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, l
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get records")
-		msg.Text = "Sorry, something went wrong with the database getting the records :("
+		msg.Text = "Sorry, something went wrong with the database getting the records :(\n" + internalErrorAditionalInfo
 		return
 	}
 

@@ -109,7 +109,7 @@ func (b *TelegramBot) ProcessInput(ctx context.Context, update tgbotapi.Update) 
 	command, ok := isCommand(recievedText)
 	if !ok || !command.isBase {
 		//wrong command
-		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Unknown command"))
+		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Soryy, unknown command.."))
 		return
 	}
 	b.sender.Send(composeBaseReply(command.ID, update.Message))
