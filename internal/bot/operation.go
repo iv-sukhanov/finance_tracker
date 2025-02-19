@@ -17,23 +17,23 @@ import (
 )
 
 type (
-	Client struct {
-		chanID      int64
-		userID      int64
-		userGUID    uuid.UUID
-		username    string
-		expectInput bool
-		isBusy      bool
-		command     Command
+	// Client struct {
+	// 	chanID   int64
+	// 	userID   int64
+	// 	userGUID uuid.UUID
+	// 	username string
 
-		batch any
+	// 	expectInput bool
+	// 	isBusy      bool
+	// 	command     Command
+	// 	batch       any
 
-		messageChanel chan string
-		api           *tgbotapi.BotAPI
-		log           *logrus.Logger
-		srvc          *service.Service
-		Sender
-	}
+	// 	messageChanel chan string
+	// 	api           *tgbotapi.BotAPI
+	// 	log           *logrus.Logger
+	// 	srvc          *service.Service
+	// 	Sender
+	// }
 
 	Command struct {
 		ID     int
@@ -43,10 +43,6 @@ type (
 		child string
 	}
 
-	Sender interface {
-		Send(msg tgbotapi.MessageConfig)
-	}
-
 	MessageSender struct {
 		messagesChan chan tgbotapi.MessageConfig
 		api          *tgbotapi.BotAPI
@@ -54,9 +50,9 @@ type (
 	}
 )
 
-const (
-	timeout = 1 * time.Minute
-)
+// const (
+// 	timeout = 1 * time.Minute
+// )
 
 var (
 	commands = map[string]Command{
@@ -430,9 +426,7 @@ func NewClient(id, userID int64, username string, cmd Command, api *tgbotapi.Bot
 }
 
 func (cl *Client) Process(ctx context.Context) {
-	defer func() {
-		cl.log.Debug(fmt.Sprintf("goroutine for %d finished", cl.chanID))
-	}()
+	defer cl.log.Debug(fmt.Sprintf("goroutine for %d finished", cl.chanID))
 
 	cl.log.Debug("start processing")
 
@@ -560,4 +554,5 @@ func (s *MessageSender) Run(ctx context.Context) {
 			s.log.WithError(err).Error("error on send message")
 		}
 	}
+	//TODO: add stop on context
 }
