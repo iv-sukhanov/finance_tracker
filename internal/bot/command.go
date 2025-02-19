@@ -66,7 +66,7 @@ var (
 		3: {
 			ID:     3,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d+)?)\s*(?<description>[a-zA-Z0-9 ]+)?$`),
+			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d{2})?)(?<description>\s+[a-zA-Z0-9 ]+)?$`),
 			action: addRecordAction,
 			child:  0,
 		},
@@ -395,12 +395,12 @@ func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, l
 	var subtotal float64 = 0
 	if addDescription {
 		for _, record := range records {
-			msg.Text += fmt.Sprintf("[%s] %s - %.3f eu\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Description, record.Amount) //mb updated?
+			msg.Text += fmt.Sprintf("[%s] %.2feu - %s\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount, record.Description) //mb updated?
 			subtotal += float64(record.Amount)
 		}
 	} else {
 		for _, record := range records {
-			msg.Text += fmt.Sprintf("[%s] %.3f eu\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount)
+			msg.Text += fmt.Sprintf("[%s] %.2feu\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount)
 			subtotal += float64(record.Amount)
 		}
 	}
