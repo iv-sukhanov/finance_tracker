@@ -27,12 +27,11 @@ var (
 )
 
 type TelegramBot struct {
-	log     *logrus.Logger
-	sender  *MessageSender
-	api     *tgbotapi.BotAPI
-	service *service.Service
-
-	sessions *SessionsCache
+	log      *logrus.Logger
+	api      *tgbotapi.BotAPI
+	service  service.ServiceInterface
+	sender   Sender
+	sessions Sessions
 }
 
 func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI, log *logrus.Logger) *TelegramBot {
@@ -51,7 +50,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
 
-	b.setCommands()
+	b.populateCommands()
 	go b.sender.Run(ctx)
 
 	//for debuging
@@ -59,11 +58,11 @@ func (b *TelegramBot) Start(ctx context.Context) {
 
 	updates := b.api.GetUpdatesChan(updateConfig)
 	for update := range updates {
-		b.ProcessInput(ctx, update)
+		b.HandleUpdate(ctx, update)
 	}
 }
 
-func (b *TelegramBot) ProcessInput(ctx context.Context, update tgbotapi.Update) {
+func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) {
 
 	b.log.Debug("processing started for update: ", update.UpdateID)
 	defer b.log.Debug("processing finished for update: ", update.UpdateID)
@@ -129,7 +128,7 @@ func (b *TelegramBot) displayMap() {
 	ticker := time.NewTicker(15 * time.Second)
 
 	for range ticker.C {
-		for k, v := range *b.sessions {
+		for k, v := range *b.sessions.(*SessionsCache) {
 			b.log.WithFields(logrus.Fields{
 				"user":         v.client.username,
 				"expect input": v.expectInput,
@@ -139,7 +138,7 @@ func (b *TelegramBot) displayMap() {
 	}
 }
 
-func (b *TelegramBot) setCommands() {
+func (b *TelegramBot) populateCommands() {
 	botCommands := tgbotapi.NewSetMyCommands(
 		tgbotapi.BotCommand{Command: "start", Description: "Start using bot"},
 		//TODO: implement abort

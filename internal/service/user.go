@@ -20,25 +20,25 @@ func NewUserService(repo repository.User) *UserService {
 	}
 }
 
-func (UserService) WithLimit(limit int) UserOption {
+func (UserService) UsersWithLimit(limit int) UserOption {
 	return func(o *repository.UserOptions) {
 		o.Limit = limit
 	}
 }
 
-func (UserService) WithGUIDs(guids []uuid.UUID) UserOption {
+func (UserService) UsersWithGUIDs(guids []uuid.UUID) UserOption {
 	return func(o *repository.UserOptions) {
 		o.GUIDs = guids
 	}
 }
 
-func (UserService) WithUsernames(usernames []string) UserOption {
+func (UserService) UsersWithUsernames(usernames []string) UserOption {
 	return func(o *repository.UserOptions) {
 		o.Usernames = usernames
 	}
 }
 
-func (UserService) WithTelegramIDs(telegramIDs []string) UserOption {
+func (UserService) UsersWithTelegramIDs(telegramIDs []string) UserOption {
 	return func(o *repository.UserOptions) {
 		o.TelegramIDs = telegramIDs
 	}

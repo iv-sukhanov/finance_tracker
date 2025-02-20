@@ -29,13 +29,13 @@ func NewCategoryService(repo repository.SpendingCategory) *CategoryService {
 	}
 }
 
-func (CategoryService) WithLimit(limit int) CategoryOption {
+func (CategoryService) SpendingCategoriesWithLimit(limit int) CategoryOption {
 	return func(o *repository.CategoryOptions) {
 		o.Limit = limit
 	}
 }
 
-func (CategoryService) WithOrder(order CategoryOrder, asc bool) CategoryOption {
+func (CategoryService) SpendingCategoriesWithOrder(order CategoryOrder, asc bool) CategoryOption {
 
 	repOrder := repository.CategoryOrder{Asc: asc}
 	switch order {
@@ -54,19 +54,19 @@ func (CategoryService) WithOrder(order CategoryOrder, asc bool) CategoryOption {
 	}
 }
 
-func (CategoryService) WithGUIDs(guids []uuid.UUID) CategoryOption {
+func (CategoryService) SpendingCategoriesWithGUIDs(guids []uuid.UUID) CategoryOption {
 	return func(o *repository.CategoryOptions) {
 		o.GUIDs = guids
 	}
 }
 
-func (CategoryService) WithUserGUIDs(guids []uuid.UUID) CategoryOption {
+func (CategoryService) SpendingCategoriesWithUserGUIDs(guids []uuid.UUID) CategoryOption {
 	return func(o *repository.CategoryOptions) {
 		o.UserGUIDs = guids
 	}
 }
 
-func (CategoryService) WithCategories(categories []string) CategoryOption {
+func (CategoryService) SpendingCategoriesWithCategories(categories []string) CategoryOption {
 	return func(o *repository.CategoryOptions) {
 		o.Categories = categories
 	}

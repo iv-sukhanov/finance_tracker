@@ -6,52 +6,53 @@ import (
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
 	"github.com/iv-sukhanov/finance_tracker/internal/repository"
-
-	"github.com/sirupsen/logrus"
 )
 
 type User interface {
 	AddUsers(users []ftracker.User) ([]uuid.UUID, error)
 	GetUsers(opts ...UserOption) ([]ftracker.User, error)
-	WithLimit(limit int) UserOption
-	WithGUIDs(guids []uuid.UUID) UserOption
-	WithUsernames(usernames []string) UserOption
-	WithTelegramIDs(telegramIDs []string) UserOption
+	UsersWithLimit(limit int) UserOption
+	UsersWithGUIDs(guids []uuid.UUID) UserOption
+	UsersWithUsernames(usernames []string) UserOption
+	UsersWithTelegramIDs(telegramIDs []string) UserOption
 }
 
 type SpendingCategory interface {
 	AddCategories(categories []ftracker.SpendingCategory) ([]uuid.UUID, error)
 	GetCategories(opts ...CategoryOption) ([]ftracker.SpendingCategory, error)
-	WithLimit(limit int) CategoryOption
-	WithGUIDs(guids []uuid.UUID) CategoryOption
-	WithUserGUIDs(guids []uuid.UUID) CategoryOption
-	WithCategories(categories []string) CategoryOption
-	WithOrder(order CategoryOrder, asc bool) CategoryOption
+	SpendingCategoriesWithLimit(limit int) CategoryOption
+	SpendingCategoriesWithGUIDs(guids []uuid.UUID) CategoryOption
+	SpendingCategoriesWithUserGUIDs(guids []uuid.UUID) CategoryOption
+	SpendingCategoriesWithCategories(categories []string) CategoryOption
+	SpendingCategoriesWithOrder(order CategoryOrder, asc bool) CategoryOption
 }
 
 type SpendingRecord interface {
 	AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error)
 	GetRecords(opts ...RecordOption) ([]ftracker.SpendingRecord, error)
-	WithLimit(limit int) RecordOption
-	WithGUIDs(guids []uuid.UUID) RecordOption
-	WithCategoryGUIDs(guids []uuid.UUID) RecordOption
-	WithTimeFrame(from, to time.Time) RecordOption
-	WithOrder(order RecordOrder, asc bool) RecordOption
+	SpendingRecordsWithLimit(limit int) RecordOption
+	SpendingRecordsWithGUIDs(guids []uuid.UUID) RecordOption
+	SpendingRecordsWithCategoryGUIDs(guids []uuid.UUID) RecordOption
+	SpendingRecordsWithTimeFrame(from, to time.Time) RecordOption
+	SpendingRecordsWithOrder(order RecordOrder, asc bool) RecordOption
+}
+
+type ServiceInterface interface {
+	User
+	SpendingCategory
+	SpendingRecord
 }
 
 type Service struct {
 	User
 	SpendingCategory
 	SpendingRecord
-
-	log *logrus.Entry
 }
 
-func New(repo *repository.Repostitory, log *logrus.Entry) *Service {
+func New(repo *repository.Repostitory) *Service {
 	return &Service{
 		User:             NewUserService(repo),
 		SpendingCategory: NewCategoryService(repo),
 		SpendingRecord:   NewRecordService(repo),
-		log:              log,
 	}
 }

@@ -30,13 +30,13 @@ func NewRecordService(repo repository.SpendingRecord) *RecordService {
 	}
 }
 
-func (RecordService) WithLimit(limit int) RecordOption {
+func (RecordService) SpendingRecordsWithLimit(limit int) RecordOption {
 	return func(o *repository.RecordOptions) {
 		o.Limit = limit
 	}
 }
 
-func (RecordService) WithTimeFrame(from, to time.Time) RecordOption {
+func (RecordService) SpendingRecordsWithTimeFrame(from, to time.Time) RecordOption {
 	return func(o *repository.RecordOptions) {
 		o.TimeFrom = from
 		o.TimeTo = to
@@ -44,19 +44,19 @@ func (RecordService) WithTimeFrame(from, to time.Time) RecordOption {
 	}
 }
 
-func (RecordService) WithGUIDs(guids []uuid.UUID) RecordOption {
+func (RecordService) SpendingRecordsWithGUIDs(guids []uuid.UUID) RecordOption {
 	return func(o *repository.RecordOptions) {
 		o.GUIDs = guids
 	}
 }
 
-func (RecordService) WithCategoryGUIDs(guids []uuid.UUID) RecordOption {
+func (RecordService) SpendingRecordsWithCategoryGUIDs(guids []uuid.UUID) RecordOption {
 	return func(o *repository.RecordOptions) {
 		o.CategoryGUIDs = guids
 	}
 }
 
-func (RecordService) WithOrder(order RecordOrder, asc bool) RecordOption {
+func (RecordService) SpendingRecordsWithOrder(order RecordOrder, asc bool) RecordOption {
 	repOrder := repository.RecordOrder{Asc: asc}
 	switch order {
 	case OrderRecordsByAmount:

@@ -17,6 +17,10 @@ const (
 )
 
 type (
+	Sessions interface {
+		GetSession(chatID int64) *Session
+		AddSession(chatID int64, userID int64, username string) *Session
+	}
 	SessionsCache map[int64]*Session
 
 	Session struct {
@@ -65,7 +69,7 @@ func (s *Session) TransmitInput(input string) {
 	s.messageChanel <- input
 }
 
-func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, sender *MessageSender, srvc *service.Service) {
+func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, sender Sender, srvc service.ServiceInterface) {
 	s.isActive = true
 	s.expectInput = true
 
@@ -105,7 +109,7 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 
 }
 
-func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, srvc *service.Service, sender *MessageSender, batch any) (finished bool) {
+func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, srvc service.ServiceInterface, sender Sender, batch any) (finished bool) {
 	matches := cmd.validateInput(input)
 	if matches == nil {
 		sender.Send(tgbotapi.NewMessage(s.client.chanID, "Wrond input, please try again"))
@@ -121,9 +125,9 @@ func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, s
 	return false
 }
 
-func (cl *Client) populateUserGUID(srvc *service.Service, log *logrus.Logger) error {
+func (cl *Client) populateUserGUID(srvc service.ServiceInterface, log *logrus.Logger) error {
 	if cl.userGUID == uuid.Nil {
-		user, err := srvc.GetUsers(srvc.User.WithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
+		user, err := srvc.GetUsers(srvc.UsersWithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
 		if err != nil {
 			log.WithError(err).Error("error on get user")
 			return fmt.Errorf("fillUserGUID: %w", err)

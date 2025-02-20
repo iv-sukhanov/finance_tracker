@@ -7,11 +7,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MessageSender struct {
-	messagesChan chan tgbotapi.MessageConfig
-	api          *tgbotapi.BotAPI
-	log          *logrus.Logger
-}
+type (
+	Sender interface {
+		Send(msg tgbotapi.MessageConfig)
+		Run(ctx context.Context)
+	}
+
+	MessageSender struct {
+		messagesChan chan tgbotapi.MessageConfig
+		api          *tgbotapi.BotAPI
+		log          *logrus.Logger
+	}
+)
 
 func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
 	return &MessageSender{

@@ -27,7 +27,7 @@ func Test_Run(t *testing.T) {
 	defer stop()
 
 	repo := repository.NewRepostitory(testContainerDB)
-	srv := service.New(repo, logrus.New().WithField("test", "finance_tracker"))
+	srv := service.New(repo)
 
 	tgbot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_BOT_TOKEN"))
 	require.NoError(t, err)

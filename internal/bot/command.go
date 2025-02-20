@@ -21,7 +21,7 @@ type command struct {
 	ID     int
 	isBase bool
 	rgx    *regexp.Regexp
-	action func(input []string, batch any, srvc *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command)
+	action func(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command)
 
 	child int
 }
@@ -100,7 +100,7 @@ var (
 	}
 )
 
-func addCategoryAction(input []string, batch any, _ *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command) {
+func addCategoryAction(input []string, batch any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 2 {
 		log.Debug("wrong input for add category command")
 		return
@@ -113,7 +113,7 @@ func addCategoryAction(input []string, batch any, _ *service.Service, log *logru
 	)
 }
 
-func addCategoryDescriptionAction(input []string, batch any, srvc *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command) {
+func addCategoryDescriptionAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 
 	if len(input) != 2 {
 		log.Debug("wrong input for add category command")
@@ -154,7 +154,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc *service.Servi
 	}
 }
 
-func addRecordAction(input []string, batch any, srvc *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command) {
+func addRecordAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
 		log.Debug("wrong tocken number for add record command")
 		return
@@ -180,7 +180,7 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 
 	log.Debug("category to lookup: ", recordCategory)
 
-	categories, err := srvc.GetCategories(srvc.SpendingCategory.WithCategories(recordCategory))
+	categories, err := srvc.GetCategories(srvc.SpendingCategoriesWithCategories(recordCategory))
 	if err != nil {
 		log.WithError(err).Error("error on get category")
 		msg.Text = "Sorry, something went wrong with the database getting the category :(\n" + internalErrorAditionalInfo
@@ -212,7 +212,7 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	}
 }
 
-func showCategoriesAction(input []string, batch any, srvc *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command) {
+func showCategoriesAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
 		log.Debug("wrong tocken number for add record command")
 		return
@@ -246,10 +246,10 @@ func showCategoriesAction(input []string, batch any, srvc *service.Service, log 
 
 	cl.populateUserGUID(srvc, log)
 	categories, err := srvc.GetCategories(
-		srvc.SpendingCategory.WithUserGUIDs([]uuid.UUID{cl.userGUID}),
-		srvc.SpendingCategory.WithLimit(categoriesLimit),
-		srvc.SpendingCategory.WithCategories(categoryNames),
-		srvc.SpendingCategory.WithOrder(service.OrderCategoriesByCreatedAt, false),
+		srvc.SpendingCategoriesWithUserGUIDs([]uuid.UUID{cl.userGUID}),
+		srvc.SpendingCategoriesWithLimit(categoriesLimit),
+		srvc.SpendingCategoriesWithCategories(categoryNames),
+		srvc.SpendingCategoriesWithOrder(service.OrderCategoriesByCreatedAt, false),
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get categories")
@@ -286,7 +286,7 @@ func showCategoriesAction(input []string, batch any, srvc *service.Service, log 
 	}
 }
 
-func showRecordsAction(input []string, batch any, srvc *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command) {
+func showRecordsAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 
 	if len(input) != 2 {
 		log.Debug("wrong tocken number for show records command")
@@ -299,7 +299,7 @@ func showRecordsAction(input []string, batch any, srvc *service.Service, log *lo
 		sender.Send(msg)
 	}()
 
-	categories, err := srvc.GetCategories(srvc.SpendingCategory.WithCategories(recordCategory))
+	categories, err := srvc.GetCategories(srvc.SpendingCategoriesWithCategories(recordCategory))
 	if err != nil {
 		log.WithError(err).Error("error on get category")
 		msg.Text = "Sorry, something went wrong with the database getting the category :(\n" + internalErrorAditionalInfo
@@ -319,7 +319,7 @@ func showRecordsAction(input []string, batch any, srvc *service.Service, log *lo
 	)
 }
 
-func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, log *logrus.Logger, sender *MessageSender, cl *Client, cmd *command) {
+func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 6 {
 		log.Debug("wrong tocken number for set time boundaries command")
 		return
@@ -384,10 +384,10 @@ func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, l
 
 	recordOption := *batch.(*repository.RecordOptions)
 	records, err := srvc.GetRecords(
-		srvc.SpendingRecord.WithCategoryGUIDs(recordOption.CategoryGUIDs),
-		srvc.SpendingRecord.WithTimeFrame(timeFrom, timeTo),
-		srvc.SpendingRecord.WithLimit(recordsLimit),
-		srvc.SpendingRecord.WithOrder(service.OrderRecordsByCreatedAt, false),
+		srvc.SpendingRecordsWithCategoryGUIDs(recordOption.CategoryGUIDs),
+		srvc.SpendingRecordsWithTimeFrame(timeFrom, timeTo),
+		srvc.SpendingRecordsWithLimit(recordsLimit),
+		srvc.SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false),
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get records")

@@ -28,17 +28,17 @@ func Test_GetUsers(t *testing.T) {
 		{
 			name: "By_guids",
 			opts: []UserOption{
-				usrSrv.WithGUIDs(randomGUIDs),
+				usrSrv.UsersWithGUIDs(randomGUIDs),
 			},
 			want: repository.UserOptions{GUIDs: randomGUIDs},
 		},
 		{
 			name: "Everything",
 			opts: []UserOption{
-				usrSrv.WithGUIDs(randomGUIDs),
-				usrSrv.WithLimit(2),
-				usrSrv.WithTelegramIDs([]string{"1", "2", "3"}),
-				usrSrv.WithUsernames([]string{"user1", "user2", "user3"}),
+				usrSrv.UsersWithGUIDs(randomGUIDs),
+				usrSrv.UsersWithLimit(2),
+				usrSrv.UsersWithTelegramIDs([]string{"1", "2", "3"}),
+				usrSrv.UsersWithUsernames([]string{"user1", "user2", "user3"}),
 			},
 			want: repository.UserOptions{GUIDs: randomGUIDs, Limit: 2, TelegramIDs: []string{"1", "2", "3"}, Usernames: []string{"user1", "user2", "user3"}},
 		},
@@ -80,18 +80,18 @@ func Test_GetCategories(t *testing.T) {
 		{
 			name: "By_guids",
 			opts: []CategoryOption{
-				ctgSrvc.WithGUIDs(randomGUIDs),
+				ctgSrvc.SpendingCategoriesWithGUIDs(randomGUIDs),
 			},
 			want: repository.CategoryOptions{GUIDs: randomGUIDs},
 		},
 		{
 			name: "Everything",
 			opts: []CategoryOption{
-				ctgSrvc.WithGUIDs(randomGUIDs[:2]),
-				ctgSrvc.WithLimit(2),
-				ctgSrvc.WithCategories([]string{"beer", "gym", "daytona"}),
-				ctgSrvc.WithUserGUIDs(randomGUIDs[2:]),
-				ctgSrvc.WithOrder(OrderCategoriesByCategory, true),
+				ctgSrvc.SpendingCategoriesWithGUIDs(randomGUIDs[:2]),
+				ctgSrvc.SpendingCategoriesWithLimit(2),
+				ctgSrvc.SpendingCategoriesWithCategories([]string{"beer", "gym", "daytona"}),
+				ctgSrvc.SpendingCategoriesWithUserGUIDs(randomGUIDs[2:]),
+				ctgSrvc.SpendingCategoriesWithOrder(OrderCategoriesByCategory, true),
 			},
 			want: repository.CategoryOptions{GUIDs: randomGUIDs[:2], Limit: 2, Categories: []string{"beer", "gym", "daytona"}, UserGUIDs: randomGUIDs[2:], Order: repository.CategoryOrder{Column: "category", Asc: true}},
 		},
@@ -137,18 +137,18 @@ func Test_GetRecords(t *testing.T) {
 		{
 			name: "By_guids",
 			opts: []RecordOption{
-				rcdSrvc.WithGUIDs(randomGUIDs),
+				rcdSrvc.SpendingRecordsWithGUIDs(randomGUIDs),
 			},
 			want: repository.RecordOptions{GUIDs: randomGUIDs},
 		},
 		{
 			name: "Everything",
 			opts: []RecordOption{
-				rcdSrvc.WithGUIDs(randomGUIDs[:2]),
-				rcdSrvc.WithLimit(2),
-				rcdSrvc.WithTimeFrame(timeFrom, timeTo),
-				rcdSrvc.WithCategoryGUIDs(randomGUIDs[2:]),
-				rcdSrvc.WithOrder(OrderRecordsByUpdatedAt, true),
+				rcdSrvc.SpendingRecordsWithGUIDs(randomGUIDs[:2]),
+				rcdSrvc.SpendingRecordsWithLimit(2),
+				rcdSrvc.SpendingRecordsWithTimeFrame(timeFrom, timeTo),
+				rcdSrvc.SpendingRecordsWithCategoryGUIDs(randomGUIDs[2:]),
+				rcdSrvc.SpendingRecordsWithOrder(OrderRecordsByUpdatedAt, true),
 			},
 			want: repository.RecordOptions{GUIDs: randomGUIDs[:2], Limit: 2, TimeFrom: timeFrom, TimeTo: timeTo, ByTime: true, CategoryGUIDs: randomGUIDs[2:], Order: repository.RecordOrder{Column: "updated_at", Asc: true}},
 		},
