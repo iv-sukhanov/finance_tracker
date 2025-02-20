@@ -5,6 +5,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/sirupsen/logrus"
 )
@@ -49,7 +50,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	b.log.Debug("bot started")
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
-
+	//
 	b.populateCommands()
 	go b.sender.Run(ctx)
 
@@ -130,9 +131,10 @@ func (b *TelegramBot) displayMap() {
 	for range ticker.C {
 		for k, v := range *b.sessions.(*SessionsCache) {
 			b.log.WithFields(logrus.Fields{
-				"user":         v.client.username,
-				"expect input": v.expectInput,
-				"isActive":     v.isActive,
+				"user":            v.client.username,
+				"has_guid_cached": v.client.userGUID != uuid.Nil,
+				"expect_input":    v.expectInput,
+				"isActive":        v.isActive,
 			}).Debug("id: ", k)
 		}
 	}
