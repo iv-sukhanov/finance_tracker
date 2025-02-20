@@ -136,6 +136,19 @@ func Test_GetRecords(t *testing.T) {
 				{GUID: recordGuids[3], CategoryGUID: categoryGuids[5], Amount: 891, Description: "bla bla bla"},
 			},
 		},
+		{
+			name: "Ordered",
+			options: RecordOptions{
+				TimeFrom: timeFrom,
+				TimeTo:   timeTo,
+				ByTime:   true,
+				Order:    RecordOrder{Column: "amount", Asc: true},
+			},
+			want: []ftracker.SpendingRecord{
+				{GUID: recordGuids[3], CategoryGUID: categoryGuids[5], Amount: 891, Description: "bla bla bla"},
+				{GUID: recordGuids[2], CategoryGUID: categoryGuids[4], Amount: 2710, Description: "bla bla bla"},
+			},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

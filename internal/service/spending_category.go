@@ -16,11 +16,11 @@ type (
 )
 
 const (
-	OrderDefault CategoryOrder = iota
-	OrderByCategory
-	OrderByAmount
-	OrderByCreatedAt
-	OrderByUpdatedAt
+	OrderCategoriesDefault CategoryOrder = iota
+	OrderCategoriesByCategory
+	OrderCategoriesByAmount
+	OrderCategoriesByCreatedAt
+	OrderCategoriesByUpdatedAt
 )
 
 func NewCategoryService(repo repository.SpendingCategory) *CategoryService {
@@ -39,13 +39,13 @@ func (CategoryService) WithOrder(order CategoryOrder, asc bool) CategoryOption {
 
 	repOrder := repository.CategoryOrder{Asc: asc}
 	switch order {
-	case OrderByCategory:
+	case OrderCategoriesByCategory:
 		repOrder.Column = "category"
-	case OrderByAmount:
+	case OrderCategoriesByAmount:
 		repOrder.Column = "amount"
-	case OrderByCreatedAt:
+	case OrderCategoriesByCreatedAt:
 		repOrder.Column = "created_at"
-	case OrderByUpdatedAt:
+	case OrderCategoriesByUpdatedAt:
 		repOrder.Column = "updated_at"
 	}
 

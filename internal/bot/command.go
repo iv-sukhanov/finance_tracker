@@ -249,7 +249,7 @@ func showCategoriesAction(input []string, batch any, srvc *service.Service, log 
 		srvc.SpendingCategory.WithUserGUIDs([]uuid.UUID{cl.userGUID}),
 		srvc.SpendingCategory.WithLimit(categoriesLimit),
 		srvc.SpendingCategory.WithCategories(categoryNames),
-		srvc.SpendingCategory.WithOrder(service.OrderByCreatedAt, false),
+		srvc.SpendingCategory.WithOrder(service.OrderCategoriesByCreatedAt, false),
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get categories")

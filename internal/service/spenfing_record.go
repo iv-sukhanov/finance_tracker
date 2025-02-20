@@ -14,6 +14,14 @@ type (
 	}
 
 	RecordOption func(*repository.RecordOptions)
+	RecordOrder  int
+)
+
+const (
+	OrderRecordsDefault RecordOrder = iota
+	OrderRecordsByAmount
+	OrderRecordsByCreatedAt
+	OrderRecordsByUpdatedAt
 )
 
 func NewRecordService(repo repository.SpendingRecord) *RecordService {
@@ -45,6 +53,22 @@ func (RecordService) WithGUIDs(guids []uuid.UUID) RecordOption {
 func (RecordService) WithCategoryGUIDs(guids []uuid.UUID) RecordOption {
 	return func(o *repository.RecordOptions) {
 		o.CategoryGUIDs = guids
+	}
+}
+
+func (RecordService) WithOrder(order RecordOrder, asc bool) RecordOption {
+	repOrder := repository.RecordOrder{Asc: asc}
+	switch order {
+	case OrderRecordsByAmount:
+		repOrder.Column = "amount"
+	case OrderRecordsByCreatedAt:
+		repOrder.Column = "created_at"
+	case OrderRecordsByUpdatedAt:
+		repOrder.Column = "updated_at"
+	}
+
+	return func(o *repository.RecordOptions) {
+		o.Order = repOrder
 	}
 }
 

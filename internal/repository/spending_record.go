@@ -22,9 +22,14 @@ type (
 		ByTime        bool
 		GUIDs         []uuid.UUID
 		CategoryGUIDs []uuid.UUID
+		Order         RecordOrder
 	}
 
 	RecordOption func(*RecordOptions)
+	RecordOrder  struct {
+		Column string
+		Asc    bool
+	}
 )
 
 func NewRecordRepository(db *sqlx.DB) *RecordRepo {
@@ -40,9 +45,10 @@ func (r *RecordRepo) GetRecords(opts RecordOptions) ([]ftracker.SpendingRecord, 
 	)
 
 	query := fmt.Sprintf(
-		"SELECT guid, category_guid, amount, description, created_at, updated_at FROM %s %s %s",
+		"SELECT guid, category_guid, amount, description, created_at, updated_at FROM %s %s %s %s",
 		spendingRecordsTable,
 		whereClause,
+		utils.MakeOrderBy(opts.Order.Column, opts.Order.Asc),
 		utils.MakeLimit(opts.Limit),
 	)
 
