@@ -36,6 +36,7 @@ type SpendingRecord interface {
 	WithGUIDs(guids []uuid.UUID) RecordOption
 	WithCategoryGUIDs(guids []uuid.UUID) RecordOption
 	WithTimeFrame(from, to time.Time) RecordOption
+	WithOrder(order RecordOrder, asc bool) RecordOption
 }
 
 type Service struct {

@@ -387,7 +387,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, l
 		srvc.SpendingRecord.WithCategoryGUIDs(recordOption.CategoryGUIDs),
 		srvc.SpendingRecord.WithTimeFrame(timeFrom, timeTo),
 		srvc.SpendingRecord.WithLimit(recordsLimit),
-		//add ordered by
+		srvc.SpendingRecord.WithOrder(service.OrderRecordsByCreatedAt, false),
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get records")
