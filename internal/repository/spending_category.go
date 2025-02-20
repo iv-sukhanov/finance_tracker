@@ -23,14 +23,10 @@ type (
 	}
 
 	CategoryOption func(*CategoryOptions)
-	CategoryOrder  int
-)
-
-const (
-	DefaultOrder CategoryOrder = iota
-	LastModifiedOrder
-	AmountOrder
-	AlphabeticalOrder
+	CategoryOrder  struct {
+		Column string
+		Asc    bool
+	}
 )
 
 func NewCategoryRepository(db *sqlx.DB) *CategoryRepo {
@@ -48,7 +44,7 @@ func (c *CategoryRepo) GetCategories(opts CategoryOptions) ([]ftracker.SpendingC
 	query := fmt.Sprintf("SELECT guid, user_guid, category, description, amount, created_at, updated_at FROM %s %s %s %s",
 		spendingCategoriesTable,
 		whereClause,
-		makeOrderBy(opts.Order),
+		utils.MakeOrderBy(opts.Order.Column, opts.Order.Asc),
 		utils.MakeLimit(opts.Limit),
 	)
 
@@ -89,19 +85,4 @@ func (c *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]
 	}
 
 	return guids, nil
-}
-
-func makeOrderBy(order CategoryOrder) string {
-	switch order {
-	case DefaultOrder:
-		return ""
-	case LastModifiedOrder:
-		return "ORDER BY updated_at DESC"
-	case AmountOrder:
-		return "ORDER BY amount DESC"
-	case AlphabeticalOrder:
-		return "ORDER BY category ASC"
-	default:
-		return ""
-	}
 }

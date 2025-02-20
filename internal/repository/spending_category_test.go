@@ -124,7 +124,7 @@ func TestCategoryRepo_GetCategories(t *testing.T) {
 			name: "Ordered",
 			options: CategoryOptions{
 				GUIDs: categoryGuids[6:10],
-				Order: AlphabeticalOrder,
+				Order: CategoryOrder{Column: "category", Asc: true},
 			},
 			want: []ftracker.SpendingCategory{
 				{GUID: categoryGuids[6], UserGUID: userGuids[0], Category: "for_get_categories1", Description: "bla bla bla", Amount: 0},

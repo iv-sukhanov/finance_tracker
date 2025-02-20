@@ -56,6 +56,21 @@ func MakeTimeFrame(col string, from, to time.Time, byTime bool) string {
 	return fmt.Sprintf("%s >= '%s' AND %s < '%s'", col, from.Format("2006-01-02 15:04:05"), col, to.Format("2006-01-02 15:04:05"))
 }
 
+func MakeOrderBy(col string, asc bool) string {
+
+	if col == "" {
+		return ""
+	}
+
+	var ascStr string
+	if asc {
+		ascStr = "ASC"
+	} else {
+		ascStr = "DESC"
+	}
+	return fmt.Sprintf("ORDER BY %s %s", col, ascStr)
+}
+
 func BindWithOp(op string, needWhere bool, exprs ...string) string {
 
 	if len(exprs) == 0 {
