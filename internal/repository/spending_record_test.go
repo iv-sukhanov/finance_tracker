@@ -18,7 +18,7 @@ func Test_AddRecords(t *testing.T) {
 		args          []ftracker.SpendingRecord
 		categoryGUIDs []uuid.UUID
 		want          []ftracker.SpendingRecord
-		wantAmount    []uint32
+		wantAmount    []uint64
 		wantErr       bool
 	}{
 		{
@@ -30,7 +30,7 @@ func Test_AddRecords(t *testing.T) {
 			want: []ftracker.SpendingRecord{
 				{CategoryGUID: categoryGuids[0], Amount: 1250, Description: "Spent some money on beer"},
 			},
-			wantAmount: []uint32{1250},
+			wantAmount: []uint64{1250},
 		},
 		{
 			name: "Multiple_record",
@@ -45,7 +45,7 @@ func Test_AddRecords(t *testing.T) {
 				{CategoryGUID: categoryGuids[1], Amount: 6190, Description: "Bought some tequila shots on the afterparty"},
 				{CategoryGUID: categoryGuids[2], Amount: 820, Description: "ogh..... i bought some water and snacks to handle hangover"},
 			},
-			wantAmount: []uint32{7950, 820},
+			wantAmount: []uint64{7950, 820},
 		},
 		{
 			name: "Errorous",

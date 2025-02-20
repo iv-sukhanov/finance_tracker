@@ -160,14 +160,7 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 		return
 	}
 	recordCategory := input[1:2]
-	recordAmount := input[2]
-	if splitedAmount := strings.Split(recordAmount, "."); len(splitedAmount) == 1 {
-		recordAmount += "00"
-	} else if len(splitedAmount[1]) == 1 {
-		recordAmount = strings.Join(splitedAmount, "") + "0"
-	} else {
-		recordAmount = strings.Join(splitedAmount, "")
-	}
+	recordAmountLeft, recordAmountRight := splitAmount(input[2])
 
 	recordDescription := input[3]
 	if len(recordDescription) == 0 {
@@ -179,6 +172,11 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	defer func() {
 		sender.Send(msg)
 	}()
+
+	if recordAmountLeft == "0" && recordAmountRight == "00" {
+		msg.Text = "Sorry, but zero records are discarded"
+		return
+	}
 
 	log.Debug("category to lookup: ", recordCategory)
 
@@ -195,13 +193,13 @@ func addRecordAction(input []string, batch any, srvc *service.Service, log *logr
 	}
 
 	batch.(*ftracker.SpendingRecord).CategoryGUID = categories[0].GUID
-	amount, err := strconv.ParseUint(recordAmount, 10, 16)
+	amount, err := strconv.ParseUint(recordAmountLeft+recordAmountRight, 10, 32)
 	if err != nil {
 		log.WithError(err).Error("error on parsing amount")
 		msg.Text = "Wow, there is something wrong with the amount you've entered\n" + internalErrorAditionalInfo
 		return
 	}
-	batch.(*ftracker.SpendingRecord).Amount = uint16(amount)
+	batch.(*ftracker.SpendingRecord).Amount = uint32(amount)
 	batch.(*ftracker.SpendingRecord).Description = recordDescription
 
 	recordToAdd := *batch.(*ftracker.SpendingRecord)
@@ -277,11 +275,13 @@ func showCategoriesAction(input []string, batch any, srvc *service.Service, log 
 	}
 	if addDescription {
 		for i, category := range categories {
-			msg.Text += fmt.Sprintf("%d. %s - %d.%d\u20AC\n%s\n\n", i+1, category.Category, category.Amount/100, category.Amount%100, category.Description)
+			leftAmount, rightAmount := splitAmount(category.Amount)
+			msg.Text += fmt.Sprintf("%d. %s - %s.%s\u20AC\n%s\n\n", i+1, category.Category, leftAmount, rightAmount, category.Description)
 		}
 	} else {
 		for i, category := range categories {
-			msg.Text += fmt.Sprintf("%d. %s - %d.%d\u20AC\n", i+1, category.Category, category.Amount/100, category.Amount%100)
+			leftAmount, rightAmount := splitAmount(category.Amount)
+			msg.Text += fmt.Sprintf("%d. %s - %s.%s\u20AC\n", i+1, category.Category, leftAmount, rightAmount)
 		}
 	}
 }
@@ -403,17 +403,20 @@ func getTimeBoundariesAction(input []string, batch any, srvc *service.Service, l
 	var subtotal uint32 = 0
 	if addDescription {
 		for _, record := range records {
-			msg.Text += fmt.Sprintf("[%s] %d.%d\u20AC - %s\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount/100, record.Amount%100, record.Description) //mb updated?
+			leftAmount, rightAmount := splitAmount(record.Amount)
+			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC - %s\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), leftAmount, rightAmount, record.Description) //mb updated?
 			subtotal += uint32(record.Amount)
 		}
 	} else {
 		for _, record := range records {
-			msg.Text += fmt.Sprintf("[%s] %d.%d\u20AC\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), record.Amount/100, record.Amount%100)
+			leftAmount, rightAmount := splitAmount(record.Amount)
+			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), leftAmount, rightAmount)
 			subtotal += uint32(record.Amount)
 		}
 	}
 
-	msg.Text = fmt.Sprintf("Subtotal: %d.%d\u20AC\n\n", subtotal/100, subtotal%100) + msg.Text
+	leftSubtotal, rightSubtotal := splitAmount(subtotal)
+	msg.Text = fmt.Sprintf("Subtotal: %s.%s\u20AC\n\n", leftSubtotal, rightSubtotal) + msg.Text
 }
 
 func (c *command) validateInput(input string) []string {
@@ -451,4 +454,34 @@ func initBatch(id int) any {
 	}
 
 	return nil
+}
+
+func splitAmount(amount any) (left string, rignt string) {
+
+	switch amount := amount.(type) {
+	case string:
+		splitedAmount := strings.Split(amount, ".")
+		left = splitedAmount[0]
+		if len(splitedAmount) == 1 {
+			rignt = "00"
+		} else if len(splitedAmount[1]) == 1 {
+			rignt = splitedAmount[1] + "0"
+		} else {
+			rignt = splitedAmount[1]
+		}
+	case uint32:
+		left = strconv.FormatUint(uint64(amount/100), 10)
+		rignt = strconv.FormatUint(uint64(amount%100), 10)
+		if len(rignt) == 1 {
+			rignt = "0" + rignt
+		}
+	case uint64:
+		left = strconv.FormatUint(uint64(amount/100), 10)
+		rignt = strconv.FormatUint(uint64(amount%100), 10)
+		if len(rignt) == 1 {
+			rignt = "0" + rignt
+		}
+	}
+
+	return left, rignt
 }
