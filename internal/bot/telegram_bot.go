@@ -13,16 +13,16 @@ import (
 var (
 	baseKeyboard = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add category"),
+			tgbotapi.NewKeyboardButton(CommandAddCategory),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("show categories"),
+			tgbotapi.NewKeyboardButton(CommandShowCategories),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("add record"),
+			tgbotapi.NewKeyboardButton(CommandAddRecord),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("show records"),
+			tgbotapi.NewKeyboardButton(CommandShowRecords),
 		),
 	)
 )
@@ -122,7 +122,6 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 			update.Message.From.UserName,
 		)
 	}
-	b.log.Debug("here1: ", session)
 	go session.Process(ctx, b.log, command, b.sender, b.service)
 }
 

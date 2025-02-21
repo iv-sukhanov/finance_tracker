@@ -73,9 +73,7 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 	s.isActive = true
 	s.expectInput = true
 
-	log.Debug("here")
 	log.Debug(fmt.Sprintf("processing goroutine for %s started", s.client.username))
-	log.Debug("here")
 	defer func() {
 		log.Debug(fmt.Sprintf("processing goroutine for %s finished", s.client.username))
 		s.expectInput = false
