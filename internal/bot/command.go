@@ -26,27 +26,37 @@ type command struct {
 	child int
 }
 
+const (
+	formatOut = "Monday, 02 Jan, 15:04"
+	formatIn  = "02.01.2006"
+)
+
+const (
+	CommandAddCategory            = "add category"
+	CommandAddCategoryDescription = "add category description"
+	CommandAddRecord              = "add record"
+	CommandShowCategories         = "show categories"
+	CommandShowRecords            = "show records"
+	CommandGetTimeBoundaries      = "get time boundaries"
+)
+
 var (
 	internalErrorAditionalInfo = fmt.Sprintf("Please, contact @%s to share this interesting case", os.Getenv("TELEGRAM_USERNAME"))
 
 	commandsToIDs = map[string]int{
-		"add category":             1,
-		"add category description": 2,
-		"add record":               3,
-		"show categories":          4,
-		"show records":             5,
-		"get time boundaries":      6,
+		CommandAddCategory:            1,
+		CommandAddCategoryDescription: 2,
+		CommandAddRecord:              3,
+		CommandShowCategories:         4,
+		CommandShowRecords:            5,
+		CommandGetTimeBoundaries:      6,
 	}
 
 	commandReplies = map[int]string{
-		1: "Please, input category name",
-		3: "Please, input category name and amount e.g. 'category 100.5'\nOptionally you can add description e.g. 'category 100.5 description'",
-		4: "Please, input the number of categories you want to see:\n\n" +
-			" - 'n' for n number of categories\n" +
-			" - 'all' for all categories\n" +
-			" - 'category name' for one specific category\n\n" +
-			"Optionally you can add 'full' to see descriptions as well",
-		5: "Please, input the category name",
+		1: MessageAddCategory,
+		3: MessageAddRecord,
+		4: MessageShowCategories,
+		5: MessageShowRecords,
 	}
 
 	commandsByIDs = map[int]command{
@@ -109,7 +119,7 @@ func addCategoryAction(input []string, batch any, _ service.ServiceInterface, lo
 	batch.(*ftracker.SpendingCategory).Category = input[1]
 	log.Debug("action on add category command")
 	sender.Send(
-		tgbotapi.NewMessage(cl.chanID, "Please, type description to a new category"),
+		tgbotapi.NewMessage(cl.chanID, MessageAddCategoryDescription),
 	)
 }
 
@@ -133,7 +143,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc service.Servic
 	err := cl.populateUserGUID(srvc, log)
 	if err != nil {
 		log.WithError(err).Error("error on fill user guid")
-		msg.Text = "Sorry, something went wrong with the users database :(\n" + internalErrorAditionalInfo
+		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
 		return
 	}
 
@@ -143,14 +153,14 @@ func addCategoryDescriptionAction(input []string, batch any, srvc service.Servic
 	if err != nil {
 
 		if utils.IsUniqueConstrainViolation(err) {
-			msg.Text = "Category with that name already exists"
+			msg.Text = MessageCategoryDuplicate
 			return
 		}
 
 		log.WithError(err).Error("error on add category")
-		msg.Text = "Sorry, something went wrong with the database adding the category:(\n" + internalErrorAditionalInfo
+		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
 	} else {
-		msg.Text = "Category added successfully"
+		msg.Text = MessageCategorySuccess
 	}
 }
 
@@ -174,7 +184,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 	}()
 
 	if recordAmountLeft == "0" && recordAmountRight == "00" {
-		msg.Text = "Sorry, but zero records are discarded"
+		msg.Text = MessageZeroAmount
 		return
 	}
 
@@ -183,7 +193,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 	categories, err := srvc.GetCategories(srvc.SpendingCategoriesWithCategories(recordCategory))
 	if err != nil {
 		log.WithError(err).Error("error on get category")
-		msg.Text = "Sorry, something went wrong with the database getting the category :(\n" + internalErrorAditionalInfo
+		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
 		return
 	}
 
@@ -196,7 +206,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 	amount, err := strconv.ParseUint(recordAmountLeft+recordAmountRight, 10, 32)
 	if err != nil {
 		log.WithError(err).Error("error on parsing amount")
-		msg.Text = "Wow, there is something wrong with the amount you've entered\n" + internalErrorAditionalInfo
+		msg.Text = MessageAmountError + "\n" + internalErrorAditionalInfo
 		return
 	}
 	batch.(*ftracker.SpendingRecord).Amount = uint32(amount)
@@ -206,9 +216,9 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 	_, err = srvc.AddRecords([]ftracker.SpendingRecord{recordToAdd})
 	if err != nil {
 		log.WithError(err).Error("error on add record")
-		msg.Text = "Sorry, something went wrong with the database adding the record :(\n" + internalErrorAditionalInfo
+		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
 	} else {
-		msg.Text = "Record added successfully"
+		msg.Text = MessageRecordSuccess
 	}
 }
 
@@ -233,7 +243,7 @@ func showCategoriesAction(input []string, batch any, srvc service.ServiceInterfa
 		categoriesLimit, err = strconv.Atoi(input[1])
 		if err != nil {
 			log.WithError(err).Error("error on parsing limit")
-			msg.Text = "Ooopsie, there is something wrong with the limit you've entered\n" + internalErrorAditionalInfo
+			msg.Text = MessageLimitError + "\n" + internalErrorAditionalInfo
 			return
 		}
 	case "all":
@@ -253,15 +263,15 @@ func showCategoriesAction(input []string, batch any, srvc service.ServiceInterfa
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get categories")
-		msg.Text = "Sorry, something went wrong with the database getting the categories :(\n" + internalErrorAditionalInfo
+		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
 		return
 	}
 
 	if len(categories) == 0 {
 		if len(categoryNames) == 0 {
-			msg.Text = "You don't have any categories yet"
+			msg.Text = MessageUnderflowCategories
 		} else {
-			msg.Text = "There is no such category"
+			msg.Text = MessageNoCategoryFound
 		}
 		return
 	}
@@ -302,12 +312,12 @@ func showRecordsAction(input []string, batch any, srvc service.ServiceInterface,
 	categories, err := srvc.GetCategories(srvc.SpendingCategoriesWithCategories(recordCategory))
 	if err != nil {
 		log.WithError(err).Error("error on get category")
-		msg.Text = "Sorry, something went wrong with the database getting the category :(\n" + internalErrorAditionalInfo
+		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
 		return
 	}
 
 	if len(categories) == 0 {
-		msg.Text = "There is no such category"
+		msg.Text = MessageNoCategoryFound
 		msg.ReplyMarkup = baseKeyboard
 		cmd.child = 0
 		return
@@ -315,7 +325,7 @@ func showRecordsAction(input []string, batch any, srvc service.ServiceInterface,
 	batch.(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
 
 	sender.Send(
-		tgbotapi.NewMessage(cl.chanID, "Please, type the time period for the records ('from' 'to') in dd.mm.yyyy format:\n'dd.mm.yyyy dd.mm.yyyy'"), //update
+		tgbotapi.NewMessage(cl.chanID, MessageAddTimeDetails), //update
 	)
 }
 
@@ -340,27 +350,27 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 		recordsLimit, err = strconv.Atoi(input[1])
 		if err != nil {
 			log.WithError(err).Error("error on parsing limit")
-			msg.Text = "Ooopsie, there is something wrong with the number of records you've entered\n" + internalErrorAditionalInfo
+			msg.Text = MessageLimitError + "\n" + internalErrorAditionalInfo
 			return
 		}
 	}
 
 	var timeFrom, timeTo time.Time
 	if input[2] == "" {
-		timeFrom, err = time.Parse("02.01.2006", input[3])
+		timeFrom, err = time.Parse(formatIn, input[3])
 		if err != nil {
 			log.WithError(err).Error("error on parsing time from")
-			msg.Text = "Wow, there is something wrong with the 'from' date you've entered"
+			msg.Text = MessageInvalidFromDate
 			return
 		}
 
 		if input[4] != "" {
 			timeTo = time.Now()
 		} else {
-			timeTo, err = time.Parse("02.01.2006", input[4])
+			timeTo, err = time.Parse(formatIn, input[4])
 			if err != nil {
 				log.WithError(err).Error("error on parsing time to")
-				msg.Text = "Wow, there is something wrong with the 'to' date you've entered"
+				msg.Text = MessageInvalidToDate
 				return
 			}
 		}
@@ -377,7 +387,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 			timeFrom = timeTo.AddDate(0, 0, -1)
 		default:
 			log.Debug("invalid token for ymd time boundaries")
-			msg.Text = "Wow, there is something wrong with the time period you've entered"
+			msg.Text = MessageInvalidFixedTime
 			return
 		}
 	}
@@ -391,12 +401,12 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get records")
-		msg.Text = "Sorry, something went wrong with the database getting the records :(\n" + internalErrorAditionalInfo
+		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
 		return
 	}
 
 	if len(records) == 0 {
-		msg.Text = "There are no records for this category and time period"
+		msg.Text = MessageUnderflowRecords
 		return
 	}
 
@@ -404,13 +414,13 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 	if addDescription {
 		for _, record := range records {
 			leftAmount, rightAmount := splitAmount(record.Amount)
-			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC - %s\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), leftAmount, rightAmount, record.Description) //mb updated?
+			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC - %s\n", record.CreatedAt.Format(formatOut), leftAmount, rightAmount, record.Description) //mb updated?
 			subtotal += uint32(record.Amount)
 		}
 	} else {
 		for _, record := range records {
 			leftAmount, rightAmount := splitAmount(record.Amount)
-			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC\n", record.CreatedAt.Format("Monday, 02 Jan, 15:04"), leftAmount, rightAmount)
+			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC\n", record.CreatedAt.Format(formatOut), leftAmount, rightAmount)
 			subtotal += uint32(record.Amount)
 		}
 	}

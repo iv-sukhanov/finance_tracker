@@ -68,6 +68,12 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 	b.log.Debug("processing started for update: ", update.UpdateID)
 	defer b.log.Debug("processing finished for update: ", update.UpdateID)
 
+	//do something about it later
+	if update.Message == nil {
+		b.log.Debug("nil message, skip it")
+		return
+	}
+
 	if command := update.Message.Command(); command != "" {
 		b.log.Debug("command: ", update.Message.Command())
 		var msg tgbotapi.MessageConfig
@@ -75,18 +81,12 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 		case "start":
 			msg = composeStartReply(update.Message)
 		case "abort":
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Sory, not implemented yet")
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageNotImplemented)
 		default:
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Unknown command")
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageUnknownCommand)
 		}
 
 		b.sender.Send(msg)
-		return
-	}
-
-	//do something about it later
-	if update.Message == nil {
-		b.log.Debug("nil message, skip it")
 		return
 	}
 
@@ -101,18 +101,18 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 			return
 		}
 		b.log.Debug("session is active, but not expecting input")
-		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Please, wait, I'm still processing your previous request"))
+		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, MessageProcessInterrupted))
 		return
 	}
 
 	b.log.Debug("Command check")
 	command, ok := isCommand(recievedText)
 	if !ok || !command.isBase {
-		//wrong command
-		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Soryy, unknown command.."))
+		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, MessageUnknownCommand))
 		return
 	}
 	b.sender.Send(composeBaseReply(command.ID, update.Message))
+	b.log.Debug("Command check done, command id: ", command.ID)
 
 	if session == nil {
 		b.log.Debugf("new session for %s", update.Message.From.UserName)
@@ -122,6 +122,7 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 			update.Message.From.UserName,
 		)
 	}
+	b.log.Debug("here1: ", session)
 	go session.Process(ctx, b.log, command, b.sender, b.service)
 }
 
@@ -155,9 +156,7 @@ func (b *TelegramBot) populateCommands() {
 
 func composeStartReply(replyTo *tgbotapi.Message) tgbotapi.MessageConfig {
 
-	msg := tgbotapi.NewMessage(replyTo.Chat.ID,
-		"Hello! I'm finance tracker bot. Please, select an option:",
-	)
+	msg := tgbotapi.NewMessage(replyTo.Chat.ID, MessageStart)
 	msg.ReplyMarkup = baseKeyboard
 	return msg
 }

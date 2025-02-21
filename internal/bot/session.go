@@ -73,7 +73,9 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 	s.isActive = true
 	s.expectInput = true
 
+	log.Debug("here")
 	log.Debug(fmt.Sprintf("processing goroutine for %s started", s.client.username))
+	log.Debug("here")
 	defer func() {
 		log.Debug(fmt.Sprintf("processing goroutine for %s finished", s.client.username))
 		s.expectInput = false
@@ -98,11 +100,11 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 			timer.Reset(timeout)
 		case <-timer.C:
 			log.Debugf("timeout for goroutine for %s", s.client.username)
-			sender.Send(tgbotapi.NewMessage(s.client.chanID, "You were thinking too long, the operation was aborted"))
+			sender.Send(tgbotapi.NewMessage(s.client.chanID, MessageTimeout))
 			return
 		case <-ctx.Done():
 			log.Debugf("interrupted goroutine for %s because of the context", s.client.username)
-			sender.Send(tgbotapi.NewMessage(s.client.chanID, "The operation was aborted"))
+			sender.Send(tgbotapi.NewMessage(s.client.chanID, MessageAbort))
 			return
 		}
 	}
@@ -112,7 +114,7 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, srvc service.ServiceInterface, sender Sender, batch any) (finished bool) {
 	matches := cmd.validateInput(input)
 	if matches == nil {
-		sender.Send(tgbotapi.NewMessage(s.client.chanID, "Wrond input, please try again"))
+		sender.Send(tgbotapi.NewMessage(s.client.chanID, MessageWrongInput))
 		return false
 	}
 
