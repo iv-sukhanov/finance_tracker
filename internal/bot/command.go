@@ -113,6 +113,10 @@ var (
 func addCategoryAction(input []string, batch any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 2 {
 		log.Debug("wrong input for add category command")
+		cmd.becomeLast()
+		msg := tgbotapi.NewMessage(cl.chanID, MessageInvalidNumberOfTockensAction+"\n"+internalErrorAditionalInfo)
+		msg.ReplyMarkup = baseKeyboard
+		sender.Send(msg)
 		return
 	}
 
@@ -127,6 +131,9 @@ func addCategoryDescriptionAction(input []string, batch any, srvc service.Servic
 
 	if len(input) != 2 {
 		log.Debug("wrong input for add category command")
+		msg := tgbotapi.NewMessage(cl.chanID, MessageInvalidNumberOfTockensAction+"\n"+internalErrorAditionalInfo)
+		msg.ReplyMarkup = baseKeyboard
+		sender.Send(msg)
 		return
 	}
 
@@ -319,7 +326,7 @@ func showRecordsAction(input []string, batch any, srvc service.ServiceInterface,
 	if len(categories) == 0 {
 		msg.Text = MessageNoCategoryFound
 		msg.ReplyMarkup = baseKeyboard
-		cmd.child = 0
+		cmd.becomeLast()
 		return
 	}
 	batch.(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
@@ -435,6 +442,10 @@ func (c *command) validateInput(input string) []string {
 		return nil
 	}
 	return matches[0]
+}
+
+func (c *command) becomeLast() {
+	c.child = 0
 }
 
 func (c *command) isLast() bool {

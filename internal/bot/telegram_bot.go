@@ -61,6 +61,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	for update := range updates {
 		b.HandleUpdate(ctx, update)
 	}
+	//TODO: add stop on context
 }
 
 func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) {
