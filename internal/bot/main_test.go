@@ -12,7 +12,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	log.SetLevel(logrus.DebugLevel)
+	log.SetLevel(logrus.PanicLevel)
 
 	os.Exit(m.Run())
 }

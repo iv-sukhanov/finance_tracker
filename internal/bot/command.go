@@ -84,7 +84,7 @@ var (
 		4: {
 			ID:     4,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category>[a-zA-Z0-9]{1,10}))\s*(?P<isfull>full)?$`),
+			rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category_or_all>[a-zA-Z0-9]{1,10}))\s*(?P<isfull>full)?$`),
 			action: showCategoriesAction,
 			child:  0,
 		},
@@ -205,7 +205,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 	}
 
 	if len(categories) == 0 {
-		msg.Text = "There is no such category"
+		msg.Text = MessageNoCategoryFound
 		return
 	}
 
@@ -229,7 +229,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 	}
 }
 
-func showCategoriesAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func showCategoriesAction(input []string, _ any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
 		log.Debug("wrong tocken number for add record command")
 		return
@@ -266,7 +266,7 @@ func showCategoriesAction(input []string, batch any, srvc service.ServiceInterfa
 		srvc.SpendingCategoriesWithUserGUIDs([]uuid.UUID{cl.userGUID}),
 		srvc.SpendingCategoriesWithLimit(categoriesLimit),
 		srvc.SpendingCategoriesWithCategories(categoryNames),
-		srvc.SpendingCategoriesWithOrder(service.OrderCategoriesByCreatedAt, false),
+		srvc.SpendingCategoriesWithOrder(service.OrderCategoriesByUpdatedAt, false),
 	)
 	if err != nil {
 		log.WithError(err).Error("error on get categories")
@@ -284,12 +284,6 @@ func showCategoriesAction(input []string, batch any, srvc service.ServiceInterfa
 	}
 
 	msg.Text = "Your categories:\n"
-	var format string
-	if addDescription {
-		format += "%d. %s - %f\n%s\n\n"
-	} else {
-		format += "%d. %s - %f\n"
-	}
 	if addDescription {
 		for i, category := range categories {
 			leftAmount, rightAmount := splitAmount(category.Amount)
