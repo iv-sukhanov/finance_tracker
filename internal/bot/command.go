@@ -63,14 +63,14 @@ var (
 		1: {
 			ID:     1,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^([a-zA-Z0-9]{1,10})$`), //TODO: update
+			rgx:    regexp.MustCompile(`^(?<category_name>[a-zA-Z0-9]{1,10})$`),
 			action: addCategoryAction,
 			child:  2,
 		},
 		2: {
 			ID:     2,
 			isBase: false,
-			rgx:    regexp.MustCompile(`^([a-zA-Z0-9 ]+)$`), //TODO: update
+			rgx:    regexp.MustCompile(`^(?<category_descr>[a-zA-Z0-9 ]+)$`),
 			action: addCategoryDescriptionAction,
 			child:  0,
 		},

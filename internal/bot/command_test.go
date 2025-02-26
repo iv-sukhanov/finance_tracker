@@ -3,6 +3,7 @@ package bot
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -785,6 +786,37 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 			client := &Client{chanID: 1}
 
 			getTimeBoundariesAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
+		})
+	}
+}
+
+func Test_command_validateInput(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		cmdID int
+		input string
+		want  []string
+	}{
+		{
+			name:  "Cat_name_ok",
+			cmdID: 1,
+			input: "test",
+			want:  []string{"test", "test"},
+		},
+		{
+			name:  "Cat_name_err",
+			cmdID: 1,
+			input: "!sH1pU4kA!",
+			want:  []string(nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := commandsByIDs[tt.cmdID]
+			if got := cmd.validateInput(tt.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("command.validateInput() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
