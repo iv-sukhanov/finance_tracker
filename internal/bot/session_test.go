@@ -73,7 +73,7 @@ func TestClient_populateUserGUID(t *testing.T) {
 			defer controller.Finish()
 			srvc := mock_service.NewMockServiceInterface(controller)
 			tc.mockBeh(srvc)
-			err := tc.cl.populateUserGUID(srvc, log)
+			err := tc.cl.populateUserGUID(srvc, test_log)
 			if tc.wantErr {
 				require.Error(t, err)
 				return

@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	log = logrus.New()
+	test_log = logrus.New()
 )
 
 func TestMain(m *testing.M) {
-	log.SetLevel(logrus.PanicLevel)
+	test_log.SetLevel(logrus.DebugLevel)
 
 	os.Exit(m.Run())
 }

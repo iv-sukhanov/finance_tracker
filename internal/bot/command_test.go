@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	gomock "github.com/golang/mock/gomock"
@@ -47,11 +48,14 @@ func Test_addCategoryAction(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
+
 			sender := NewMockSender(controller)
 			tc.senderBeh(sender)
+
 			cmd := commandsByIDs[1]
 			client := &Client{chanID: 1}
-			addCategoryAction(tc.input, tc.batch, nil, log, sender, client, &cmd)
+
+			addCategoryAction(tc.input, tc.batch, nil, test_log, sender, client, &cmd)
 			require.Equal(t, tc.input[1], tc.batch.(*ftracker.SpendingCategory).Category)
 		})
 	}
@@ -146,7 +150,7 @@ func Test_addCategoryDescriptionAction(t *testing.T) {
 			cmd := commandsByIDs[2]
 			client := &Client{userGUID: tt.userGUID, chanID: 1}
 
-			addCategoryDescriptionAction(tt.input, tt.batch, service, log, sender, client, &cmd)
+			addCategoryDescriptionAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
 		})
 	}
 }
@@ -284,7 +288,7 @@ func Test_addRecordAction(t *testing.T) {
 			cmd := commandsByIDs[3]
 			client := &Client{chanID: 1}
 
-			addRecordAction(tt.input, tt.batch, service, log, sender, client, &cmd)
+			addRecordAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
 		})
 	}
 }
@@ -472,7 +476,7 @@ func Test_showCategoriesAction(t *testing.T) {
 			cmd := commandsByIDs[4]
 			client := &Client{chanID: 1, userGUID: tt.clientGUID}
 
-			showCategoriesAction(tt.input, nil, service, log, sender, client, &cmd)
+			showCategoriesAction(tt.input, nil, service, test_log, sender, client, &cmd)
 		})
 	}
 }
@@ -551,12 +555,81 @@ func Test_showRecordsAction(t *testing.T) {
 			cmd := commandsByIDs[5]
 			client := &Client{chanID: 1}
 
-			showRecordsAction(tt.input, tt.batch, service, log, sender, client, &cmd)
+			showRecordsAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
 			if tt.categoryGUID != uuid.Nil {
 				require.Equal(t, tt.categoryGUID, tt.batch.(*repository.RecordOptions).CategoryGUIDs[0])
 			} else {
 				require.True(t, cmd.isLast())
 			}
+		})
+	}
+}
+
+func Test_getTimeBoundariesAction(t *testing.T) {
+
+	guids := []uuid.UUID{
+		uuid.New(),
+	}
+	timeNow := time.Now()
+
+	tests := []struct {
+		name         string
+		input        []string
+		batch        any
+		categoryGUID uuid.UUID
+		senderBeh    func(*MockSender)
+		serviceBeh   func(*mock_service.MockServiceInterface)
+	}{
+		{
+			name:  "Ok",
+			input: []string{"", "all", "day", "", "", "full"},
+			batch: any(&repository.RecordOptions{CategoryGUIDs: guids}),
+			senderBeh: func(s *MockSender) {
+				timeNowStr := timeNow.Format(formatOut)
+				msg := tgbotapi.NewMessage(int64(1),
+					"Subtotal: 24.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11.22\u20AC - test1\n"+
+						"["+timeNowStr+"] 12.20\u20AC - test2\n"+
+						"["+timeNowStr+"] 0.90\u20AC - test3\n",
+				)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingRecordsWithCategoryGUIDs(guids)
+				timeTo := time.Now()
+				timeFrom := timeTo.AddDate(0, 0, -1)
+				s.EXPECT().SpendingRecordsWithTimeFrame(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(from, to time.Time) interface{} {
+						require.True(t, from.Sub(timeFrom) < time.Second)
+						require.True(t, to.Sub(timeTo) < time.Second)
+						return nil
+					})
+				s.EXPECT().SpendingRecordsWithLimit(0)
+				s.EXPECT().SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false)
+				s.EXPECT().GetRecords(gomock.Any()).Return(
+					[]ftracker.SpendingRecord{
+						{Amount: 1122, Description: "test1", CreatedAt: timeNow},
+						{Amount: 1220, Description: "test2", CreatedAt: timeNow},
+						{Amount: 90, Description: "test3", CreatedAt: timeNow},
+					}, nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			controller := gomock.NewController(t)
+			defer controller.Finish()
+
+			service := mock_service.NewMockServiceInterface(controller)
+			tt.serviceBeh(service)
+			sender := NewMockSender(controller)
+			tt.senderBeh(sender)
+
+			cmd := commandsByIDs[6]
+			client := &Client{chanID: 1}
+
+			getTimeBoundariesAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
 		})
 	}
 }

@@ -33,7 +33,7 @@ func Test_Run(t *testing.T) {
 	require.NoError(t, err)
 	// Create a new bot
 
-	bot := NewTelegramBot(srv, tgbot, log)
+	bot := NewTelegramBot(srv, tgbot, test_log)
 
 	// Run the bot
 	bot.Start(context.Background())
@@ -210,7 +210,7 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 			b := &TelegramBot{
 				sender:   mockSender,
 				sessions: mockSessions,
-				log:      log,
+				log:      test_log,
 				service:  nil,
 				api:      nil,
 			}

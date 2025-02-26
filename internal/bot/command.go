@@ -387,11 +387,12 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 			timeFrom = timeTo.AddDate(0, 0, -1)
 		default:
 			log.Debug("invalid token for ymd time boundaries")
-			msg.Text = MessageInvalidFixedTime
+			msg.Text = MessageInvalidFixedTime + "\n" + internalErrorAditionalInfo
 			return
 		}
 	}
 
+	log.Debug("time boundaries: ", timeFrom, timeTo)
 	recordOption := *batch.(*repository.RecordOptions)
 	records, err := srvc.GetRecords(
 		srvc.SpendingRecordsWithCategoryGUIDs(recordOption.CategoryGUIDs),
