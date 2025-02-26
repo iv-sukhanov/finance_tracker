@@ -8,14 +8,10 @@ import (
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
 	mock_service "github.com/iv-sukhanov/finance_tracker/internal/service/mock"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestClient_populateUserGUID(t *testing.T) {
-
-	log := logrus.New()
-	log.SetLevel(logrus.DebugLevel)
 
 	tt := []struct {
 		name    string

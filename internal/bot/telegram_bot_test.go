@@ -12,7 +12,6 @@ import (
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,8 +32,7 @@ func Test_Run(t *testing.T) {
 	tgbot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_BOT_TOKEN"))
 	require.NoError(t, err)
 	// Create a new bot
-	log := logrus.New()
-	log.SetLevel(logrus.DebugLevel)
+
 	bot := NewTelegramBot(srv, tgbot, log)
 
 	// Run the bot
@@ -42,9 +40,6 @@ func Test_Run(t *testing.T) {
 }
 
 func TestTelegramBot_HandleUpdate(t *testing.T) {
-
-	log := logrus.New()
-	log.SetLevel(logrus.DebugLevel)
 
 	newUpdateWithMessage := func(text string) tgbotapi.Update {
 		return tgbotapi.Update{
