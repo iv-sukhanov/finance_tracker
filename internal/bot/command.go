@@ -314,6 +314,8 @@ func showRecordsAction(input []string, batch any, srvc service.ServiceInterface,
 	if err != nil {
 		log.WithError(err).Error("error on get category")
 		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
+		msg.ReplyMarkup = baseKeyboard
+		cmd.becomeLast()
 		return
 	}
 
@@ -324,10 +326,7 @@ func showRecordsAction(input []string, batch any, srvc service.ServiceInterface,
 		return
 	}
 	batch.(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
-
-	sender.Send(
-		tgbotapi.NewMessage(cl.chanID, MessageAddTimeDetails), //update
-	)
+	msg.Text = MessageAddTimeDetails
 }
 
 func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {

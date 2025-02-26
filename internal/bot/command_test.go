@@ -9,6 +9,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
+	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	mock_service "github.com/iv-sukhanov/finance_tracker/internal/service/mock"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -468,10 +469,94 @@ func Test_showCategoriesAction(t *testing.T) {
 			sender := NewMockSender(controller)
 			tt.senderBeh(sender)
 
-			cmd := commandsByIDs[3]
+			cmd := commandsByIDs[4]
 			client := &Client{chanID: 1, userGUID: tt.clientGUID}
 
 			showCategoriesAction(tt.input, nil, service, log, sender, client, &cmd)
+		})
+	}
+}
+
+func Test_showRecordsAction(t *testing.T) {
+
+	guids := []uuid.UUID{
+		uuid.New(),
+	}
+
+	tests := []struct {
+		name         string
+		input        []string
+		batch        any
+		categoryGUID uuid.UUID
+		senderBeh    func(*MockSender)
+		serviceBeh   func(*mock_service.MockServiceInterface)
+	}{
+		{
+			name:         "Ok",
+			input:        []string{"", "beer"},
+			batch:        any(&repository.RecordOptions{}),
+			categoryGUID: guids[0],
+			senderBeh: func(s *MockSender) {
+				msg := tgbotapi.NewMessage(int64(1), MessageAddTimeDetails)
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingCategoriesWithCategories([]string{"beer"})
+				category := ftracker.SpendingCategory{
+					Category: "beer",
+					GUID:     guids[0],
+				}
+				s.EXPECT().GetCategories(gomock.Any()).Return([]ftracker.SpendingCategory{category}, nil)
+			},
+		},
+		{
+			name:  "No_category_found",
+			input: []string{"", "beer"},
+			batch: any(&repository.RecordOptions{}),
+			senderBeh: func(s *MockSender) {
+				msg := tgbotapi.NewMessage(int64(1), MessageNoCategoryFound)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingCategoriesWithCategories([]string{"beer"})
+				s.EXPECT().GetCategories(gomock.Any()).Return([]ftracker.SpendingCategory{}, nil)
+			},
+		},
+		{
+			name:  "DB_error",
+			input: []string{"", "beer"},
+			batch: any(&repository.RecordOptions{}),
+			senderBeh: func(s *MockSender) {
+				msg := tgbotapi.NewMessage(int64(1), MessageDatabaseError+"\n"+internalErrorAditionalInfo)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingCategoriesWithCategories([]string{"beer"})
+				s.EXPECT().GetCategories(gomock.Any()).Return(nil, errors.New("error"))
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			controller := gomock.NewController(t)
+			defer controller.Finish()
+
+			service := mock_service.NewMockServiceInterface(controller)
+			tt.serviceBeh(service)
+			sender := NewMockSender(controller)
+			tt.senderBeh(sender)
+
+			cmd := commandsByIDs[5]
+			client := &Client{chanID: 1}
+
+			showRecordsAction(tt.input, tt.batch, service, log, sender, client, &cmd)
+			if tt.categoryGUID != uuid.Nil {
+				require.Equal(t, tt.categoryGUID, tt.batch.(*repository.RecordOptions).CategoryGUIDs[0])
+			} else {
+				require.True(t, cmd.isLast())
+			}
 		})
 	}
 }
