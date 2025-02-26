@@ -364,7 +364,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 			return
 		}
 
-		if input[4] != "" {
+		if input[4] == "" {
 			timeTo = time.Now()
 		} else {
 			timeTo, err = time.Parse(formatIn, input[4])

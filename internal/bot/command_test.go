@@ -581,7 +581,7 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 		serviceBeh   func(*mock_service.MockServiceInterface)
 	}{
 		{
-			name:  "Ok",
+			name:  "All_full",
 			input: []string{"", "all", "day", "", "", "full"},
 			batch: any(&repository.RecordOptions{CategoryGUIDs: guids}),
 			senderBeh: func(s *MockSender) {
@@ -613,6 +613,161 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 						{Amount: 1220, Description: "test2", CreatedAt: timeNow},
 						{Amount: 90, Description: "test3", CreatedAt: timeNow},
 					}, nil)
+			},
+		},
+		{
+			name:  "All",
+			input: []string{"", "all", "month", "", "", ""},
+			batch: any(&repository.RecordOptions{CategoryGUIDs: guids}),
+			senderBeh: func(s *MockSender) {
+				timeNowStr := timeNow.Format(formatOut)
+				msg := tgbotapi.NewMessage(int64(1),
+					"Subtotal: 24.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11.22\u20AC\n"+
+						"["+timeNowStr+"] 12.20\u20AC\n"+
+						"["+timeNowStr+"] 0.90\u20AC\n",
+				)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingRecordsWithCategoryGUIDs(guids)
+				timeTo := time.Now()
+				timeFrom := timeTo.AddDate(0, -1, 0)
+				s.EXPECT().SpendingRecordsWithTimeFrame(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(from, to time.Time) interface{} {
+						require.True(t, from.Sub(timeFrom) < time.Second)
+						require.True(t, to.Sub(timeTo) < time.Second)
+						return nil
+					})
+				s.EXPECT().SpendingRecordsWithLimit(0)
+				s.EXPECT().SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false)
+				s.EXPECT().GetRecords(gomock.Any()).Return(
+					[]ftracker.SpendingRecord{
+						{Amount: 1122, Description: "test1", CreatedAt: timeNow},
+						{Amount: 1220, Description: "test2", CreatedAt: timeNow},
+						{Amount: 90, Description: "test3", CreatedAt: timeNow},
+					}, nil)
+			},
+		},
+		{
+			name:  "Limited",
+			input: []string{"", "2", "", "24.02.2025", "26.02.2025", ""},
+			batch: any(&repository.RecordOptions{CategoryGUIDs: guids}),
+			senderBeh: func(s *MockSender) {
+				timeNowStr := timeNow.Format(formatOut)
+				msg := tgbotapi.NewMessage(int64(1),
+					"Subtotal: 24.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11.22\u20AC\n"+
+						"["+timeNowStr+"] 12.20\u20AC\n"+
+						"["+timeNowStr+"] 0.90\u20AC\n",
+				)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingRecordsWithCategoryGUIDs(guids)
+				timeTo, _ := time.Parse(formatIn, "26.02.2025")
+				timeFrom, _ := time.Parse(formatIn, "24.02.2025")
+				s.EXPECT().SpendingRecordsWithTimeFrame(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(from, to time.Time) interface{} {
+						require.True(t, from.Sub(timeFrom) < time.Second)
+						require.True(t, to.Sub(timeTo) < time.Second)
+						return nil
+					})
+				s.EXPECT().SpendingRecordsWithLimit(2)
+				s.EXPECT().SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false)
+				s.EXPECT().GetRecords(gomock.Any()).Return(
+					[]ftracker.SpendingRecord{
+						{Amount: 1122, Description: "test1", CreatedAt: timeNow},
+						{Amount: 1220, Description: "test2", CreatedAt: timeNow},
+						{Amount: 90, Description: "test3", CreatedAt: timeNow},
+					}, nil)
+			},
+		},
+		{
+			name:  "One_side_boundaries",
+			input: []string{"", "all", "", "24.02.2025", "", ""},
+			batch: any(&repository.RecordOptions{CategoryGUIDs: guids}),
+			senderBeh: func(s *MockSender) {
+				timeNowStr := timeNow.Format(formatOut)
+				msg := tgbotapi.NewMessage(int64(1),
+					"Subtotal: 24.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11.22\u20AC\n"+
+						"["+timeNowStr+"] 12.20\u20AC\n"+
+						"["+timeNowStr+"] 0.90\u20AC\n",
+				)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingRecordsWithCategoryGUIDs(guids)
+				timeTo := time.Now()
+				timeFrom, _ := time.Parse(formatIn, "24.02.2025")
+				s.EXPECT().SpendingRecordsWithTimeFrame(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(from, to time.Time) interface{} {
+						require.True(t, from.Sub(timeFrom) < time.Second)
+						require.True(t, to.Sub(timeTo) < time.Second)
+						return nil
+					})
+				s.EXPECT().SpendingRecordsWithLimit(0)
+				s.EXPECT().SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false)
+				s.EXPECT().GetRecords(gomock.Any()).Return(
+					[]ftracker.SpendingRecord{
+						{Amount: 1122, Description: "test1", CreatedAt: timeNow},
+						{Amount: 1220, Description: "test2", CreatedAt: timeNow},
+						{Amount: 90, Description: "test3", CreatedAt: timeNow},
+					}, nil)
+			},
+		},
+		{
+			name:  "No_records",
+			input: []string{"", "all", "month", "", "", ""},
+			batch: any(&repository.RecordOptions{CategoryGUIDs: guids}),
+			senderBeh: func(s *MockSender) {
+				msg := tgbotapi.NewMessage(int64(1), MessageUnderflowRecords)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingRecordsWithCategoryGUIDs(guids)
+				timeTo := time.Now()
+				timeFrom := timeTo.AddDate(0, -1, 0)
+				s.EXPECT().SpendingRecordsWithTimeFrame(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(from, to time.Time) interface{} {
+						require.True(t, from.Sub(timeFrom) < time.Second)
+						require.True(t, to.Sub(timeTo) < time.Second)
+						return nil
+					})
+				s.EXPECT().SpendingRecordsWithLimit(0)
+				s.EXPECT().SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false)
+				s.EXPECT().GetRecords(gomock.Any()).Return(
+					[]ftracker.SpendingRecord{}, nil)
+			},
+		},
+		{
+			name:  "DB_error",
+			input: []string{"", "all", "month", "", "", ""},
+			batch: any(&repository.RecordOptions{CategoryGUIDs: guids}),
+			senderBeh: func(s *MockSender) {
+				msg := tgbotapi.NewMessage(int64(1), MessageDatabaseError+"\n"+internalErrorAditionalInfo)
+				msg.ReplyMarkup = baseKeyboard
+				s.EXPECT().Send(msg)
+			},
+			serviceBeh: func(s *mock_service.MockServiceInterface) {
+				s.EXPECT().SpendingRecordsWithCategoryGUIDs(guids)
+				timeTo := time.Now()
+				timeFrom := timeTo.AddDate(0, -1, 0)
+				s.EXPECT().SpendingRecordsWithTimeFrame(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(from, to time.Time) interface{} {
+						require.True(t, from.Sub(timeFrom) < time.Second)
+						require.True(t, to.Sub(timeTo) < time.Second)
+						return nil
+					})
+				s.EXPECT().SpendingRecordsWithLimit(0)
+				s.EXPECT().SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false)
+				s.EXPECT().GetRecords(gomock.Any()).Return(
+					nil, errors.New("error"))
 			},
 		},
 	}
