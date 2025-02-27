@@ -935,7 +935,62 @@ func Test_splitAmount(t *testing.T) {
 		amount    any
 		wantLeft  string
 		wantRignt string
-	}{}
+	}{
+		{
+			name:      "String_amount_no_decimal",
+			amount:    "123",
+			wantLeft:  "123",
+			wantRignt: "00",
+		},
+		{
+			name:      "String_amount_one_decimal",
+			amount:    "123.4",
+			wantLeft:  "123",
+			wantRignt: "40",
+		},
+		{
+			name:      "String_amount_two_decimals",
+			amount:    "123.45",
+			wantLeft:  "123",
+			wantRignt: "45",
+		},
+		{
+			name:      "String_amount_zero_decimal",
+			amount:    "123.00",
+			wantLeft:  "123",
+			wantRignt: "00",
+		},
+		{
+			name:      "Uint32_amount",
+			amount:    uint32(12345),
+			wantLeft:  "123",
+			wantRignt: "45",
+		},
+		{
+			name:      "Uint64_amount",
+			amount:    uint64(12345),
+			wantLeft:  "123",
+			wantRignt: "45",
+		},
+		{
+			name:      "String_amount_no_decimal_zero",
+			amount:    "0",
+			wantLeft:  "0",
+			wantRignt: "00",
+		},
+		{
+			name:      "Uint32_amount_zero",
+			amount:    uint32(0),
+			wantLeft:  "0",
+			wantRignt: "00",
+		},
+		{
+			name:      "Uint64_amount_zero",
+			amount:    uint64(0),
+			wantLeft:  "0",
+			wantRignt: "00",
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotLeft, gotRignt := splitAmount(tt.amount)
