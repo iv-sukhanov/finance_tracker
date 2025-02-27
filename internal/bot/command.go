@@ -77,14 +77,14 @@ var (
 		3: {
 			ID:     3,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d{1,2})?)(?<description>\s+[a-zA-Z0-9 ]+)?$`),
+			rgx:    regexp.MustCompile(`^\s*(?P<category>[a-zA-Z0-9]{1,10})\s*(?P<amount>\d+(?:\.\d{1,2})?)(?:\s+(?<description>[a-zA-Z0-9 ]+))?$`),
 			action: addRecordAction,
 			child:  0,
 		},
 		4: {
 			ID:     4,
 			isBase: true,
-			rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category_or_all>[a-zA-Z0-9]{1,10}))\s*(?P<isfull>full)?$`),
+			rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category_or_all>[a-zA-Z0-9]{1,10}))(?:\s+(?P<isfull>full))?$`),
 			action: showCategoriesAction,
 			child:  0,
 		},

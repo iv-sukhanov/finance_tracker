@@ -807,7 +807,115 @@ func Test_command_validateInput(t *testing.T) {
 		{
 			name:  "Cat_name_err",
 			cmdID: 1,
-			input: "!sH1pU4kA!",
+			input: "!_sH1pU4kA_!",
+			want:  []string(nil),
+		},
+		{
+			name:  "Cat_descr_ok",
+			cmdID: 2,
+			input: "description for category",
+			want:  []string{"description for category", "description for category"},
+		},
+		{
+			name:  "Cat_descr_err",
+			cmdID: 2,
+			input: "description@for#category",
+			want:  []string(nil),
+		},
+		{
+			name:  "Record_ok",
+			cmdID: 3,
+			input: "category 100.5 description",
+			want:  []string{"category 100.5 description", "category", "100.5", "description"},
+		},
+		{
+			name:  "Record_ok_no_descr",
+			cmdID: 3,
+			input: "category 100.5",
+			want:  []string{"category 100.5", "category", "100.5", ""},
+		},
+		{
+			name:  "Record_err_amount",
+			cmdID: 3,
+			input: "category 100.512 description",
+			want:  []string(nil),
+		},
+		{
+			name:  "Record_err_cat",
+			cmdID: 3,
+			input: "_categ0ry_ 100.52 description",
+			want:  []string(nil),
+		},
+		{
+			name:  "Show_cat_ok",
+			cmdID: 4,
+			input: "10 full",
+			want:  []string{"10 full", "10", "", "full"},
+		},
+		{
+			name:  "Show_cat_all_ok",
+			cmdID: 4,
+			input: "all full",
+			want:  []string{"all full", "", "all", "full"},
+		},
+		{
+			name:  "Show_cat_name_ok",
+			cmdID: 4,
+			input: "beer",
+			want:  []string{"beer", "", "beer", ""},
+		},
+		{
+			name:  "Show_cat_err_1",
+			cmdID: 4,
+			input: "-10 full",
+			want:  []string(nil),
+		},
+		{
+			name:  "Show_rec_ok",
+			cmdID: 5,
+			input: "category",
+			want:  []string{"category", "category"},
+		},
+		{
+			name:  "Show_rec_err",
+			cmdID: 5,
+			input: "category@",
+			want:  []string(nil),
+		},
+		{
+			name:  "Time_boundaries_ok_1",
+			cmdID: 6,
+			input: "all last month full",
+			want:  []string{"all last month full", "all", "month", "", "", "full"},
+		},
+		{
+			name:  "Time_boundaries_ok_2",
+			cmdID: 6,
+			input: "all month",
+			want:  []string{"all month", "all", "month", "", "", ""},
+		},
+		{
+			name:  "Time_boundaries_ok_3",
+			cmdID: 6,
+			input: "5 02.02.2025 05.02.2025",
+			want:  []string{"5 02.02.2025 05.02.2025", "5", "", "02.02.2025", "05.02.2025", ""},
+		},
+		{
+			name:  "Time_boundaries_ok_4",
+			cmdID: 6,
+			input: "all 02.02.2025 full",
+			want:  []string{"all 02.02.2025 full", "all", "", "02.02.2025", "", "full"},
+		},
+		{
+			name:  "Time_boundaries_err",
+			cmdID: 6,
+			input: "all last month 02.02.2025 full",
+			want:  []string(nil),
+		},
+		{
+			name:  "Time_boundaries_err",
+			cmdID: 6,
+			input: "-4 02.02.2025",
 			want:  []string(nil),
 		},
 	}
@@ -816,6 +924,26 @@ func Test_command_validateInput(t *testing.T) {
 			cmd := commandsByIDs[tt.cmdID]
 			if got := cmd.validateInput(tt.input); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("command.validateInput() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_splitAmount(t *testing.T) {
+	tests := []struct {
+		name      string
+		amount    any
+		wantLeft  string
+		wantRignt string
+	}{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotLeft, gotRignt := splitAmount(tt.amount)
+			if gotLeft != tt.wantLeft {
+				t.Errorf("splitAmount() gotLeft = %v, want %v", gotLeft, tt.wantLeft)
+			}
+			if gotRignt != tt.wantRignt {
+				t.Errorf("splitAmount() gotRignt = %v, want %v", gotRignt, tt.wantRignt)
 			}
 		})
 	}
