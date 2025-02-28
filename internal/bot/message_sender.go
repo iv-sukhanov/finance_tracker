@@ -73,12 +73,16 @@ func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
 }
 
 func (s *MessageSender) Run(ctx context.Context) {
-	for msg := range s.messagesChan {
-		_, err := s.api.Send(msg)
-		// cl.log.Debug(returned)
-		if err != nil {
-			s.log.WithError(err).Error("error on send message")
+	for {
+		select {
+		case msg := <-s.messagesChan:
+			_, err := s.api.Send(msg)
+			if err != nil {
+				s.log.WithError(err).Error("error on send message")
+			}
+		case <-ctx.Done():
+			s.log.Debug("context cancelled, stopping message sender")
+			return
 		}
 	}
-	//TODO: add stop on context
 }

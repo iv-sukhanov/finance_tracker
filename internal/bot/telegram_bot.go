@@ -50,7 +50,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	b.log.Debug("bot started")
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
-	//
+
 	b.populateCommands()
 	go b.sender.Run(ctx)
 
@@ -58,10 +58,15 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	go b.displayMap()
 
 	updates := b.api.GetUpdatesChan(updateConfig)
-	for update := range updates {
-		b.HandleUpdate(ctx, update)
+	for {
+		select {
+		case update := <-updates:
+			b.HandleUpdate(ctx, update)
+		case <-ctx.Done():
+			b.log.Debug("context cancelled, stopping updates loop")
+			return
+		}
 	}
-	//TODO: add stop on context
 }
 
 func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) {
@@ -170,6 +175,5 @@ func composeBaseReply(commandID int, replyTo *tgbotapi.Message) tgbotapi.Message
 		commandReplies[commandID],
 	)
 	msg.ReplyToMessageID = replyTo.MessageID
-	// msg.ReplyMarkup = baseKeyboard
 	return msg
 }
