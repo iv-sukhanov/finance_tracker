@@ -95,9 +95,10 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 	recievedText := update.Message.Text
 	session := b.sessions.GetSession(update.Message.Chat.ID)
 
-	if session != nil && session.isActive {
-		if session.expectInput {
+	if session != nil && session.isActive() {
+		if session.isExpectingInput() {
 			b.log.Debugf("transmiting %s to %s", recievedText, session.client.username)
+			session.setExpectInput(false)
 			session.TransmitInput(recievedText)
 			return
 		}
@@ -123,6 +124,8 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 			update.Message.From.UserName,
 		)
 	}
+	session.setExpectInput(true)
+	session.setActive(true)
 	go session.Process(ctx, b.log, command, b.sender, b.service)
 }
 
@@ -135,7 +138,7 @@ func (b *TelegramBot) displayMap() {
 				"user":            v.client.username,
 				"has_guid_cached": v.client.userGUID != uuid.Nil,
 				"expect_input":    v.expectInput,
-				"isActive":        v.isActive,
+				"isActive":        v.active,
 			}).Debug("id: ", k)
 		}
 	}

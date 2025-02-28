@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -26,8 +27,8 @@ type (
 	Session struct {
 		client *Client
 
-		isActive      bool
-		expectInput   bool
+		active        int32
+		expectInput   int32
 		messageChanel chan string
 	}
 
@@ -70,14 +71,12 @@ func (s *Session) TransmitInput(input string) {
 }
 
 func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, sender Sender, srvc service.ServiceInterface) {
-	s.isActive = true
-	s.expectInput = true
 
 	log.Debug(fmt.Sprintf("processing goroutine for %s started", s.client.username))
 	defer func() {
 		log.Debug(fmt.Sprintf("processing goroutine for %s finished", s.client.username))
-		s.expectInput = false
-		s.isActive = false
+		s.setExpectInput(false)
+		s.setActive(false)
 	}()
 
 	batch := initBatch(cmd.ID)
@@ -86,14 +85,13 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 		select {
 		case msg := <-s.messageChanel:
 			timer.Stop()
-			s.expectInput = false
 
 			log.Debugf("in goroutine for %s got message: %s", s.client.username, msg)
 			if s.processInput(msg, &cmd, log, srvc, sender, batch) {
 				log.Debug("last command reached")
 				return
 			}
-			s.expectInput = true
+			s.setExpectInput(true)
 
 			timer.Reset(timeout)
 		case <-timer.C:
@@ -148,4 +146,34 @@ func (cl *Client) populateUserGUID(srvc service.ServiceInterface, log *logrus.Lo
 	}
 
 	return nil
+}
+
+func (s *Session) isActive() bool {
+	return atomic.LoadInt32(&s.active) == 1
+}
+
+func (s *Session) isExpectingInput() bool {
+	return atomic.LoadInt32(&s.expectInput) == 1
+}
+
+func (s *Session) setActive(val bool) {
+	var set int32
+	if val {
+		set = 1
+	} else {
+		set = 0
+	}
+
+	atomic.StoreInt32(&s.active, set)
+}
+
+func (s *Session) setExpectInput(val bool) {
+	var set int32
+	if val {
+		set = 1
+	} else {
+		set = 0
+	}
+
+	atomic.StoreInt32(&s.expectInput, set)
 }

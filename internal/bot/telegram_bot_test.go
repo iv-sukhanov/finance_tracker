@@ -103,8 +103,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
 					&Session{
 						client:        &Client{username: "test"},
-						isActive:      true,
-						expectInput:   true,
+						active:        1,
+						expectInput:   1,
 						messageChanel: messageChan,
 					},
 				)
@@ -134,8 +134,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
 					&Session{
 						client:        &Client{username: "test"},
-						isActive:      true,
-						expectInput:   false,
+						active:        1,
+						expectInput:   0,
 						messageChanel: make(chan string),
 					},
 				)
@@ -151,8 +151,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
 					&Session{
 						client:        &Client{username: "test"},
-						isActive:      false,
-						expectInput:   false,
+						active:        0,
+						expectInput:   0,
 						messageChanel: make(chan string),
 					},
 				)
@@ -188,8 +188,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
 					&Session{
 						client:        &Client{username: "test"},
-						isActive:      false,
-						expectInput:   false,
+						active:        0,
+						expectInput:   0,
 						messageChanel: make(chan string),
 					},
 				)
