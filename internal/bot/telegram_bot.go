@@ -13,16 +13,16 @@ import (
 var (
 	baseKeyboard = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(CommandAddCategory),
+			tgbotapi.NewKeyboardButton("\U0000270F"+CommandAddCategory),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(CommandShowCategories),
+			tgbotapi.NewKeyboardButton("\U0001F9FE"+CommandShowCategories),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(CommandAddRecord),
+			tgbotapi.NewKeyboardButton("\U0000270F"+CommandAddRecord),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(CommandShowRecords),
+			tgbotapi.NewKeyboardButton("\U0001F9FE"+CommandShowRecords),
 		),
 	)
 )
@@ -87,9 +87,10 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 		case "start":
 			msg = composeStartReply(update.Message)
 		case "abort":
-			if err := b.sessions.TerminateSession(update.Message.Chat.ID); err != nil {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageNoActiveSession)
+			if err := b.sessions.TerminateSession(update.Message.Chat.ID); err == nil {
+				return
 			}
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageNoActiveSession)
 		default:
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageUnknownCommand)
 		}
