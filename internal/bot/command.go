@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -41,8 +40,6 @@ const (
 )
 
 var (
-	internalErrorAditionalInfo = fmt.Sprintf("Please, contact @%s to share this interesting case", os.Getenv("TELEGRAM_USERNAME"))
-
 	commandsToIDs = map[string]int{
 		CommandAddCategory:            1,
 		CommandAddCategoryDescription: 2,

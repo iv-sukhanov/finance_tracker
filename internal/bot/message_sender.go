@@ -2,6 +2,8 @@ package bot
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
@@ -20,44 +22,63 @@ type (
 	}
 )
 
+var (
+	internalErrorAditionalInfo = fmt.Sprintf("Please, contact @%s to share this interesting case\U0001F62E\U0001F915", os.Getenv("TELEGRAM_USERNAME"))
+)
+
 const (
-	MessageNotImplemented     = "Sorry, not implemented yet"
-	MessageUnknownCommand     = "Unknown command"
-	MessageProcessInterrupted = "Please, wait, I'm still processing your previous request"
-	MessageStart              = "Hello! I'm finance tracker bot. Please, select an option:"
-	MessageTimeout            = "You were thinking too long, the operation was aborted"
-	MessageAbort              = "The operation was aborted"
-	MessageWrongInput         = "Wrond input, please try again"
+	MessageNotImplemented               = "Sorry, not implemented yet\U0001F51C"
+	MessageUnknownCommand               = "There is no such command\U0001F921\U0001F921"
+	MessageProcessInterrupted           = "Please, wait, I'm still processing your previous request\U0001F624"
+	MessageStart                        = "Hello\\!\U0001F44B I'm finance tracker bot\U0001F978\\. Please, select an option:"
+	MessageTimeout                      = "You were thinking too long \U000023F0, the operation was aborted"
+	MessageAbort                        = "The operation was aborted\U0000274C"
+	MessageWrongInput                   = "Wrond input, please try again\U0001F92D\U0001FAF5"
+	MessageAddCategory                  = "\U00002757\U0001F4C3Please, input category name:"
+	MessageShowRecords                  = "\U00002757\U0001F4C3Please, input the category name"
+	MessageAddCategoryDescription       = "\U00002757\U0001F4C3Please, input description to a new category, just a few words\U0001F646"
+	MessageDatabaseError                = "Sorry, something went wrong with the database\U0001F912"
+	MessageCategoryDuplicate            = "Category with that name already exist\U0001FAE0"
+	MessageCategorySuccess              = "Category added successfully\\!\\!\U0001F31E\U0001FAE1"
+	MessageZeroAmount                   = "Sorry, but zero records are discarded\U0001F605\U0001F921"
+	MessageAmountError                  = "Wow, there is something wrong with the amount you've entered\U0001F914"
+	MessageRecordSuccess                = "Record was added successfully\\!\\!\U0001F31E\U0001FAE1"
+	MessageLimitError                   = "Ooopsie, there is something wrong with the number you've entered\U0001F914"
+	MessageUnderflowCategories          = "You don't have any categories yet\U0001F62C\U0001F642"
+	MessageNoCategoryFound              = "There is no such category, may be you spelled it wrong\U0001F615"
+	MessageInvalidFromDate              = "Wow, there is something wrong with the 'from' date you've entered\U0001F914"
+	MessageInvalidToDate                = "Wow, there is something wrong with the 'to' date you've entered\U0001F914"
+	MessageInvalidFixedTime             = "Wow, there is something wrong with the time period you've entered\U0001F914"
+	MessageUnderflowRecords             = "There are no records for this category and time period\U0001F979"
+	MessageInvalidNumberOfTockensAction = "There were some really serious internal problems with your input\U0001F912"
+	MessageNoActiveSession              = "There is no operation in progress\U0001F605\U0001F921"
 
-	MessageAddCategory    = "Please, input category name"
-	MessageAddRecord      = "Please, input category name and amount e.g. 'category 100.5'\nOptionally you can add description e.g. 'category 100.5 description'"
+	MessageAddRecord = "" +
+		"\U00002757\U0001F4C3Please, input category name and amount:\n\n" +
+		"    \U000027A1 `category 12.34`\n\n" +
+		"Optionally you can add description:\n\n" +
+		"    \U000027A1 `category 12\\.34 description`\n\n" +
+		"You can tap to copy the examples\U0001F60B"
+
 	MessageShowCategories = "" +
-		"Please, input the number of categories you want to see:\n\n" +
-		" - 'n' for n number of categories\n" +
-		" - 'all' for all categories\n" +
-		" - 'category name' for one specific category\n\n" +
-		"Optionally you can add 'full' to see descriptions as well"
-	MessageShowRecords                  = "Please, input the category name"
-	MessageAddCategoryDescription       = "Please, type description to a new category"
-	MessageDatabaseError                = "Sorry, something went wrong with the database"
-	MessageCategoryDuplicate            = "Category with that name already exists"
-	MessageCategorySuccess              = "Category added successfully!!"
-	MessageZeroAmount                   = "Sorry, but zero records are discarded"
-	MessageAmountError                  = "Wow, there is something wrong with the amount you've entered"
-	MessageRecordSuccess                = "Record was added successfully!!"
-	MessageLimitError                   = "Ooopsie, there is something wrong with the number you've entered"
-	MessageUnderflowCategories          = "You don't have any categories yet"
-	MessageNoCategoryFound              = "There is no such category"
-	MessageInvalidFromDate              = "Wow, there is something wrong with the 'from' date you've entered"
-	MessageInvalidToDate                = "Wow, there is something wrong with the 'to' date you've entered"
-	MessageInvalidFixedTime             = "Wow, there is something wrong with the time period you've entered"
-	MessageUnderflowRecords             = "There are no records for this category and time period"
-	MessageInvalidNumberOfTockensAction = "There were some problems with your input"
+		"\U00002757\U0001F4C3Please, input the number of categories you want to see:\n\n" +
+		"  \U000027A1 `n`\n  for *n* number of categories\n\n" +
+		"  \U000027A1 `all`\n  for all categories\n\n" +
+		"  \U000027A1 `category`\n  for one specific category\n\n" +
+		"Optionally you can add 'full' to see descriptions as well:\n\n" +
+		"  \U000027A1 `all full`\n  for all categories with descriptions\n\n" +
+		"You can tap to copy the examples\U0001F60B	"
 
-	//update!!!
-	MessageAddTimeDetails = "Please, type the time period for the records ('from' 'to') in dd.mm.yyyy format:\n'dd.mm.yyyy dd.mm.yyyy'"
-	//update!!!
-
+	MessageAddTimeDetails = "" +
+		"Please, type the number of records you want to see, and the time period for them:\n\n" +
+		"  \U000027A1 `all last day`\n  for all records for the last day\n\n" +
+		"  \U000027A1 `n last month`\n  for n records for the last month\n\n" +
+		"  \U000027A1 `15 02.11.2024`\n  for 15 records made since 2 November 2024\n\n" +
+		"  \U000027A1 `15 02.11.2024 16.11.2024`\n  for 15 records made between 2 and 16 November 2024\n\n" +
+		"Optionally you can add 'full' to see descriptions as well:\n\n" +
+		"  \U000027A1 `all last year full`\n  for all records made last year with descriptions\n\n" +
+		"Additionally, *last* word is optional, so you can ommit it\U0001F627\n" +
+		"You can tap to copy the examples\U0001F60B"
 )
 
 func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
@@ -69,6 +90,7 @@ func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
 }
 
 func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
+	msg.ParseMode = "MarkdownV2"
 	s.messagesChan <- msg
 }
 

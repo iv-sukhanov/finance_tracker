@@ -21,6 +21,7 @@ type (
 	Sessions interface {
 		GetSession(chatID int64) *Session
 		AddSession(chatID int64, userID int64, username string) *Session
+		TerminateSession(chatID int64) error
 	}
 	SessionsCache map[int64]*Session
 
@@ -30,6 +31,7 @@ type (
 		active        int32
 		expectInput   int32
 		messageChanel chan string
+		abortFunc     func()
 	}
 
 	Client struct {
@@ -66,8 +68,39 @@ func (s *SessionsCache) AddSession(chatID int64, userID int64, username string) 
 	return newSession
 }
 
+func (s *SessionsCache) TerminateSession(chatID int64) error {
+	session, ok := (*s)[chatID]
+	if !ok {
+		return fmt.Errorf("sessionsCache.TerminateSession: there is no session with chatID %d", chatID)
+	}
+	return session.terminateSession()
+}
+
 func (s *Session) TransmitInput(input string) {
 	s.messageChanel <- input
+}
+
+func (s *Session) setUpActive(ctx context.Context, log *logrus.Logger) context.Context {
+	defer log.Debug("the process is set up")
+	s.setExpectInput(true)
+	s.setActive(true)
+	newContext, abort := context.WithCancel(ctx)
+	s.abortFunc = abort
+	return newContext
+}
+
+func (s *Session) close() {
+	s.setExpectInput(false)
+	s.setActive(false)
+	s.abortFunc = nil
+}
+
+func (s *Session) terminateSession() error {
+	if s.abortFunc == nil {
+		return fmt.Errorf("session.Abort: the session is not active now")
+	}
+	s.abortFunc()
+	return nil
 }
 
 func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, sender Sender, srvc service.ServiceInterface) {
@@ -75,8 +108,7 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 	log.Debug(fmt.Sprintf("processing goroutine for %s started", s.client.username))
 	defer func() {
 		log.Debug(fmt.Sprintf("processing goroutine for %s finished", s.client.username))
-		s.setExpectInput(false)
-		s.setActive(false)
+		s.close()
 	}()
 
 	batch := initBatch(cmd.ID)

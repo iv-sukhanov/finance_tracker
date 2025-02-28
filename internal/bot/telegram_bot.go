@@ -87,7 +87,9 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 		case "start":
 			msg = composeStartReply(update.Message)
 		case "abort":
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageNotImplemented)
+			if err := b.sessions.TerminateSession(update.Message.Chat.ID); err != nil {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageNoActiveSession)
+			}
 		default:
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageUnknownCommand)
 		}
@@ -129,9 +131,8 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 			update.Message.From.UserName,
 		)
 	}
-	session.setExpectInput(true)
-	session.setActive(true)
-	go session.Process(ctx, b.log, command, b.sender, b.service)
+
+	go session.Process(session.setUpActive(ctx, b.log), b.log, command, b.sender, b.service)
 }
 
 func (b *TelegramBot) displayMap() {
