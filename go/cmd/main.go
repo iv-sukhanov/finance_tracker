@@ -8,6 +8,7 @@ import (
 	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/iv-sukhanov/finance_tracker/internal/utils"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var (
@@ -38,14 +39,16 @@ func main() {
 	}
 	defer closeDB()
 
+	log.Info("Connected to DB", db.Stats())
+
 	bot, err := utils.NewBot(argTelegramBotToken, argTelegramBotMode == "true")
 	if err != nil {
 		log.WithError(err).Fatal("Failed to initialize telegram bot")
 	}
 
-	repo := repository.NewRepostitory(db)
+	repo := repository.New(db)
 	src := service.New(repo)
-	telegramBot := tbot.NewTelegramBot(src, bot, log.Logger)
+	telegramBot := tbot.New(src, bot, log.Logger)
 
 	telegramBot.Start(context.Background())
 }

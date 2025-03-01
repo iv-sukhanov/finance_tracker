@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  bot:
+    build: ./go
+    container_name: finance_tracker
+    depends_on:
+      - db
+      - migrate
+    env_file:
+      - .env/.dev
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: postgres-db
+    env_file:
+      - .env/.dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  migrate:
+    image: migrate/migrate:v4
+    container_name: migrate-db
+    volumes:
+      - ./migrations:/migrations
+    env_file:
+      - .env/.dev
+    command: 
+      [ 
+        "-path", "/migrations", 
+        "-database", "${DATABASE_URL}", 
+        "up"
+      ]
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

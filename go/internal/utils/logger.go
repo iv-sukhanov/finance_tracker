@@ -13,11 +13,11 @@ func NewLogger(level string) *logrus.Logger {
 	log.SetFormatter(&logrus.TextFormatter{
 		ForceColors: true,
 	})
-	log.SetLevel(getLevelFromEnv(level))
+	log.SetLevel(GetLevelFromEnv(level))
 	return log
 }
 
-func getLevelFromEnv(currentLevel string) logrus.Level {
+func GetLevelFromEnv(currentLevel string) logrus.Level {
 
 	levels := map[string]logrus.Level{
 		"DEBUG": logrus.DebugLevel,

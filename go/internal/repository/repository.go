@@ -33,7 +33,7 @@ type Repostitory struct {
 	SpendingRecord
 }
 
-func NewRepostitory(db *sqlx.DB) *Repostitory {
+func New(db *sqlx.DB) *Repostitory {
 	return &Repostitory{
 		User:             NewUserRepository(db),
 		SpendingCategory: NewCategoryRepository(db),

@@ -26,14 +26,14 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 	defer stop()
 
-	repo := repository.NewRepostitory(testContainerDB)
+	repo := repository.New(testContainerDB)
 	srv := service.New(repo)
 
 	tgbot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_BOT_TOKEN"))
 	require.NoError(t, err)
 	// Create a new bot
 
-	bot := NewTelegramBot(srv, tgbot, test_log)
+	bot := New(srv, tgbot, test_log)
 
 	// Run the bot
 	bot.Start(context.Background())

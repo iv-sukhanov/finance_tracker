@@ -35,7 +35,7 @@ type TelegramBot struct {
 	sessions Sessions
 }
 
-func NewTelegramBot(service *service.Service, api *tgbotapi.BotAPI, log *logrus.Logger) *TelegramBot {
+func New(service *service.Service, api *tgbotapi.BotAPI, log *logrus.Logger) *TelegramBot {
 	sender := NewMessageSender(api, log)
 	return &TelegramBot{
 		log:      log,
