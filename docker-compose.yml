@@ -23,18 +23,16 @@ services:
     restart: always
 
   migrate:
-    image: migrate/migrate:v4
+    image: migrate/migrate
     container_name: migrate-db
     volumes:
       - ./migrations:/migrations
-    env_file:
-      - .env/.dev
-    command: 
-      [ 
-        "-path", "/migrations", 
-        "-database", "${DATABASE_URL}", 
-        "up"
-      ]
+    command:
+      - "-path"
+      - "/migrations"
+      - "-database"
+      - "${DATABASE_URL}"
+      - "up"
     depends_on:
       - db
 
