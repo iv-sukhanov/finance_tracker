@@ -31,11 +31,11 @@ const (
 )
 
 const (
-	CommandAddCategory            = "add category"
+	CommandAddCategory            = "\U0000270Fadd category"
 	CommandAddCategoryDescription = "add category description"
-	CommandAddRecord              = "add record"
-	CommandShowCategories         = "show categories"
-	CommandShowRecords            = "show records"
+	CommandAddRecord              = "\U0000270Fadd record"
+	CommandShowCategories         = "\U0001F9FEshow categories"
+	CommandShowRecords            = "\U0001F9FEshow records"
 	CommandGetTimeBoundaries      = "get time boundaries"
 )
 
@@ -284,12 +284,12 @@ func showCategoriesAction(input []string, _ any, srvc service.ServiceInterface, 
 	if addDescription {
 		for i, category := range categories {
 			leftAmount, rightAmount := splitAmount(category.Amount)
-			msg.Text += fmt.Sprintf("%d. %s - %s.%s\u20AC\n%s\n\n", i+1, category.Category, leftAmount, rightAmount, category.Description)
+			msg.Text += fmt.Sprintf("%d\\. %s \\- %s\\.%s\u20AC\n%s\n\n", i+1, category.Category, leftAmount, rightAmount, category.Description)
 		}
 	} else {
 		for i, category := range categories {
 			leftAmount, rightAmount := splitAmount(category.Amount)
-			msg.Text += fmt.Sprintf("%d. %s - %s.%s\u20AC\n", i+1, category.Category, leftAmount, rightAmount)
+			msg.Text += fmt.Sprintf("%d\\. %s \\- %s\\.%s\u20AC\n", i+1, category.Category, leftAmount, rightAmount)
 		}
 	}
 }
@@ -412,19 +412,19 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 	if addDescription {
 		for _, record := range records {
 			leftAmount, rightAmount := splitAmount(record.Amount)
-			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC - %s\n", record.CreatedAt.Format(formatOut), leftAmount, rightAmount, record.Description) //mb updated?
+			msg.Text += fmt.Sprintf("[%s] %s\\.%s\u20AC \\- %s\n", record.CreatedAt.Format(formatOut), leftAmount, rightAmount, record.Description) //mb updated?
 			subtotal += uint32(record.Amount)
 		}
 	} else {
 		for _, record := range records {
 			leftAmount, rightAmount := splitAmount(record.Amount)
-			msg.Text += fmt.Sprintf("[%s] %s.%s\u20AC\n", record.CreatedAt.Format(formatOut), leftAmount, rightAmount)
+			msg.Text += fmt.Sprintf("[%s] %s\\.%s\u20AC\n", record.CreatedAt.Format(formatOut), leftAmount, rightAmount)
 			subtotal += uint32(record.Amount)
 		}
 	}
 
 	leftSubtotal, rightSubtotal := splitAmount(subtotal)
-	msg.Text = fmt.Sprintf("Subtotal: %s.%s\u20AC\n\n", leftSubtotal, rightSubtotal) + msg.Text
+	msg.Text = fmt.Sprintf("Subtotal: %s\\.%s\u20AC\n\n", leftSubtotal, rightSubtotal) + msg.Text
 }
 
 func (c *command) validateInput(input string) []string {

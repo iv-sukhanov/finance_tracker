@@ -13,16 +13,16 @@ import (
 var (
 	baseKeyboard = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("\U0000270F"+CommandAddCategory),
+			tgbotapi.NewKeyboardButton(CommandAddCategory),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("\U0001F9FE"+CommandShowCategories),
+			tgbotapi.NewKeyboardButton(CommandShowCategories),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("\U0000270F"+CommandAddRecord),
+			tgbotapi.NewKeyboardButton(CommandAddRecord),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("\U0001F9FE"+CommandShowRecords),
+			tgbotapi.NewKeyboardButton(CommandShowRecords),
 		),
 	)
 )
