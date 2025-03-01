@@ -15,11 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_Run(t *testing.T) {
+func TestRun(t *testing.T) {
 
 	basePath, err := os.Getwd()
 	require.NoError(t, err)
-	basePath += "/../../migrations/"
+	basePath += "/../../../migrations/"
 	testContainerDB, stop, err := utils.NewPGContainer(
 		basePath + "000001_init.up.sql",
 	)

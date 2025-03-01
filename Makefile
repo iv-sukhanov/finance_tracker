@@ -1,11 +1,12 @@
 include .env/.dev
 export
 run-dev:
-	go run cmd/main.go
+	cd ./go && go run ./cmd/main.go
 build-dev:
-	go build cmd/main.go
+	cd ./go && go build -o bot.exe ./cmd/main.go
 test-dev:
-	go test ./internal/repository/*.go
-	go test ./internal/service/*.go
+	cd ./go/internal/repository && go test
+	cd ./go/internal/service && go test
+	cd ./go/internal/bot && go test -run Test_
 test-bot:
-	go test ./internal/bot/... -v -run Test_Run
+	cd ./go/internal/bot && go test -run TestRun

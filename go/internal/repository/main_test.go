@@ -62,7 +62,7 @@ func TestMain(m *testing.M) {
 		logrus.Error(err)
 		os.Exit(1)
 	}
-	basePath += "/../../migrations/"
+	basePath += "/../../../migrations/"
 	var stop func()
 	testContainerDB, stop, err = utils.NewPGContainer(
 		basePath+"000001_init.up.sql",
