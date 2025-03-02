@@ -11,4 +11,4 @@ test-dev:
 test-bot:
 	cd ./go/internal/bot && go test -run TestRun
 compose-up:
-	docker-compose up
+	docker compose up
