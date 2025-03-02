@@ -42,7 +42,7 @@ jobs:
         run: |
           ssh actions@${{ secrets.VPS_HOST }} << 'EOF'
             cd finance_tracker/
-            git pull origin main
+            git pull origin master
             make compose-restart
           EOF
           
