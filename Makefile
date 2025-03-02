@@ -11,4 +11,12 @@ test-dev:
 test-bot:
 	cd ./go/internal/bot && go test -run TestRun
 compose-up:
-	docker compose up
+	docker compose up -d
+compose-down:
+	docker compose down
+compose-build:
+	docker compose build --no-cache
+compose-restart:
+	docker compose down
+	docker compose build --no-cache
+	docker compose up -d
