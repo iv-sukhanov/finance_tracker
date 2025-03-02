@@ -79,6 +79,13 @@ const (
 		"  \U000027A1 `all last year full`\n  for all records made last year with descriptions\n\n" +
 		"Additionally, *last* word is optional, so you can ommit it\U0001F627\n" +
 		"You can tap to copy the examples\U0001F60B"
+
+	MessageShowRecordsFormat       = "[%s] %s\\.%s\u20AC\n"
+	MessageShowRecordsFormatFull   = "[%s] %s\\.%s\u20AC \\- %s\n"
+	MessageShowRecordsFormatHeader = "Subtotal: %s\\.%s\u20AC\n\n"
+
+	MessageShowCategoriesFormat     = "%d\\. %s \\- %s\\.%s\u20AC\n"
+	MessageShowCategoriesFormatFull = "%d\\. %s \\- %s\\.%s\u20AC\n%s\n\n"
 )
 
 func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {

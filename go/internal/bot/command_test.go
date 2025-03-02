@@ -313,9 +313,9 @@ func Test_showCategoriesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				msg := tgbotapi.NewMessage(int64(1),
 					"Your categories:\n"+
-						"1. test1 - 11.01\u20AC\n"+
-						"2. test2 - 11.02\u20AC\n"+
-						"3. test3 - 11.03\u20AC\n",
+						"1\\. test1 \\- 11\\.01\u20AC\n"+
+						"2\\. test2 \\- 11\\.02\u20AC\n"+
+						"3\\. test3 \\- 11\\.03\u20AC\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)
@@ -340,9 +340,9 @@ func Test_showCategoriesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				msg := tgbotapi.NewMessage(int64(1),
 					"Your categories:\n"+
-						"1. test1 - 11.01\u20AC\ntest1descr\n\n"+
-						"2. test2 - 11.02\u20AC\ntest2descr\n\n"+
-						"3. test3 - 11.03\u20AC\ntest3descr\n\n",
+						"1\\. test1 \\- 11\\.01\u20AC\ntest1descr\n\n"+
+						"2\\. test2 \\- 11\\.02\u20AC\ntest2descr\n\n"+
+						"3\\. test3 \\- 11\\.03\u20AC\ntest3descr\n\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)
@@ -367,8 +367,8 @@ func Test_showCategoriesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				msg := tgbotapi.NewMessage(int64(1),
 					"Your categories:\n"+
-						"1. test1 - 11.01\u20AC\ntest1descr\n\n"+
-						"2. test2 - 11.02\u20AC\ntest2descr\n\n",
+						"1\\. test1 \\- 11\\.01\u20AC\ntest1descr\n\n"+
+						"2\\. test2 \\- 11\\.02\u20AC\ntest2descr\n\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)
@@ -392,7 +392,7 @@ func Test_showCategoriesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				msg := tgbotapi.NewMessage(int64(1),
 					"Your categories:\n"+
-						"1. beer - 11.01\u20AC\nmoney spent on beer\n\n",
+						"1\\. beer \\- 11\\.01\u20AC\nmoney spent on beer\n\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)
@@ -588,10 +588,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				timeNowStr := timeNow.Format(formatOut)
 				msg := tgbotapi.NewMessage(int64(1),
-					"Subtotal: 24.32\u20AC\n\n"+
-						"["+timeNowStr+"] 11.22\u20AC - test1\n"+
-						"["+timeNowStr+"] 12.20\u20AC - test2\n"+
-						"["+timeNowStr+"] 0.90\u20AC - test3\n",
+					"Subtotal: 24\\.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11\\.22\u20AC \\- test1\n"+
+						"["+timeNowStr+"] 12\\.20\u20AC \\- test2\n"+
+						"["+timeNowStr+"] 0\\.90\u20AC \\- test3\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)
@@ -623,10 +623,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				timeNowStr := timeNow.Format(formatOut)
 				msg := tgbotapi.NewMessage(int64(1),
-					"Subtotal: 24.32\u20AC\n\n"+
-						"["+timeNowStr+"] 11.22\u20AC\n"+
-						"["+timeNowStr+"] 12.20\u20AC\n"+
-						"["+timeNowStr+"] 0.90\u20AC\n",
+					"Subtotal: 24\\.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11\\.22\u20AC\n"+
+						"["+timeNowStr+"] 12\\.20\u20AC\n"+
+						"["+timeNowStr+"] 0\\.90\u20AC\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)
@@ -658,10 +658,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				timeNowStr := timeNow.Format(formatOut)
 				msg := tgbotapi.NewMessage(int64(1),
-					"Subtotal: 24.32\u20AC\n\n"+
-						"["+timeNowStr+"] 11.22\u20AC\n"+
-						"["+timeNowStr+"] 12.20\u20AC\n"+
-						"["+timeNowStr+"] 0.90\u20AC\n",
+					"Subtotal: 24\\.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11\\.22\u20AC\n"+
+						"["+timeNowStr+"] 12\\.20\u20AC\n"+
+						"["+timeNowStr+"] 0\\.90\u20AC\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)
@@ -693,10 +693,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				timeNowStr := timeNow.Format(formatOut)
 				msg := tgbotapi.NewMessage(int64(1),
-					"Subtotal: 24.32\u20AC\n\n"+
-						"["+timeNowStr+"] 11.22\u20AC\n"+
-						"["+timeNowStr+"] 12.20\u20AC\n"+
-						"["+timeNowStr+"] 0.90\u20AC\n",
+					"Subtotal: 24\\.32\u20AC\n\n"+
+						"["+timeNowStr+"] 11\\.22\u20AC\n"+
+						"["+timeNowStr+"] 12\\.20\u20AC\n"+
+						"["+timeNowStr+"] 0\\.90\u20AC\n",
 				)
 				msg.ReplyMarkup = baseKeyboard
 				s.EXPECT().Send(msg)

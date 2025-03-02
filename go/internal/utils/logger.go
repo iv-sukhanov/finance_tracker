@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	defaultLogLevel = logrus.DebugLevel
+	defaultLogLevel = logrus.InfoLevel
 )
 
 func NewLogger(level string) *logrus.Logger {
@@ -13,11 +13,11 @@ func NewLogger(level string) *logrus.Logger {
 	log.SetFormatter(&logrus.TextFormatter{
 		ForceColors: true,
 	})
-	log.SetLevel(GetLevelFromEnv(level))
+	log.SetLevel(GetLevelFromString(level))
 	return log
 }
 
-func GetLevelFromEnv(currentLevel string) logrus.Level {
+func GetLevelFromString(currentLevel string) logrus.Level {
 
 	levels := map[string]logrus.Level{
 		"DEBUG": logrus.DebugLevel,

@@ -13,7 +13,13 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	test_log.SetLevel(utils.GetLevelFromEnv(os.Getenv("LOG_LEVEL")))
+	level := os.Getenv("LOG_LEVEL")
+
+	if level == "" {
+		test_log.SetLevel(logrus.PanicLevel)
+	} else {
+		test_log.SetLevel(utils.GetLevelFromString(level))
+	}
 
 	os.Exit(m.Run())
 }

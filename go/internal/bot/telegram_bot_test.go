@@ -2,42 +2,14 @@ package bot
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/golang/mock/gomock"
-	"github.com/iv-sukhanov/finance_tracker/internal/repository"
-	"github.com/iv-sukhanov/finance_tracker/internal/service"
-	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/require"
 )
-
-func TestRun(t *testing.T) {
-
-	basePath, err := os.Getwd()
-	require.NoError(t, err)
-	basePath += "/../../../migrations/"
-	testContainerDB, stop, err := utils.NewPGContainer(
-		basePath + "000001_init.up.sql",
-	)
-	require.NoError(t, err)
-	defer stop()
-
-	repo := repository.New(testContainerDB)
-	srv := service.New(repo)
-
-	tgbot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_BOT_TOKEN"))
-	require.NoError(t, err)
-	// Create a new bot
-
-	bot := New(srv, tgbot, test_log)
-
-	// Run the bot
-	bot.Start(context.Background())
-}
 
 func TestTelegramBot_HandleUpdate(t *testing.T) {
 
