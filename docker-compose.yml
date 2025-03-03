@@ -3,6 +3,7 @@ services:
   bot:
     build: ./go
     container_name: finance_tracker
+    image: sukhanoviv/ftbot:latest
     depends_on:
       - db
       - migrate
