@@ -1,8 +1,7 @@
 name: CI/CD for a young goodlooking man
 
 on:
-  push:
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   test:
