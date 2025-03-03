@@ -33,13 +33,13 @@ jobs:
       - name: set up ssh
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github_actions_key
-          chmod 600 ~/.ssh/github_actions_key
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
       
       - name: deploy to vps
         run: |
-          ssh -v -T root@${{ secrets.VPS_HOST }} << 'EOF'
+          ssh -v -T -i root@${{ secrets.VPS_HOST }} << 'EOF'
             echo "Connected to VPS"
             cd finance_tracker/
             git pull origin master
