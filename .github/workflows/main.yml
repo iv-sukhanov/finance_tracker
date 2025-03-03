@@ -39,7 +39,7 @@ jobs:
       
       - name: deploy to vps
         run: |
-          ssh -v -T -i root@${{ secrets.VPS_HOST }} << 'EOF'
+          ssh -v -T root@${{ secrets.VPS_HOST }} << 'EOF'
             echo "Connected to VPS"
             cd finance_tracker/
             git pull origin master
