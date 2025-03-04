@@ -109,7 +109,7 @@ var (
 
 func addCategoryAction(input []string, batch any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 2 {
-		log.Debug("wrong input for add category command")
+		log.Error("wrong input for add category command")
 		cmd.becomeLast()
 		msg := tgbotapi.NewMessage(cl.chanID, MessageInvalidNumberOfTockensAction+"\n"+internalErrorAditionalInfo)
 		msg.ReplyMarkup = baseKeyboard
@@ -127,7 +127,7 @@ func addCategoryAction(input []string, batch any, _ service.ServiceInterface, lo
 func addCategoryDescriptionAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 
 	if len(input) != 2 {
-		log.Debug("wrong input for add category command")
+		log.Error("wrong input for add category command")
 		msg := tgbotapi.NewMessage(cl.chanID, MessageInvalidNumberOfTockensAction+"\n"+internalErrorAditionalInfo)
 		msg.ReplyMarkup = baseKeyboard
 		sender.Send(msg)
@@ -170,7 +170,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc service.Servic
 
 func addRecordAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
-		log.Debug("wrong tocken number for add record command")
+		log.Error("wrong tocken number for add record command")
 		return
 	}
 	recordCategory := input[1:2]
@@ -228,7 +228,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 
 func showCategoriesAction(input []string, _ any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
-		log.Debug("wrong tocken number for add record command")
+		log.Error("wrong tocken number for add record command")
 		return
 	}
 
@@ -297,7 +297,7 @@ func showCategoriesAction(input []string, _ any, srvc service.ServiceInterface, 
 func showRecordsAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 
 	if len(input) != 2 {
-		log.Debug("wrong tocken number for show records command")
+		log.Error("wrong tocken number for show records command")
 		return
 	}
 	recordCategory := input[1:2]
@@ -328,7 +328,7 @@ func showRecordsAction(input []string, batch any, srvc service.ServiceInterface,
 
 func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 6 {
-		log.Debug("wrong tocken number for set time boundaries command")
+		log.Error("wrong tocken number for set time boundaries command")
 		return
 	}
 
@@ -383,7 +383,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 			timeTo = time.Now()
 			timeFrom = timeTo.AddDate(0, 0, -1)
 		default:
-			log.Debug("invalid token for ymd time boundaries")
+			log.Error("invalid token for ymd time boundaries")
 			msg.Text = MessageInvalidFixedTime + "\n" + internalErrorAditionalInfo
 			return
 		}

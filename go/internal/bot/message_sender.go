@@ -110,7 +110,7 @@ func (s *MessageSender) Run(ctx context.Context) {
 				s.log.WithError(err).Error("error on send message")
 			}
 		case <-ctx.Done():
-			s.log.Debug("context cancelled, stopping message sender")
+			s.log.Info("context cancelled, stopping message sender")
 			return
 		}
 	}

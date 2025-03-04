@@ -47,7 +47,7 @@ func New(service *service.Service, api *tgbotapi.BotAPI, log *logrus.Logger) *Te
 }
 
 func (b *TelegramBot) Start(ctx context.Context) {
-	b.log.Debug("bot started")
+	b.log.Info("bot started successfully")
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
 
@@ -63,7 +63,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 		case update := <-updates:
 			b.HandleUpdate(ctx, update)
 		case <-ctx.Done():
-			b.log.Debug("context cancelled, stopping updates loop")
+			b.log.Info("context cancelled, stopping updates loop")
 			return
 		}
 	}

@@ -105,9 +105,9 @@ func (s *Session) terminateSession() error {
 
 func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, sender Sender, srvc service.ServiceInterface) {
 
-	log.Debug(fmt.Sprintf("processing goroutine for %s started", s.client.username))
+	log.Info(fmt.Sprintf("processing goroutine for %s started", s.client.username))
 	defer func() {
-		log.Debug(fmt.Sprintf("processing goroutine for %s finished", s.client.username))
+		log.Info(fmt.Sprintf("processing goroutine for %s finished", s.client.username))
 		s.close()
 	}()
 
@@ -120,18 +120,18 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 
 			log.Debugf("in goroutine for %s got message: %s", s.client.username, msg)
 			if s.processInput(msg, &cmd, log, srvc, sender, batch) {
-				log.Debug("last command reached")
+				log.Info("last command reached")
 				return
 			}
 			s.setExpectInput(true)
 
 			timer.Reset(timeout)
 		case <-timer.C:
-			log.Debugf("timeout for goroutine for %s", s.client.username)
+			log.Infof("timeout for goroutine for %s", s.client.username)
 			sender.Send(tgbotapi.NewMessage(s.client.chanID, MessageTimeout))
 			return
 		case <-ctx.Done():
-			log.Debugf("interrupted goroutine for %s because of the context", s.client.username)
+			log.Infof("interrupted goroutine for %s because of the context", s.client.username)
 			sender.Send(tgbotapi.NewMessage(s.client.chanID, MessageAbort))
 			return
 		}
