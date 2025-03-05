@@ -17,6 +17,7 @@ type ParamsPostgresDB struct {
 	Host     string
 	Port     string
 	DBName   string
+	AppName  string
 }
 
 func NewPostgresDB(params ParamsPostgresDB) (*sqlx.DB, func(), error) {
@@ -60,5 +61,9 @@ func composeURL(params ParamsPostgresDB) (url string, err error) {
 		return "", fmt.Errorf("composeURL: missing arguments %s", missingArgs.String())
 	}
 
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", params.User, params.Password, params.Host, params.Port, params.DBName), nil
+	if params.AppName == "" {
+		params.AppName = "go_service"
+	}
+
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&application_name=%s", params.User, params.Password, params.Host, params.Port, params.DBName, params.AppName), nil
 }

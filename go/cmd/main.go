@@ -33,6 +33,7 @@ func main() {
 		Host:     argPostgresHost,
 		Port:     argPostgresPort,
 		DBName:   argPostgresNameDB,
+		AppName:  argAppName,
 	})
 	if err != nil {
 		log.WithError(err).Fatal("Failed to connect to DB")
