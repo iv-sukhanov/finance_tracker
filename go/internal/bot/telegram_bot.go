@@ -55,7 +55,7 @@ func (b *TelegramBot) Start(ctx context.Context) {
 	go b.sender.Run(ctx)
 
 	//for debuging
-	go b.displayMap()
+	//go b.displayMap()
 
 	updates := b.api.GetUpdatesChan(updateConfig)
 	for {
