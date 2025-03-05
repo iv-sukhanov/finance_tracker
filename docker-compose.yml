@@ -5,9 +5,9 @@ services:
     container_name: finance_tracker
     image: sukhanoviv/ftbot:latest
     depends_on:
-      db:
+      - migrate
+      - db:
         condition: service_healthy
-      migrate:
     env_file:
       - .env/.dev
     restart: unless-stopped
