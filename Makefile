@@ -20,3 +20,5 @@ compose-restart:
 	docker compose down
 	docker compose build --no-cache
 	docker compose up -d
+gh-action:
+	gh workflow run 147279424
