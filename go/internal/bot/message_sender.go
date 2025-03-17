@@ -58,7 +58,7 @@ const (
 	MessageInvalidNumberOfTockensAction = "There were some really serious internal problems with your input\U0001F912"
 	MessageNoActiveSession              = "There is no operation in progress\U0001F605\U0001F921"
 	MessageWantEXEL                     = "Do you want to get the report in EXEL format?\U0001F60E\U0001F601"
-	MessageRecordsExelNo                = "Ok... I will not create the report in EXEL format\U0001F61E"
+	MessageRecordsExelNo                = "Ok\\.\\.\\. I will not create the report in EXEL format\U0001F61E"
 	MessageRecordsExelYes               = "Sure\\! Here it is\U00002934\U00002934\U0001F917\U0001F642\U0000200D\U00002195\U0000FE0F"
 	MessageExelError                    = "Ooopsie, there is something wrong with the EXEL report\U0001F914\U0001F615"
 
