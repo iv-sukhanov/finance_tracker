@@ -28,6 +28,7 @@ var (
 
 const (
 	MessageNotImplemented               = "Sorry, not implemented yet\U0001F51C"
+	MessageInternalError                = "Ooopsie, there is something reeealy wrong with the bot\U0001F914"
 	MessageUnknownCommand               = "There is no such command\U0001F921\U0001F921"
 	MessageProcessInterrupted           = "Please, wait, I'm still processing your previous request\U0001F624"
 	MessageStart                        = "Hello\\!\U0001F44B I'm finance tracker bot\U0001F978\\. Please, select an option:"
@@ -52,6 +53,10 @@ const (
 	MessageUnderflowRecords             = "There are no records for this category and time period\U0001F979"
 	MessageInvalidNumberOfTockensAction = "There were some really serious internal problems with your input\U0001F912"
 	MessageNoActiveSession              = "There is no operation in progress\U0001F605\U0001F921"
+	MessageWantEXEL                     = "Do you want to get the report in EXEL format?\U0001F60E\U0001F601"
+	MessageRecordsExelNo                = "Ok... I will not create the report in EXEL format\U0001F61E"
+	MessageRecordsExelYes               = "Sure! You will get it in a few seconds\U0001F642\U0000200D\U00002195\U0000FE0F"
+	MessageExelError                    = "Ooopsie, there is something wrong with the EXEL report\U0001F914\U0001F615"
 
 	MessageAddRecord = "" +
 		"\U00002757\U0001F4C3Please, input category name and amount:\n\n" +

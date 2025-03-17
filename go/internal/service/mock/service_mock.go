@@ -12,6 +12,7 @@ import (
 	uuid "github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
 	service "github.com/iv-sukhanov/finance_tracker/internal/service"
+	excelize "github.com/xuri/excelize/v2"
 )
 
 // MockUser is a mock of User interface.
@@ -381,6 +382,44 @@ func (mr *MockSpendingRecordMockRecorder) SpendingRecordsWithTimeFrame(from, to 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendingRecordsWithTimeFrame", reflect.TypeOf((*MockSpendingRecord)(nil).SpendingRecordsWithTimeFrame), from, to)
 }
 
+// MockExelMaker is a mock of ExelMaker interface.
+type MockExelMaker struct {
+	ctrl     *gomock.Controller
+	recorder *MockExelMakerMockRecorder
+}
+
+// MockExelMakerMockRecorder is the mock recorder for MockExelMaker.
+type MockExelMakerMockRecorder struct {
+	mock *MockExelMaker
+}
+
+// NewMockExelMaker creates a new mock instance.
+func NewMockExelMaker(ctrl *gomock.Controller) *MockExelMaker {
+	mock := &MockExelMaker{ctrl: ctrl}
+	mock.recorder = &MockExelMakerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockExelMaker) EXPECT() *MockExelMakerMockRecorder {
+	return m.recorder
+}
+
+// CreateExelFromRecords mocks base method.
+func (m *MockExelMaker) CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (*excelize.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateExelFromRecords", username, recods)
+	ret0, _ := ret[0].(*excelize.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateExelFromRecords indicates an expected call of CreateExelFromRecords.
+func (mr *MockExelMakerMockRecorder) CreateExelFromRecords(username, recods interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromRecords", reflect.TypeOf((*MockExelMaker)(nil).CreateExelFromRecords), username, recods)
+}
+
 // MockServiceInterface is a mock of ServiceInterface interface.
 type MockServiceInterface struct {
 	ctrl     *gomock.Controller
@@ -447,6 +486,21 @@ func (m *MockServiceInterface) AddUsers(users []ftracker.User) ([]uuid.UUID, err
 func (mr *MockServiceInterfaceMockRecorder) AddUsers(users interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUsers", reflect.TypeOf((*MockServiceInterface)(nil).AddUsers), users)
+}
+
+// CreateExelFromRecords mocks base method.
+func (m *MockServiceInterface) CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (*excelize.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateExelFromRecords", username, recods)
+	ret0, _ := ret[0].(*excelize.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateExelFromRecords indicates an expected call of CreateExelFromRecords.
+func (mr *MockServiceInterfaceMockRecorder) CreateExelFromRecords(username, recods interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromRecords", reflect.TypeOf((*MockServiceInterface)(nil).CreateExelFromRecords), username, recods)
 }
 
 // GetCategories mocks base method.

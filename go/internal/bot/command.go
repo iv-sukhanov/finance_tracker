@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -101,6 +102,15 @@ var (
 					`\s*(?P<full>full)?$`,
 			),
 			action: getTimeBoundariesAction,
+			child:  7,
+		},
+		7: {
+			ID:     7,
+			isBase: false,
+			rgx: regexp.MustCompile(
+				`^(?P<y_or_n>(?:yes_records_exel)|(?:no_records_exel))$`,
+			),
+			action: returnRecordsExelAction,
 			child:  0,
 		},
 	}
@@ -407,6 +417,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 		return
 	}
 
+	batch = records
 	var subtotal uint32 = 0
 	if addDescription {
 		for _, record := range records {
@@ -423,9 +434,69 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 	}
 
 	leftSubtotal, rightSubtotal := utils.ExtractAmountParts(subtotal)
-	msg.Text = fmt.Sprintf(MessageShowRecordsFormatHeader, leftSubtotal, rightSubtotal) + msg.Text
+	msg.Text = fmt.Sprintf(MessageShowRecordsFormatHeader, leftSubtotal, rightSubtotal) +
+		msg.Text +
+		"\n" +
+		MessageWantEXEL
+
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Yes", "yes_records_exel"),
+			tgbotapi.NewInlineKeyboardButtonData("No", "no_records_exel"),
+		),
+	)
 }
 
+func returnRecordsExelAction(input []string, batch any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+
+	msg := tgbotapi.NewMessage(cl.chanID, "")
+	msg.ReplyMarkup = baseKeyboard
+	defer func() {
+		sender.Send(msg)
+	}()
+
+	if len(input) != 2 {
+		log.Error("wrong input for add category command")
+		cmd.becomeLast()
+		msg.Text = MessageInvalidNumberOfTockensAction + "\n" + internalErrorAditionalInfo
+		msg.ReplyMarkup = baseKeyboard
+		return
+	}
+	log.Debug("action on return records exel command, got: ", input[1])
+
+	if input[1] == "no_records_exel" {
+		msg.Text = MessageRecordsExelNo
+		return
+	}
+
+	records, ok := batch.([]ftracker.SpendingRecord)
+	if !ok {
+		log.Error("wrong batch type for exel")
+		msg.Text = MessageInternalError + "\n" + internalErrorAditionalInfo
+		return
+	}
+
+	file, err := service.CreateExelFromRecords(cl.username, records)
+	if err != nil {
+		log.WithError(err).Error("error on create exel")
+		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
+		return
+	}
+	var buffer bytes.Buffer
+	err = file.Write(&buffer)
+	if err != nil {
+		log.WithError(err).Error("error on upload exel")
+		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
+		return
+	}
+
+	// document := tgbotapi.NewDocument(cl.chanID, tgbotapi.FileBytes{
+	// 	Name:  "report.xlsx",
+	// 	Bytes: buffer.Bytes(),
+	// })
+	msg.Text = MessageRecordsExelYes
+	// sender.Send(document)
+}
 func (c *command) validateInput(input string) []string {
 	matches := c.rgx.FindAllStringSubmatch(input, 1)
 	if len(matches) == 0 {

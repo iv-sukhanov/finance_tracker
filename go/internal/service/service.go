@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
 	"github.com/iv-sukhanov/finance_tracker/internal/repository"
+	"github.com/xuri/excelize/v2"
 )
 
 type User interface {
@@ -37,16 +38,22 @@ type SpendingRecord interface {
 	SpendingRecordsWithOrder(order RecordOrder, asc bool) RecordOption
 }
 
+type ExelMaker interface {
+	CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (f *excelize.File, outputError error)
+}
+
 type ServiceInterface interface {
 	User
 	SpendingCategory
 	SpendingRecord
+	ExelMaker
 }
 
 type Service struct {
 	User
 	SpendingCategory
 	SpendingRecord
+	ExelMaker
 }
 
 func New(repo *repository.Repostitory) *Service {
@@ -54,5 +61,6 @@ func New(repo *repository.Repostitory) *Service {
 		User:             NewUserService(repo),
 		SpendingCategory: NewCategoryService(repo),
 		SpendingRecord:   NewRecordService(repo),
+		ExelMaker:        NewExelService(),
 	}
 }

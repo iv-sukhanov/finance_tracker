@@ -72,10 +72,18 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 	b.log.Debug("processing started for update: ", update.UpdateID)
 	defer b.log.Debug("processing finished for update: ", update.UpdateID)
 
-	//do something about it later
+	var recievedText string
 	if update.Message == nil {
-		b.log.Debug("nil message, skip it")
-		return
+		if update.CallbackQuery != nil {
+			b.handleCallback(update.CallbackQuery.ID, update.CallbackQuery.From.UserName)
+			recievedText = update.CallbackQuery.Data
+		} else {
+			b.log.Debug("no message or callback query")
+			return
+		}
+		b.log.Debug("got callback query: ", update.CallbackQuery.Data)
+	} else {
+		recievedText = update.Message.Text
 	}
 
 	if command := update.Message.Command(); command != "" {
@@ -98,7 +106,6 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 	}
 
 	b.log.Debug("recieved text: ", update.Message.Text)
-	recievedText := update.Message.Text
 	session := b.sessions.GetSession(update.Message.Chat.ID)
 
 	if session != nil && session.isActive() {
@@ -160,6 +167,14 @@ func (b *TelegramBot) populateCommands() {
 		b.log.Error("error setting commands: ", err)
 	}
 	b.log.Debug("commands set: ", resp)
+}
+
+func (b *TelegramBot) handleCallback(id string, username string) {
+	response := tgbotapi.NewCallback(id, "got it!")
+	_, err := b.api.Request(response) //TODO: move to sender
+	if err != nil {
+		b.log.Errorf("error sending callback response for %s: %s", username, err.Error())
+	}
 }
 
 func composeStartReply(replyTo *tgbotapi.Message) tgbotapi.MessageConfig {
