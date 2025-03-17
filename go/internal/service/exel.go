@@ -1,11 +1,10 @@
 package service
 
 import (
-	"crypto/sha1"
 	"fmt"
-	"time"
 
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
+	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -53,9 +52,9 @@ func NewExelService() *ExelService {
 	return &ExelService{}
 }
 
-func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (outputError error) {
+func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (f *excelize.File, outputError error) {
 
-	f := excelize.NewFile()
+	f = excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
 			outputError = fmt.Errorf("CreateExelFromRecords: %w %w", err, outputError)
@@ -65,7 +64,7 @@ func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.S
 	index, err := f.NewSheet(username)
 	if err != nil {
 		outputError = fmt.Errorf("CreateExelFromRecords: %w", err)
-		return outputError
+		return nil, outputError
 	}
 	f.DeleteSheet("Sheet1")
 	f.SetActiveSheet(index)
@@ -73,13 +72,13 @@ func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.S
 	headerStyle, err := f.NewStyle(&headerStyle)
 	if err != nil {
 		outputError = fmt.Errorf("CreateExelFromRecords: %w", err)
-		return outputError
+		return nil, outputError
 	}
 
 	dataStyle, err := f.NewStyle(&dataStyle)
 	if err != nil {
 		outputError = fmt.Errorf("CreateExelFromRecords: %w", err)
-		return outputError
+		return nil, outputError
 	}
 
 	f.SetSheetRow(username, "A1", &[]any{"Amount", "Description", "Created At"})
@@ -88,8 +87,9 @@ func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.S
 	for i, record := range recods {
 		start := fmt.Sprintf("A%d", i+2)
 		end := fmt.Sprintf("C%d", i+2)
+		left, right := utils.ExtractAmountParts(record.Amount)
 		f.SetSheetRow(username, start, &[]any{
-			record.Amount,
+			fmt.Sprintf("%s.%s", left, right),
 			record.Description,
 			record.CreatedAt.Format(formatOut),
 		})
@@ -100,15 +100,10 @@ func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.S
 	f.SetColWidth(username, "B", "B", descriptionLen)
 	f.SetColWidth(username, "C", "C", timeLen)
 
-	secondsOffset := time.Now().Nanosecond()
-	hash := sha1.New()
-	hash.Write(fmt.Appendf(nil, "%s%d", username, secondsOffset))
-	filename := fmt.Sprintf("%x.xlsx", hash.Sum(nil))
+	// secondsOffset := time.Now().Nanosecond()
+	// hash := sha1.New()
+	// hash.Write(fmt.Appendf(nil, "%s%d", username, secondsOffset))
+	// filename := fmt.Sprintf("%x.xlsx", hash.Sum(nil))
 
-	if err := f.SaveAs(filename); err != nil {
-		outputError = fmt.Errorf("CreateExelFromRecords: %w", err)
-		return outputError
-	}
-
-	return nil
+	return f, nil
 }

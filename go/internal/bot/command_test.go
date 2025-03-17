@@ -14,6 +14,7 @@ import (
 	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	mock_service "github.com/iv-sukhanov/finance_tracker/internal/service/mock"
+	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
 )
@@ -993,7 +994,7 @@ func Test_splitAmount(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotLeft, gotRignt := splitAmount(tt.amount)
+			gotLeft, gotRignt := utils.ExtractAmountParts(tt.amount)
 			if gotLeft != tt.wantLeft {
 				t.Errorf("splitAmount() gotLeft = %v, want %v", gotLeft, tt.wantLeft)
 			}

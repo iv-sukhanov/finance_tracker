@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -174,7 +173,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 		return
 	}
 	recordCategory := input[1:2]
-	recordAmountLeft, recordAmountRight := splitAmount(input[2])
+	recordAmountLeft, recordAmountRight := utils.ExtractAmountParts(input[2])
 
 	recordDescription := input[3]
 	if len(recordDescription) == 0 {
@@ -283,12 +282,12 @@ func showCategoriesAction(input []string, _ any, srvc service.ServiceInterface, 
 	msg.Text = "Your categories:\n"
 	if addDescription {
 		for i, category := range categories {
-			leftAmount, rightAmount := splitAmount(category.Amount)
+			leftAmount, rightAmount := utils.ExtractAmountParts(category.Amount)
 			msg.Text += fmt.Sprintf(MessageShowCategoriesFormatFull, i+1, category.Category, leftAmount, rightAmount, category.Description)
 		}
 	} else {
 		for i, category := range categories {
-			leftAmount, rightAmount := splitAmount(category.Amount)
+			leftAmount, rightAmount := utils.ExtractAmountParts(category.Amount)
 			msg.Text += fmt.Sprintf(MessageShowCategoriesFormat, i+1, category.Category, leftAmount, rightAmount)
 		}
 	}
@@ -411,19 +410,19 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 	var subtotal uint32 = 0
 	if addDescription {
 		for _, record := range records {
-			leftAmount, rightAmount := splitAmount(record.Amount)
+			leftAmount, rightAmount := utils.ExtractAmountParts(record.Amount)
 			msg.Text += fmt.Sprintf(MessageShowRecordsFormatFull, record.CreatedAt.Format(formatOut), leftAmount, rightAmount, record.Description) //mb updated?
 			subtotal += uint32(record.Amount)
 		}
 	} else {
 		for _, record := range records {
-			leftAmount, rightAmount := splitAmount(record.Amount)
+			leftAmount, rightAmount := utils.ExtractAmountParts(record.Amount)
 			msg.Text += fmt.Sprintf(MessageShowRecordsFormat, record.CreatedAt.Format(formatOut), leftAmount, rightAmount)
 			subtotal += uint32(record.Amount)
 		}
 	}
 
-	leftSubtotal, rightSubtotal := splitAmount(subtotal)
+	leftSubtotal, rightSubtotal := utils.ExtractAmountParts(subtotal)
 	msg.Text = fmt.Sprintf(MessageShowRecordsFormatHeader, leftSubtotal, rightSubtotal) + msg.Text
 }
 
@@ -466,34 +465,4 @@ func initBatch(id int) any {
 	}
 
 	return nil
-}
-
-func splitAmount(amount any) (left string, rignt string) {
-
-	switch amount := amount.(type) {
-	case string:
-		splitedAmount := strings.Split(amount, ".")
-		left = splitedAmount[0]
-		if len(splitedAmount) == 1 {
-			rignt = "00"
-		} else if len(splitedAmount[1]) == 1 {
-			rignt = splitedAmount[1] + "0"
-		} else {
-			rignt = splitedAmount[1]
-		}
-	case uint32:
-		left = strconv.FormatUint(uint64(amount/100), 10)
-		rignt = strconv.FormatUint(uint64(amount%100), 10)
-		if len(rignt) == 1 {
-			rignt = "0" + rignt
-		}
-	case uint64:
-		left = strconv.FormatUint(uint64(amount/100), 10)
-		rignt = strconv.FormatUint(uint64(amount%100), 10)
-		if len(rignt) == 1 {
-			rignt = "0" + rignt
-		}
-	}
-
-	return left, rignt
 }

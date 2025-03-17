@@ -2,10 +2,8 @@ package bot
 
 import (
 	"context"
-	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/google/uuid"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/sirupsen/logrus"
 )
@@ -136,20 +134,20 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 	go session.Process(session.setUpActive(ctx, b.log), b.log, command, b.sender, b.service)
 }
 
-func (b *TelegramBot) displayMap() {
-	ticker := time.NewTicker(15 * time.Second)
+// func (b *TelegramBot) displayMap() {
+// 	ticker := time.NewTicker(15 * time.Second)
 
-	for range ticker.C {
-		for k, v := range *b.sessions.(*SessionsCache) {
-			b.log.WithFields(logrus.Fields{
-				"user":            v.client.username,
-				"has_guid_cached": v.client.userGUID != uuid.Nil,
-				"expect_input":    v.expectInput,
-				"isActive":        v.active,
-			}).Debug("id: ", k)
-		}
-	}
-}
+// 	for range ticker.C {
+// 		for k, v := range *b.sessions.(*SessionsCache) {
+// 			b.log.WithFields(logrus.Fields{
+// 				"user":            v.client.username,
+// 				"has_guid_cached": v.client.userGUID != uuid.Nil,
+// 				"expect_input":    v.expectInput,
+// 				"isActive":        v.active,
+// 			}).Debug("id: ", k)
+// 		}
+// 	}
+// }
 
 func (b *TelegramBot) populateCommands() {
 	botCommands := tgbotapi.NewSetMyCommands(
