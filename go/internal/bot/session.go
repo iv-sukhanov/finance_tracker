@@ -119,7 +119,7 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 			timer.Stop()
 
 			log.Debugf("in goroutine for %s got message: %s", s.client.username, msg)
-			if s.processInput(msg, &cmd, log, srvc, sender, batch) {
+			if s.processInput(msg, &cmd, log, srvc, sender, &batch) {
 				log.Info("last command reached")
 				return
 			}
@@ -139,7 +139,7 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 
 }
 
-func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, srvc service.ServiceInterface, sender Sender, batch any) (finished bool) {
+func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, srvc service.ServiceInterface, sender Sender, batch *any) (finished bool) {
 	matches := cmd.validateInput(input)
 	if matches == nil {
 		sender.Send(tgbotapi.NewMessage(s.client.chanID, MessageWrongInput))

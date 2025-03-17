@@ -20,7 +20,7 @@ type command struct {
 	ID     int
 	isBase bool
 	rgx    *regexp.Regexp
-	action func(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command)
+	action func(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command)
 
 	child int
 }
@@ -116,7 +116,7 @@ var (
 	}
 )
 
-func addCategoryAction(input []string, batch any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func addCategoryAction(input []string, batch *any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 2 {
 		log.Error("wrong input for add category command")
 		cmd.becomeLast()
@@ -126,14 +126,14 @@ func addCategoryAction(input []string, batch any, _ service.ServiceInterface, lo
 		return
 	}
 
-	batch.(*ftracker.SpendingCategory).Category = input[1]
+	(*batch).(*ftracker.SpendingCategory).Category = input[1]
 	log.Debug("action on add category command")
 	sender.Send(
 		tgbotapi.NewMessage(cl.chanID, MessageAddCategoryDescription),
 	)
 }
 
-func addCategoryDescriptionAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func addCategoryDescriptionAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 
 	if len(input) != 2 {
 		log.Error("wrong input for add category command")
@@ -145,7 +145,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc service.Servic
 
 	log.Debug("action on add category description command")
 
-	batch.(*ftracker.SpendingCategory).Description = input[1]
+	(*batch).(*ftracker.SpendingCategory).Description = input[1]
 
 	msg := tgbotapi.NewMessage(cl.chanID, "")
 	msg.ReplyMarkup = baseKeyboard
@@ -160,7 +160,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc service.Servic
 		return
 	}
 
-	categoryToAdd := *batch.(*ftracker.SpendingCategory)
+	categoryToAdd := *(*batch).(*ftracker.SpendingCategory)
 	categoryToAdd.UserGUID = cl.userGUID
 	_, err = srvc.AddCategories([]ftracker.SpendingCategory{categoryToAdd})
 	if err != nil {
@@ -177,7 +177,7 @@ func addCategoryDescriptionAction(input []string, batch any, srvc service.Servic
 	}
 }
 
-func addRecordAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func addRecordAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
 		log.Error("wrong tocken number for add record command")
 		return
@@ -215,17 +215,17 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 		return
 	}
 
-	batch.(*ftracker.SpendingRecord).CategoryGUID = categories[0].GUID
+	(*batch).(*ftracker.SpendingRecord).CategoryGUID = categories[0].GUID
 	amount, err := strconv.ParseUint(recordAmountLeft+recordAmountRight, 10, 32)
 	if err != nil {
 		log.WithError(err).Error("error on parsing amount")
 		msg.Text = MessageAmountError + "\n" + internalErrorAditionalInfo
 		return
 	}
-	batch.(*ftracker.SpendingRecord).Amount = uint32(amount)
-	batch.(*ftracker.SpendingRecord).Description = recordDescription
+	(*batch).(*ftracker.SpendingRecord).Amount = uint32(amount)
+	(*batch).(*ftracker.SpendingRecord).Description = recordDescription
 
-	recordToAdd := *batch.(*ftracker.SpendingRecord)
+	recordToAdd := *(*batch).(*ftracker.SpendingRecord)
 	_, err = srvc.AddRecords([]ftracker.SpendingRecord{recordToAdd})
 	if err != nil {
 		log.WithError(err).Error("error on add record")
@@ -235,7 +235,7 @@ func addRecordAction(input []string, batch any, srvc service.ServiceInterface, l
 	}
 }
 
-func showCategoriesAction(input []string, _ any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func showCategoriesAction(input []string, _ *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
 		log.Error("wrong tocken number for add record command")
 		return
@@ -303,7 +303,7 @@ func showCategoriesAction(input []string, _ any, srvc service.ServiceInterface, 
 	}
 }
 
-func showRecordsAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func showRecordsAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 
 	if len(input) != 2 {
 		log.Error("wrong tocken number for show records command")
@@ -331,11 +331,11 @@ func showRecordsAction(input []string, batch any, srvc service.ServiceInterface,
 		cmd.becomeLast()
 		return
 	}
-	batch.(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
+	(*batch).(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
 	msg.Text = MessageAddTimeDetails
 }
 
-func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 6 {
 		log.Error("wrong tocken number for set time boundaries command")
 		return
@@ -399,7 +399,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 	}
 
 	log.Debug("time boundaries: ", timeFrom, timeTo)
-	recordOption := *batch.(*repository.RecordOptions)
+	recordOption := *(*batch).(*repository.RecordOptions)
 	records, err := srvc.GetRecords(
 		srvc.SpendingRecordsWithCategoryGUIDs(recordOption.CategoryGUIDs),
 		srvc.SpendingRecordsWithTimeFrame(timeFrom, timeTo),
@@ -417,7 +417,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 		return
 	}
 
-	batch = records
+	*batch = records
 	var subtotal uint32 = 0
 	if addDescription {
 		for _, record := range records {
@@ -447,7 +447,7 @@ func getTimeBoundariesAction(input []string, batch any, srvc service.ServiceInte
 	)
 }
 
-func returnRecordsExelAction(input []string, batch any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func returnRecordsExelAction(input []string, batch *any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 
 	msg := tgbotapi.NewMessage(cl.chanID, "")
 	msg.ReplyMarkup = baseKeyboard
@@ -469,9 +469,9 @@ func returnRecordsExelAction(input []string, batch any, service service.ServiceI
 		return
 	}
 
-	records, ok := batch.([]ftracker.SpendingRecord)
+	records, ok := (*batch).([]ftracker.SpendingRecord)
 	if !ok {
-		log.Error("wrong batch type for exel")
+		log.Errorf("wrong batch type for exel: %T", *batch)
 		msg.Text = MessageInternalError + "\n" + internalErrorAditionalInfo
 		return
 	}

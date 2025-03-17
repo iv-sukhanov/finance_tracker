@@ -57,7 +57,7 @@ func Test_addCategoryAction(t *testing.T) {
 			cmd := commandsByIDs[1]
 			client := &Client{chanID: 1}
 
-			addCategoryAction(tc.input, tc.batch, nil, test_log, sender, client, &cmd)
+			addCategoryAction(tc.input, &tc.batch, nil, test_log, sender, client, &cmd)
 			require.Equal(t, tc.input[1], tc.batch.(*ftracker.SpendingCategory).Category)
 		})
 	}
@@ -152,7 +152,7 @@ func Test_addCategoryDescriptionAction(t *testing.T) {
 			cmd := commandsByIDs[2]
 			client := &Client{userGUID: tt.userGUID, chanID: 1}
 
-			addCategoryDescriptionAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
+			addCategoryDescriptionAction(tt.input, &tt.batch, service, test_log, sender, client, &cmd)
 		})
 	}
 }
@@ -290,7 +290,7 @@ func Test_addRecordAction(t *testing.T) {
 			cmd := commandsByIDs[3]
 			client := &Client{chanID: 1}
 
-			addRecordAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
+			addRecordAction(tt.input, &tt.batch, service, test_log, sender, client, &cmd)
 		})
 	}
 }
@@ -557,7 +557,7 @@ func Test_showRecordsAction(t *testing.T) {
 			cmd := commandsByIDs[5]
 			client := &Client{chanID: 1}
 
-			showRecordsAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
+			showRecordsAction(tt.input, &tt.batch, service, test_log, sender, client, &cmd)
 			if tt.categoryGUID != uuid.Nil {
 				require.Equal(t, tt.categoryGUID, tt.batch.(*repository.RecordOptions).CategoryGUIDs[0])
 			} else {
@@ -786,7 +786,7 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 			cmd := commandsByIDs[6]
 			client := &Client{chanID: 1}
 
-			getTimeBoundariesAction(tt.input, tt.batch, service, test_log, sender, client, &cmd)
+			getTimeBoundariesAction(tt.input, &tt.batch, service, test_log, sender, client, &cmd)
 		})
 	}
 }
