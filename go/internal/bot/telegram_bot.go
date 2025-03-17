@@ -73,40 +73,50 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 	defer b.log.Debug("processing finished for update: ", update.UpdateID)
 
 	var recievedText string
+	var chatID int64
+	var processingCallback bool = false
 	if update.Message == nil {
+
 		if update.CallbackQuery != nil {
+
 			b.handleCallback(update.CallbackQuery.ID, update.CallbackQuery.From.UserName)
 			recievedText = update.CallbackQuery.Data
+			chatID = update.CallbackQuery.Message.Chat.ID
+			processingCallback = true
 		} else {
+
 			b.log.Debug("no message or callback query")
 			return
 		}
 		b.log.Debug("got callback query: ", update.CallbackQuery.Data)
-	} else {
-		recievedText = update.Message.Text
-	}
 
-	if command := update.Message.Command(); command != "" {
-		b.log.Debug("command: ", update.Message.Command())
-		var msg tgbotapi.MessageConfig
-		switch command {
-		case "start":
-			msg = composeStartReply(update.Message)
-		case "abort":
-			if err := b.sessions.TerminateSession(update.Message.Chat.ID); err == nil {
-				return
+	} else {
+
+		if command := update.Message.Command(); command != "" {
+			b.log.Debug("command: ", update.Message.Command())
+			var msg tgbotapi.MessageConfig
+			switch command {
+			case "start":
+				msg = composeStartReply(update.Message)
+			case "abort":
+				if err := b.sessions.TerminateSession(update.Message.Chat.ID); err == nil {
+					return
+				}
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageNoActiveSession)
+			default:
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageUnknownCommand)
 			}
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageNoActiveSession)
-		default:
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, MessageUnknownCommand)
+
+			b.sender.Send(msg)
+			return
 		}
 
-		b.sender.Send(msg)
-		return
+		recievedText = update.Message.Text
+		chatID = update.Message.Chat.ID
+		b.log.Debug("recieved text: ", update.Message.Text)
 	}
 
-	b.log.Debug("recieved text: ", update.Message.Text)
-	session := b.sessions.GetSession(update.Message.Chat.ID)
+	session := b.sessions.GetSession(chatID)
 
 	if session != nil && session.isActive() {
 		if session.isExpectingInput() {
@@ -116,14 +126,19 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 			return
 		}
 		b.log.Debug("session is active, but not expecting input")
-		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, MessageProcessInterrupted))
+		b.sender.Send(tgbotapi.NewMessage(chatID, MessageProcessInterrupted))
+		return
+	}
+
+	if processingCallback {
+		b.log.Warn("no active session for callback query")
 		return
 	}
 
 	b.log.Debug("Command check")
 	command, ok := isCommand(recievedText)
 	if !ok || !command.isBase {
-		b.sender.Send(tgbotapi.NewMessage(update.Message.Chat.ID, MessageUnknownCommand))
+		b.sender.Send(tgbotapi.NewMessage(chatID, MessageUnknownCommand))
 		return
 	}
 	b.sender.Send(composeBaseReply(command.ID, update.Message))
@@ -132,7 +147,7 @@ func (b *TelegramBot) HandleUpdate(ctx context.Context, update tgbotapi.Update) 
 	if session == nil {
 		b.log.Debugf("new session for %s", update.Message.From.UserName)
 		session = b.sessions.AddSession(
-			update.Message.Chat.ID,
+			chatID,
 			update.Message.From.ID,
 			update.Message.From.UserName,
 		)

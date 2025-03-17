@@ -490,12 +490,12 @@ func returnRecordsExelAction(input []string, batch any, service service.ServiceI
 		return
 	}
 
-	// document := tgbotapi.NewDocument(cl.chanID, tgbotapi.FileBytes{
-	// 	Name:  "report.xlsx",
-	// 	Bytes: buffer.Bytes(),
-	// })
+	document := tgbotapi.NewDocument(cl.chanID, tgbotapi.FileBytes{
+		Name:  "report.xlsx",
+		Bytes: buffer.Bytes(),
+	})
 	msg.Text = MessageRecordsExelYes
-	// sender.Send(document)
+	sender.SendDoc(document)
 }
 func (c *command) validateInput(input string) []string {
 	matches := c.rgx.FindAllStringSubmatch(input, 1)

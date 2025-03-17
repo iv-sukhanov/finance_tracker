@@ -12,13 +12,17 @@ import (
 type (
 	Sender interface {
 		Send(msg tgbotapi.MessageConfig)
+		SendDoc(doc tgbotapi.DocumentConfig)
+		SendCallback(cb tgbotapi.CallbackConfig)
 		Run(ctx context.Context)
 	}
 
 	MessageSender struct {
-		messagesChan chan tgbotapi.MessageConfig
-		api          *tgbotapi.BotAPI
-		log          *logrus.Logger
+		messagesChan  chan tgbotapi.MessageConfig
+		documentsChan chan tgbotapi.DocumentConfig
+		callbackChan  chan tgbotapi.CallbackConfig
+		api           *tgbotapi.BotAPI
+		log           *logrus.Logger
 	}
 )
 
@@ -95,15 +99,25 @@ const (
 
 func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
 	return &MessageSender{
-		messagesChan: make(chan tgbotapi.MessageConfig),
-		log:          log,
-		api:          api,
+		messagesChan:  make(chan tgbotapi.MessageConfig),
+		documentsChan: make(chan tgbotapi.DocumentConfig),
+		callbackChan:  make(chan tgbotapi.CallbackConfig),
+		log:           log,
+		api:           api,
 	}
 }
 
 func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
 	msg.ParseMode = "MarkdownV2"
 	s.messagesChan <- msg
+}
+
+func (s *MessageSender) SendDoc(doc tgbotapi.DocumentConfig) {
+	s.documentsChan <- doc
+}
+
+func (s *MessageSender) SendCallback(cb tgbotapi.CallbackConfig) {
+	s.callbackChan <- cb
 }
 
 func (s *MessageSender) Run(ctx context.Context) {
@@ -113,6 +127,16 @@ func (s *MessageSender) Run(ctx context.Context) {
 			_, err := s.api.Send(msg)
 			if err != nil {
 				s.log.WithError(err).Error("error on send message")
+			}
+		case doc := <-s.documentsChan:
+			_, err := s.api.Send(doc)
+			if err != nil {
+				s.log.WithError(err).Error("error on send domcument")
+			}
+		case cb := <-s.callbackChan:
+			_, err := s.api.Request(cb)
+			if err != nil {
+				s.log.WithError(err).Error("error on requesting callback")
 			}
 		case <-ctx.Done():
 			s.log.Info("context cancelled, stopping message sender")
