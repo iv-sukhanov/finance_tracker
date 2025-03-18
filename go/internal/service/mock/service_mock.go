@@ -405,6 +405,21 @@ func (m *MockExelMaker) EXPECT() *MockExelMakerMockRecorder {
 	return m.recorder
 }
 
+// CreateExelFromCategories mocks base method.
+func (m *MockExelMaker) CreateExelFromCategories(username string, categories []ftracker.SpendingCategory) (*excelize.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateExelFromCategories", username, categories)
+	ret0, _ := ret[0].(*excelize.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateExelFromCategories indicates an expected call of CreateExelFromCategories.
+func (mr *MockExelMakerMockRecorder) CreateExelFromCategories(username, categories interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromCategories", reflect.TypeOf((*MockExelMaker)(nil).CreateExelFromCategories), username, categories)
+}
+
 // CreateExelFromRecords mocks base method.
 func (m *MockExelMaker) CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (*excelize.File, error) {
 	m.ctrl.T.Helper()
@@ -486,6 +501,21 @@ func (m *MockServiceInterface) AddUsers(users []ftracker.User) ([]uuid.UUID, err
 func (mr *MockServiceInterfaceMockRecorder) AddUsers(users interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUsers", reflect.TypeOf((*MockServiceInterface)(nil).AddUsers), users)
+}
+
+// CreateExelFromCategories mocks base method.
+func (m *MockServiceInterface) CreateExelFromCategories(username string, categories []ftracker.SpendingCategory) (*excelize.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateExelFromCategories", username, categories)
+	ret0, _ := ret[0].(*excelize.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateExelFromCategories indicates an expected call of CreateExelFromCategories.
+func (mr *MockServiceInterfaceMockRecorder) CreateExelFromCategories(username, categories interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromCategories", reflect.TypeOf((*MockServiceInterface)(nil).CreateExelFromCategories), username, categories)
 }
 
 // CreateExelFromRecords mocks base method.

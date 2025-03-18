@@ -39,7 +39,8 @@ type SpendingRecord interface {
 }
 
 type ExelMaker interface {
-	CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (f *excelize.File, err error)
+	CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (*excelize.File, error)
+	CreateExelFromCategories(username string, categories []ftracker.SpendingCategory) (*excelize.File, error)
 }
 
 type ServiceInterface interface {

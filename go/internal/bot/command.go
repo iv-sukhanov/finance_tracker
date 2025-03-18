@@ -28,16 +28,16 @@ type command struct {
 const (
 	formatOut = "Monday, 02 Jan, 15:04"
 	formatIn  = "02.01.2006"
-)
 
-const (
 	CommandAddCategory    = "\U0000270Fadd category"
 	CommandAddRecord      = "\U0000270Fadd record"
 	CommandShowCategories = "\U0001F9FEshow categories"
 	CommandShowRecords    = "\U0001F9FEshow records"
 
-	CallbackDataYesRecordsExel = "yes_records_exel"
-	CallbackDataNoRecordsExel  = "no_records_exel"
+	CallbackDataYesRecordsExel    = "yes_records_exel"
+	CallbackDataNoRecordsExel     = "no_records_exel"
+	CallbackDataYesCategoriesExel = "yes_categories_exel"
+	CallbackDataNoCategoriesExel  = "no_categories_exel"
 
 	filename = "report.xlsx"
 )
@@ -84,7 +84,7 @@ var (
 			isBase: true,
 			rgx:    regexp.MustCompile(`^(?:(?P<number>\d+)|(?P<category_or_all>[a-zA-Z0-9]{1,10}))(?:\s+(?P<isfull>full))?$`),
 			action: showCategoriesAction,
-			child:  0,
+			child:  8,
 		},
 		5: {
 			ID:     5,
@@ -114,12 +114,28 @@ var (
 			action: returnRecordsExelAction,
 			child:  0,
 		},
+		8: {
+			ID:     8,
+			isBase: false,
+			rgx: regexp.MustCompile(
+				`^(?P<y_or_n>(?:` + CallbackDataYesCategoriesExel + `)|(?:` + CallbackDataNoCategoriesExel + `))$`,
+			),
+			action: returnCategoriesExelAction,
+			child:  0,
+		},
 	}
 
 	wantExelRecordsKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Yes", CallbackDataYesRecordsExel),
 			tgbotapi.NewInlineKeyboardButtonData("No", CallbackDataNoRecordsExel),
+		),
+	)
+
+	wantExelCategoriesKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Yes", CallbackDataYesCategoriesExel),
+			tgbotapi.NewInlineKeyboardButtonData("No", CallbackDataNoCategoriesExel),
 		),
 	)
 )
@@ -243,7 +259,7 @@ func addRecordAction(input []string, batch *any, srvc service.ServiceInterface, 
 	}
 }
 
-func showCategoriesAction(input []string, _ *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
 	if len(input) != 4 {
 		log.Error("wrong tocken number for add record command")
 		return
@@ -297,6 +313,7 @@ func showCategoriesAction(input []string, _ *any, srvc service.ServiceInterface,
 		return
 	}
 
+	*batch = categories
 	msg.Text = "Your categories:\n"
 	if addDescription {
 		for i, category := range categories {
@@ -309,6 +326,9 @@ func showCategoriesAction(input []string, _ *any, srvc service.ServiceInterface,
 			msg.Text += fmt.Sprintf(MessageShowCategoriesFormat, i+1, category.Category, leftAmount, rightAmount)
 		}
 	}
+
+	msg.Text += MessageWantEXEL
+	msg.ReplyMarkup = wantExelCategoriesKeyboard
 }
 
 func showRecordsAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
@@ -459,15 +479,13 @@ func returnRecordsExelAction(input []string, batch *any, service service.Service
 	}()
 
 	if len(input) != 2 {
-		log.Error("wrong input for add category command")
-		cmd.becomeLast()
+		log.Error("wrong callback input")
 		msg.Text = MessageInvalidNumberOfTockensAction + "\n" + internalErrorAditionalInfo
-		msg.ReplyMarkup = baseKeyboard
 		return
 	}
 	log.Debug("action on return records exel command, got: ", input[1])
 
-	if input[1] == "no_records_exel" {
+	if input[1] == CallbackDataNoRecordsExel {
 		msg.Text = MessageRecordsExelNo
 		return
 	}
@@ -480,6 +498,55 @@ func returnRecordsExelAction(input []string, batch *any, service service.Service
 	}
 
 	file, err := service.CreateExelFromRecords(cl.username, records)
+	if err != nil {
+		log.WithError(err).Error("error on create exel")
+		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
+		return
+	}
+	var buffer bytes.Buffer
+	err = file.Write(&buffer)
+	if err != nil {
+		log.WithError(err).Error("error on upload exel")
+		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
+		return
+	}
+
+	document := tgbotapi.NewDocument(cl.chanID, tgbotapi.FileBytes{
+		Name:  filename,
+		Bytes: buffer.Bytes(),
+	})
+	msg.Text = MessageRecordsExelYes
+	sender.SendDoc(document)
+}
+
+func returnCategoriesExelAction(input []string, batch *any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+
+	msg := tgbotapi.NewMessage(cl.chanID, "")
+	msg.ReplyMarkup = baseKeyboard
+	defer func() {
+		sender.Send(msg)
+	}()
+
+	if len(input) != 2 {
+		log.Error("wrong callback input")
+		msg.Text = MessageInvalidNumberOfTockensAction + "\n" + internalErrorAditionalInfo
+		return
+	}
+	log.Debug("action on return categories exel command, got: ", input[1])
+
+	if input[1] == CallbackDataNoCategoriesExel {
+		msg.Text = MessageRecordsExelNo
+		return
+	}
+
+	categories, ok := (*batch).([]ftracker.SpendingCategory)
+	if !ok {
+		log.Errorf("wrong batch type for exel: %T", *batch)
+		msg.Text = MessageInternalError + "\n" + internalErrorAditionalInfo
+		return
+	}
+
+	file, err := service.CreateExelFromCategories(cl.username, categories)
 	if err != nil {
 		log.WithError(err).Error("error on create exel")
 		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
