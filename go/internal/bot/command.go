@@ -31,25 +31,23 @@ const (
 )
 
 const (
-	CommandAddCategory            = "\U0000270Fadd category"
-	CommandAddCategoryDescription = "add category description"
-	CommandAddRecord              = "\U0000270Fadd record"
-	CommandShowCategories         = "\U0001F9FEshow categories"
-	CommandShowRecords            = "\U0001F9FEshow records"
-	CommandGetTimeBoundaries      = "get time boundaries"
+	CommandAddCategory    = "\U0000270Fadd category"
+	CommandAddRecord      = "\U0000270Fadd record"
+	CommandShowCategories = "\U0001F9FEshow categories"
+	CommandShowRecords    = "\U0001F9FEshow records"
 
 	CallbackDataYesRecordsExel = "yes_records_exel"
 	CallbackDataNoRecordsExel  = "no_records_exel"
+
+	filename = "report.xlsx"
 )
 
 var (
 	commandsToIDs = map[string]int{
-		CommandAddCategory:            1,
-		CommandAddCategoryDescription: 2,
-		CommandAddRecord:              3,
-		CommandShowCategories:         4,
-		CommandShowRecords:            5,
-		CommandGetTimeBoundaries:      6,
+		CommandAddCategory:    1,
+		CommandAddRecord:      3,
+		CommandShowCategories: 4,
+		CommandShowRecords:    5,
 	}
 
 	commandReplies = map[int]string{
@@ -496,12 +494,13 @@ func returnRecordsExelAction(input []string, batch *any, service service.Service
 	}
 
 	document := tgbotapi.NewDocument(cl.chanID, tgbotapi.FileBytes{
-		Name:  "report.xlsx",
+		Name:  filename,
 		Bytes: buffer.Bytes(),
 	})
 	msg.Text = MessageRecordsExelYes
 	sender.SendDoc(document)
 }
+
 func (c *command) validateInput(input string) []string {
 	matches := c.rgx.FindAllStringSubmatch(input, 1)
 	if len(matches) == 0 {

@@ -129,7 +129,7 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 					},
 				)
 			},
-			update: newUpdateWithMessage(CommandAddCategoryDescription), //not a base command
+			update: newUpdateWithMessage("bla bla bla"), //not a base command
 		},
 		{
 			name: "New_session",

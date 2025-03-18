@@ -81,3 +81,74 @@ func TestExelService_CreateExelFromRecords(t *testing.T) {
 		})
 	}
 }
+
+func TestExelService_CreateExelFromCategories(t *testing.T) {
+	s := NewExelService()
+
+	tests := []struct {
+		name       string
+		username   string
+		categories []ftracker.SpendingCategory
+		wantErr    bool
+	}{
+		{
+			name:     "Ok",
+			username: "test",
+			categories: []ftracker.SpendingCategory{
+				{
+					Category:    "Food",
+					Description: "money spent on ready food like delivery or restaurant",
+					Amount:      1234,
+				},
+				{
+					Category:    "Gas",
+					Description: "money spent on gas for the car",
+					Amount:      23002,
+				},
+				{
+					Category:    "Drugs",
+					Description: "money spent on drugs\U0001F601",
+					Amount:      0,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			file, err := s.CreateExelFromCategories(tt.username, tt.categories)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ExelService.CreateExelFromCategories() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			for i := range len(tt.categories) + 1 {
+				for j := range 3 {
+					curCell := fmt.Sprintf("%c%d", 'A'+j, i+1)
+					content, err := file.GetCellValue(tt.username, curCell)
+					var expectedContent string
+					if i == 0 {
+						switch j {
+						case 0:
+							expectedContent = "Category"
+						case 1:
+							expectedContent = "Description"
+						case 2:
+							expectedContent = "Amount"
+						}
+					} else {
+						switch j {
+						case 0:
+							expectedContent = tt.categories[i-1].Category
+						case 1:
+							expectedContent = tt.categories[i-1].Description
+						case 2:
+							left, right := utils.ExtractAmountParts(tt.categories[i-1].Amount)
+							expectedContent = fmt.Sprintf("%s.%s", left, right)
+						}
+					}
+					require.NoError(t, err)
+					require.Equal(t, expectedContent, content)
+				}
+			}
+			file.SaveAs("test.xlsx")
+		})
+	}
+}

@@ -13,6 +13,7 @@ const (
 	amountLen      = 10
 	descriptionLen = 30
 	timeLen        = 25
+	categoryLen    = 20
 )
 
 var (
@@ -100,10 +101,55 @@ func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.S
 	f.SetColWidth(username, "B", "B", descriptionLen)
 	f.SetColWidth(username, "C", "C", timeLen)
 
-	// secondsOffset := time.Now().Nanosecond()
-	// hash := sha1.New()
-	// hash.Write(fmt.Appendf(nil, "%s%d", username, secondsOffset))
-	// filename := fmt.Sprintf("%x.xlsx", hash.Sum(nil))
+	return f, nil
+}
+
+func (s *ExelService) CreateExelFromCategories(username string, categories []ftracker.SpendingCategory) (f *excelize.File, outputError error) {
+	f = excelize.NewFile()
+	defer func() {
+		if err := f.Close(); err != nil {
+			outputError = fmt.Errorf("CreateExelFromCategories: %w %w", err, outputError)
+		}
+	}()
+
+	index, err := f.NewSheet(username)
+	if err != nil {
+		outputError = fmt.Errorf("CreateExelFromCategories: %w", err)
+		return nil, outputError
+	}
+	f.DeleteSheet("Sheet1")
+	f.SetActiveSheet(index)
+
+	headerStyle, err := f.NewStyle(&headerStyle)
+	if err != nil {
+		outputError = fmt.Errorf("CreateExelFromCategories: %w", err)
+		return nil, outputError
+	}
+
+	dataStyle, err := f.NewStyle(&dataStyle)
+	if err != nil {
+		outputError = fmt.Errorf("CreateExelFromCategories: %w", err)
+		return nil, outputError
+	}
+
+	f.SetSheetRow(username, "A1", &[]any{"Category", "Description", "Amount"})
+	f.SetCellStyle(username, "A1", "C1", headerStyle)
+
+	for i, category := range categories {
+		start := fmt.Sprintf("A%d", i+2)
+		end := fmt.Sprintf("C%d", i+2)
+		left, right := utils.ExtractAmountParts(category.Amount)
+		f.SetSheetRow(username, start, &[]any{
+			category.Category,
+			category.Description,
+			fmt.Sprintf("%s.%s", left, right),
+		})
+		f.SetCellStyle(username, start, end, dataStyle)
+	}
+
+	f.SetColWidth(username, "A", "A", categoryLen)
+	f.SetColWidth(username, "B", "B", descriptionLen)
+	f.SetColWidth(username, "C", "C", amountLen)
 
 	return f, nil
 }
