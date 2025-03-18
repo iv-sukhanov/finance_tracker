@@ -37,6 +37,9 @@ const (
 	CommandShowCategories         = "\U0001F9FEshow categories"
 	CommandShowRecords            = "\U0001F9FEshow records"
 	CommandGetTimeBoundaries      = "get time boundaries"
+
+	CallbackDataYesRecordsExel = "yes_records_exel"
+	CallbackDataNoRecordsExel  = "no_records_exel"
 )
 
 var (
@@ -108,12 +111,19 @@ var (
 			ID:     7,
 			isBase: false,
 			rgx: regexp.MustCompile(
-				`^(?P<y_or_n>(?:yes_records_exel)|(?:no_records_exel))$`,
+				`^(?P<y_or_n>(?:` + CallbackDataYesRecordsExel + `)|(?:` + CallbackDataNoRecordsExel + `))$`,
 			),
 			action: returnRecordsExelAction,
 			child:  0,
 		},
 	}
+
+	wantExelRecordsKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Yes", CallbackDataYesRecordsExel),
+			tgbotapi.NewInlineKeyboardButtonData("No", CallbackDataNoRecordsExel),
+		),
+	)
 )
 
 func addCategoryAction(input []string, batch *any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
@@ -439,12 +449,7 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 		"\n" +
 		MessageWantEXEL
 
-	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Yes", "yes_records_exel"),
-			tgbotapi.NewInlineKeyboardButtonData("No", "no_records_exel"),
-		),
-	)
+	msg.ReplyMarkup = wantExelRecordsKeyboard
 }
 
 func returnRecordsExelAction(input []string, batch *any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {

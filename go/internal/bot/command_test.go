@@ -592,9 +592,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 					"Subtotal: 24\\.32\u20AC\n\n"+
 						"["+timeNowStr+"] 11\\.22\u20AC \\- test1\n"+
 						"["+timeNowStr+"] 12\\.20\u20AC \\- test2\n"+
-						"["+timeNowStr+"] 0\\.90\u20AC \\- test3\n",
+						"["+timeNowStr+"] 0\\.90\u20AC \\- test3\n"+
+						"\n"+MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelRecordsKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
@@ -627,9 +628,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 					"Subtotal: 24\\.32\u20AC\n\n"+
 						"["+timeNowStr+"] 11\\.22\u20AC\n"+
 						"["+timeNowStr+"] 12\\.20\u20AC\n"+
-						"["+timeNowStr+"] 0\\.90\u20AC\n",
+						"["+timeNowStr+"] 0\\.90\u20AC\n"+
+						"\n"+MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelRecordsKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
@@ -662,9 +664,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 					"Subtotal: 24\\.32\u20AC\n\n"+
 						"["+timeNowStr+"] 11\\.22\u20AC\n"+
 						"["+timeNowStr+"] 12\\.20\u20AC\n"+
-						"["+timeNowStr+"] 0\\.90\u20AC\n",
+						"["+timeNowStr+"] 0\\.90\u20AC\n"+
+						"\n"+MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelRecordsKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
@@ -697,9 +700,10 @@ func Test_getTimeBoundariesAction(t *testing.T) {
 					"Subtotal: 24\\.32\u20AC\n\n"+
 						"["+timeNowStr+"] 11\\.22\u20AC\n"+
 						"["+timeNowStr+"] 12\\.20\u20AC\n"+
-						"["+timeNowStr+"] 0\\.90\u20AC\n",
+						"["+timeNowStr+"] 0\\.90\u20AC\n"+
+						"\n"+MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelRecordsKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
