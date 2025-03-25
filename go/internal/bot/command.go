@@ -16,11 +16,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// contains command IDs and their properties:
+//
+//   - ID: command ID
+//
+//   - isBase: whether the command is a first command in the sequence
+//
+//   - rgx: regular expression that defines the expected input for the command
+//
+//   - action: function that will be called on the input when the command is selected
+//
+//   - child: ID of the next command in the sequence, if 0, it means the command is the last one
 type command struct {
 	ID     int
 	isBase bool
 	rgx    *regexp.Regexp
-	action func(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command)
+	action func(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command)
 
 	child int
 }
@@ -43,6 +54,7 @@ const (
 )
 
 var (
+	// translates string commands to command IDs
 	commandsToIDs = map[string]int{
 		CommandAddCategory:    1,
 		CommandAddRecord:      3,
@@ -50,6 +62,7 @@ var (
 		CommandShowRecords:    5,
 	}
 
+	// contains replies for each base command
 	commandReplies = map[int]string{
 		1: MessageAddCategory,
 		3: MessageAddRecord,
@@ -57,6 +70,8 @@ var (
 		5: MessageShowRecords,
 	}
 
+	// contains all registered commands
+	// if a new command is added, it should be registered here
 	commandsByIDs = map[int]command{
 		1: {
 			ID:     1,
@@ -125,6 +140,8 @@ var (
 		},
 	}
 
+	// inline keyboard asking the user if they want to receive an EXEL file
+	// with the records
 	wantExelRecordsKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Yes", CallbackDataYesRecordsExel),
@@ -132,6 +149,8 @@ var (
 		),
 	)
 
+	// inline keyboard asking the user if they want to receive an EXEL file
+	// with the categories
 	wantExelCategoriesKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Yes", CallbackDataYesCategoriesExel),
@@ -140,7 +159,14 @@ var (
 	)
 )
 
-func addCategoryAction(input []string, batch *any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the add category command, id 1
+//
+// it takes takes the input category name, stores it in the batch, and prompts the user to send the category description
+func addCategoryAction(input []string, batch *any, _ service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
+
+	// specified regex allways returns 2 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes
+	// or to catch some errors I am unaware of
 	if len(input) != 2 {
 		log.Error("wrong input for add category command")
 		cmd.becomeLast()
@@ -157,8 +183,14 @@ func addCategoryAction(input []string, batch *any, _ service.ServiceInterface, l
 	)
 }
 
-func addCategoryDescriptionAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the add description to a category command, id 2
+//
+// it takes takes the input description and puts the category to the service.repository
+func addCategoryDescriptionAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
 
+	// specified regex allways returns 2 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes
+	// or to catch some errors I am unaware of
 	if len(input) != 2 {
 		log.Error("wrong input for add category command")
 		msg := tgbotapi.NewMessage(cl.chanID, MessageInvalidNumberOfTockensAction+"\n"+internalErrorAditionalInfo)
@@ -201,7 +233,14 @@ func addCategoryDescriptionAction(input []string, batch *any, srvc service.Servi
 	}
 }
 
-func addRecordAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the add record, id 3
+//
+// it takes the input category name, amount and description, and adds the record to the service.repository
+func addRecordAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
+
+	// specified regex allways returns 4 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
+	// or to catch some errors I am unaware of
 	if len(input) != 4 {
 		log.Error("wrong tocken number for add record command")
 		return
@@ -220,7 +259,7 @@ func addRecordAction(input []string, batch *any, srvc service.ServiceInterface, 
 		sender.Send(msg)
 	}()
 
-	if recordAmountLeft == "0" && recordAmountRight == "00" {
+	if recordAmountLeft == "0" && recordAmountRight == "00" { //zero amount
 		msg.Text = MessageZeroAmount
 		return
 	}
@@ -259,7 +298,15 @@ func addRecordAction(input []string, batch *any, srvc service.ServiceInterface, 
 	}
 }
 
-func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the show categories command, id 4
+//
+// it takes the number of categories to display from the user and shows the categories from the service.repository
+// then it asks the user if they want to receive an EXEL file with the categories
+func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
+
+	// specified regex allways returns 4 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
+	// or to catch some errors I am unaware of
 	if len(input) != 4 {
 		log.Error("wrong tocken number for add record command")
 		return
@@ -331,8 +378,14 @@ func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterf
 	msg.ReplyMarkup = wantExelCategoriesKeyboard
 }
 
-func showRecordsAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the show records command, id 5
+//
+// it takes the category name from the user and prompts then to input the time boundaries
+func showRecordsAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
 
+	// specified regex allways returns 2 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
+	// or to catch some errors I am unaware of
 	if len(input) != 2 {
 		log.Error("wrong tocken number for show records command")
 		return
@@ -363,7 +416,15 @@ func showRecordsAction(input []string, batch *any, srvc service.ServiceInterface
 	msg.Text = MessageAddTimeDetails
 }
 
-func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the get time bounaries command, id 6
+//
+// it takes the the nubmer of records to display, the time boundaries and it the desctiption needed,
+// then it diplays the records from the service.repository and asks the user if they want to receive an EXEL file
+func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
+
+	// specified regex allways returns 6 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
+	// or to catch some errors I am unaware of
 	if len(input) != 6 {
 		log.Error("wrong tocken number for set time boundaries command")
 		return
@@ -470,7 +531,11 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 	msg.ReplyMarkup = wantExelRecordsKeyboard
 }
 
-func returnRecordsExelAction(input []string, batch *any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the exel records command, id 7
+//
+// it retrieves the records from the batch and creates an EXEL file with them
+// then it sends the file to the user
+func returnRecordsExelAction(input []string, batch *any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
 
 	msg := tgbotapi.NewMessage(cl.chanID, "")
 	msg.ReplyMarkup = baseKeyboard
@@ -478,6 +543,9 @@ func returnRecordsExelAction(input []string, batch *any, service service.Service
 		sender.Send(msg)
 	}()
 
+	// specified regex allways returns 2 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
+	// or to catch some errors I am unaware of
 	if len(input) != 2 {
 		log.Error("wrong callback input")
 		msg.Text = MessageInvalidNumberOfTockensAction + "\n" + internalErrorAditionalInfo
@@ -519,7 +587,11 @@ func returnRecordsExelAction(input []string, batch *any, service service.Service
 	sender.SendDoc(document)
 }
 
-func returnCategoriesExelAction(input []string, batch *any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *Client, cmd *command) {
+// action function for the exel categories command, id 8
+//
+// it retrieves the categories from the batch and creates an EXEL file with them
+// then it sends the file to the user
+func returnCategoriesExelAction(input []string, batch *any, service service.ServiceInterface, log *logrus.Logger, sender Sender, cl *client, cmd *command) {
 
 	msg := tgbotapi.NewMessage(cl.chanID, "")
 	msg.ReplyMarkup = baseKeyboard
@@ -527,6 +599,9 @@ func returnCategoriesExelAction(input []string, batch *any, service service.Serv
 		sender.Send(msg)
 	}()
 
+	// specified regex allways returns 2 tokens, so this check may be redundant,
+	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
+	// or to catch some errors I am unaware of
 	if len(input) != 2 {
 		log.Error("wrong callback input")
 		msg.Text = MessageInvalidNumberOfTockensAction + "\n" + internalErrorAditionalInfo
@@ -568,6 +643,8 @@ func returnCategoriesExelAction(input []string, batch *any, service service.Serv
 	sender.SendDoc(document)
 }
 
+// validateInput function checks if the input matches the command's regex
+// and returns the matched group if it does
 func (c *command) validateInput(input string) []string {
 	matches := c.rgx.FindAllStringSubmatch(input, 1)
 	if len(matches) == 0 {
@@ -576,18 +653,24 @@ func (c *command) validateInput(input string) []string {
 	return matches[0]
 }
 
+// in case we want to exit the command sequence
+// we set the child to 0, so the command will become the last one
 func (c *command) becomeLast() {
 	c.child = 0
 }
 
+// checks if the command is the last one in the sequence
 func (c *command) isLast() bool {
 	return c.child == 0
 }
 
+// returns the next command in the sequence
 func (c *command) next() command {
 	return commandsByIDs[c.child]
 }
 
+// function to check if the input form user is a command
+// it is applied only if there is no currently running process
 func isCommand(s string) (command, bool) {
 	id, ok := commandsToIDs[s]
 	if !ok {
@@ -596,6 +679,7 @@ func isCommand(s string) (command, bool) {
 	return commandsByIDs[id], true
 }
 
+// inits the batch for the command
 func initBatch(id int) any {
 	switch id {
 	case 1:

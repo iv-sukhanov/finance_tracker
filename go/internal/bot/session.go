@@ -18,15 +18,34 @@ const (
 )
 
 type (
+	// Sessions interface defines the interface for managing user sessions.
 	Sessions interface {
-		GetSession(chatID int64) *Session
-		AddSession(chatID int64, userID int64, username string) *Session
+		GetSession(chatID int64) *session
+		AddSession(chatID int64, userID int64, username string) *session
 		TerminateSession(chatID int64) error
 	}
-	SessionsCache map[int64]*Session
 
-	Session struct {
-		client *Client
+	// sessionsCache is a map that stores user sessions and
+	// previously aquired data.
+	sessionsCache map[int64]*session
+
+	// session represents a user session
+	//
+	//  - client: contains information about the user
+	//
+	// 	- active: indicates if the session is active
+	//   0 if not active, 1 if active
+	//   it is a int32 to be atomic
+	//
+	// 	- expectInput: indicates if the session is expecting input
+	//   0 if not expecting input, 1 if expecting input
+	//   it is a int32 to be atomic
+	//
+	//  - messageChanel: a channel to recieve input from the user
+	//
+	//  - abortFunc: a function to abort the session, usually it is a ctx.CancelFunc
+	session struct {
+		client *client
 
 		active        int32
 		expectInput   int32
@@ -34,7 +53,8 @@ type (
 		abortFunc     func()
 	}
 
-	Client struct {
+	// client contains information about the user
+	client struct {
 		chanID   int64
 		userID   int64
 		userGUID uuid.UUID
@@ -42,11 +62,20 @@ type (
 	}
 )
 
-func NewSessionsCache() *SessionsCache {
-	return &SessionsCache{}
+// NewSessionsCache creates a new instance of sessionsCache.
+func NewSessionsCache() *sessionsCache {
+	return &sessionsCache{}
 }
 
-func (s *SessionsCache) GetSession(chatID int64) *Session {
+// GetSession retrieves the session associated with the given chatID from the sessionsCache.
+// If no session exists for the provided chatID, it returns nil.
+//
+// Parameters:
+//   - chatID: The unique identifier for the chat session.
+//
+// Returns:
+//   - A pointer to the session if it exists, or nil if no session is found.
+func (s *sessionsCache) GetSession(chatID int64) *session {
 	session, ok := (*s)[chatID]
 	if !ok {
 		return nil
@@ -54,9 +83,19 @@ func (s *SessionsCache) GetSession(chatID int64) *Session {
 	return session
 }
 
-func (s *SessionsCache) AddSession(chatID int64, userID int64, username string) *Session {
-	newSession := &Session{
-		client: &Client{
+// AddSession creates a new session for a given chat ID and user details,
+// adds it to the sessions cache, and returns the created session.
+//
+// Parameters:
+//   - chatID: The unique identifier for the chat.
+//   - userID: The unique identifier for the user.
+//   - username: The username of the user.
+//
+// Returns:
+//   - A pointer to the newly created session.
+func (s *sessionsCache) AddSession(chatID int64, userID int64, username string) *session {
+	newSession := &session{
+		client: &client{
 			chanID:   chatID,
 			userID:   userID,
 			username: username,
@@ -68,7 +107,15 @@ func (s *SessionsCache) AddSession(chatID int64, userID int64, username string) 
 	return newSession
 }
 
-func (s *SessionsCache) TerminateSession(chatID int64) error {
+// TerminateSession terminates an active session associated with the given chatID.
+// If no session exists for the provided chatID, it returns an error.
+//
+// Parameters:
+//   - chatID: The unique identifier for the chat session to be terminated.
+//
+// Returns:
+//   - error: An error if the session does not exist or if the termination process fails.
+func (s *sessionsCache) TerminateSession(chatID int64) error {
 	session, ok := (*s)[chatID]
 	if !ok {
 		return fmt.Errorf("sessionsCache.TerminateSession: there is no session with chatID %d", chatID)
@@ -76,11 +123,16 @@ func (s *SessionsCache) TerminateSession(chatID int64) error {
 	return session.terminateSession()
 }
 
-func (s *Session) TransmitInput(input string) {
+// TransmitInput transmits input to the session's message channel.
+//
+// Parameters:
+//   - input: The input string to be transmitted.
+func (s *session) TransmitInput(input string) {
 	s.messageChanel <- input
 }
 
-func (s *Session) setUpActive(ctx context.Context, log *logrus.Logger) context.Context {
+// SetUpActive initializes the session as active and sets up a context for it.
+func (s *session) setUpActive(ctx context.Context, log *logrus.Logger) context.Context {
 	defer log.Debug("the process is set up")
 	s.setExpectInput(true)
 	s.setActive(true)
@@ -89,13 +141,15 @@ func (s *Session) setUpActive(ctx context.Context, log *logrus.Logger) context.C
 	return newContext
 }
 
-func (s *Session) close() {
+// close closes the session making it inactive and setting the abort function to nil.
+func (s *session) close() {
 	s.setExpectInput(false)
 	s.setActive(false)
 	s.abortFunc = nil
 }
 
-func (s *Session) terminateSession() error {
+// terminateSession terminates the session by calling the abort function.
+func (s *session) terminateSession() error {
 	if s.abortFunc == nil {
 		return fmt.Errorf("session.Abort: the session is not active now")
 	}
@@ -103,7 +157,24 @@ func (s *Session) terminateSession() error {
 	return nil
 }
 
-func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, sender Sender, srvc service.ServiceInterface) {
+// Process handles the main processing loop for a session. It listens for incoming messages,
+// processes them, and manages session state. The function runs in a goroutine and terminates
+// when a timeout occurs, the context is canceled, or the last command is reached.
+//
+// Parameters:
+//   - ctx: The context used to manage the lifecycle of the goroutine.
+//   - log: A logger instance for logging session activity.
+//   - cmd: The initial command to process.
+//   - sender: An interface for sending messages to the client.
+//   - srvc: A service interface for handling business logic.
+//
+// Behavior:
+//   - Listens for messages on the session's message channel.
+//   - Processes each message using the `processInput` method.
+//   - Resets a timeout timer after each processed message.
+//   - Sends a timeout message and terminates if no input is received within the timeout period.
+//   - Terminates the session if the context is canceled or the last command is reached.
+func (s *session) Process(ctx context.Context, log *logrus.Logger, cmd command, sender Sender, srvc service.ServiceInterface) {
 
 	log.Info(fmt.Sprintf("processing goroutine for %s started", s.client.username))
 	defer func() {
@@ -139,7 +210,20 @@ func (s *Session) Process(ctx context.Context, log *logrus.Logger, cmd command, 
 
 }
 
-func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, srvc service.ServiceInterface, sender Sender, batch *any) (finished bool) {
+// processInput processes the user input for a given command in the session.
+// It validates the input, executes the associated action, and determines if the command sequence is complete.
+//
+// Parameters:
+//   - input: The user-provided input string to be processed.
+//   - cmd: A pointer to the current command being processed.
+//   - log: A logger instance for logging purposes.
+//   - srvc: An interface to the service layer for executing business logic.
+//   - sender: An interface for sending messages back to the user.
+//   - batch: A pointer to an arbitrary data structure used for batch processing.
+//
+// Returns:
+//   - finished: A boolean indicating whether the last command reached.
+func (s *session) processInput(input string, cmd *command, log *logrus.Logger, srvc service.ServiceInterface, sender Sender, batch *any) (finished bool) {
 	matches := cmd.validateInput(input)
 	if matches == nil {
 		sender.Send(tgbotapi.NewMessage(s.client.chanID, MessageWrongInput))
@@ -155,7 +239,10 @@ func (s *Session) processInput(input string, cmd *command, log *logrus.Logger, s
 	return false
 }
 
-func (cl *Client) populateUserGUID(srvc service.ServiceInterface, log *logrus.Logger) error {
+// populateUserGUID populates the userGUID field of the client struct.
+//
+// It makes sure the client has a userGUID
+func (cl *client) populateUserGUID(srvc service.ServiceInterface, log *logrus.Logger) error {
 	if cl.userGUID == uuid.Nil {
 		user, err := srvc.GetUsers(srvc.UsersWithTelegramIDs([]string{fmt.Sprint(cl.userID)}))
 		if err != nil {
@@ -180,15 +267,18 @@ func (cl *Client) populateUserGUID(srvc service.ServiceInterface, log *logrus.Lo
 	return nil
 }
 
-func (s *Session) isActive() bool {
+// isActive checks if the session is active.
+func (s *session) isActive() bool {
 	return atomic.LoadInt32(&s.active) == 1
 }
 
-func (s *Session) isExpectingInput() bool {
+// isExpectingInput checks if the session is expecting input.
+func (s *session) isExpectingInput() bool {
 	return atomic.LoadInt32(&s.expectInput) == 1
 }
 
-func (s *Session) setActive(val bool) {
+// setActive sets the session as active or inactive.
+func (s *session) setActive(val bool) {
 	var set int32
 	if val {
 		set = 1
@@ -199,7 +289,8 @@ func (s *Session) setActive(val bool) {
 	atomic.StoreInt32(&s.active, set)
 }
 
-func (s *Session) setExpectInput(val bool) {
+// setExpectInput sets the session to expect input or not.
+func (s *session) setExpectInput(val bool) {
 	var set int32
 	if val {
 		set = 1

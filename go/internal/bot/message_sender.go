@@ -10,6 +10,8 @@ import (
 )
 
 type (
+	// Sender is an interface that defines methods for sending messages, documents, and callbacks.
+	// It also includes a method that runs the sender in a separate goroutine.
 	Sender interface {
 		Send(msg tgbotapi.MessageConfig)
 		SendDoc(doc tgbotapi.DocumentConfig)
@@ -17,7 +19,8 @@ type (
 		Run(ctx context.Context)
 	}
 
-	MessageSender struct {
+	// messageSender is a struct that implements the Sender interface.
+	messageSender struct {
 		messagesChan  chan tgbotapi.MessageConfig
 		documentsChan chan tgbotapi.DocumentConfig
 		callbackChan  chan tgbotapi.CallbackConfig
@@ -27,9 +30,11 @@ type (
 )
 
 var (
+	// this message is used in case of internal error
 	internalErrorAditionalInfo = fmt.Sprintf("Please, contact @%s to share this interesting case\U0001F62E\U0001F915", os.Getenv("TELEGRAM_USERNAME"))
 )
 
+// messages the bot sends
 const (
 	MessageNotImplemented               = "Sorry, not implemented yet\U0001F51C"
 	MessageInternalError                = "Ooopsie, there is something reeealy wrong with the bot\U0001F914"
@@ -97,8 +102,9 @@ const (
 	MessageShowCategoriesFormatFull = "%d\\. %s \\- %s\\.%s\u20AC\n%s\n\n"
 )
 
-func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
-	return &MessageSender{
+// NewMessageSender creates a new instance of MessageSender with the provided API and logger.
+func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *messageSender {
+	return &messageSender{
 		messagesChan:  make(chan tgbotapi.MessageConfig),
 		documentsChan: make(chan tgbotapi.DocumentConfig),
 		callbackChan:  make(chan tgbotapi.CallbackConfig),
@@ -107,20 +113,27 @@ func NewMessageSender(api *tgbotapi.BotAPI, log *logrus.Logger) *MessageSender {
 	}
 }
 
-func (s *MessageSender) Send(msg tgbotapi.MessageConfig) {
+// Send sends a message to the sender goroutine for sending.
+func (s *messageSender) Send(msg tgbotapi.MessageConfig) {
 	msg.ParseMode = "MarkdownV2"
 	s.messagesChan <- msg
 }
 
-func (s *MessageSender) SendDoc(doc tgbotapi.DocumentConfig) {
+// SendDoc sends a document to the sender goroutine for sending.
+func (s *messageSender) SendDoc(doc tgbotapi.DocumentConfig) {
 	s.documentsChan <- doc
 }
 
-func (s *MessageSender) SendCallback(cb tgbotapi.CallbackConfig) {
+// SendCallback sends a callback to the sender goroutine for sending.
+func (s *messageSender) SendCallback(cb tgbotapi.CallbackConfig) {
 	s.callbackChan <- cb
 }
 
-func (s *MessageSender) Run(ctx context.Context) {
+// Run function starts the message sender goroutine.
+//
+// It listens for messages, documents, and callbacks on their respective channels.
+// When a message is received, it sends the message using the Telegram API to send them.
+func (s *messageSender) Run(ctx context.Context) {
 	for {
 		select {
 		case msg := <-s.messagesChan:

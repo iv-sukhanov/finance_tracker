@@ -15,13 +15,13 @@ func TestClient_populateUserGUID(t *testing.T) {
 
 	tt := []struct {
 		name    string
-		cl      *Client
+		cl      *client
 		mockBeh func(*mock_service.MockServiceInterface)
 		wantErr bool
 	}{
 		{
 			name: "No_call",
-			cl: &Client{
+			cl: &client{
 				userGUID: uuid.New(),
 			},
 			mockBeh: func(srv *mock_service.MockServiceInterface) {},
@@ -29,7 +29,7 @@ func TestClient_populateUserGUID(t *testing.T) {
 		},
 		{
 			name: "From_db",
-			cl: &Client{
+			cl: &client{
 				userID: 1,
 			},
 			mockBeh: func(srv *mock_service.MockServiceInterface) {
@@ -42,7 +42,7 @@ func TestClient_populateUserGUID(t *testing.T) {
 		},
 		{
 			name: "New_user",
-			cl: &Client{
+			cl: &client{
 				userID:   1,
 				username: "test",
 			},
@@ -55,7 +55,7 @@ func TestClient_populateUserGUID(t *testing.T) {
 		},
 		{
 			name: "With_error",
-			cl: &Client{
+			cl: &client{
 				userID:   1,
 				username: "test",
 			},

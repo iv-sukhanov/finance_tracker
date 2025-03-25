@@ -73,8 +73,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 			sessionsBehavior: func(sessions *MockSessions) {
 				messageChan := make(chan string)
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
-					&Session{
-						client:        &Client{username: "test"},
+					&session{
+						client:        &client{username: "test"},
 						active:        1,
 						expectInput:   1,
 						messageChanel: messageChan,
@@ -104,8 +104,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 			},
 			sessionsBehavior: func(sessions *MockSessions) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
-					&Session{
-						client:        &Client{username: "test"},
+					&session{
+						client:        &client{username: "test"},
 						active:        1,
 						expectInput:   0,
 						messageChanel: make(chan string),
@@ -121,8 +121,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 			},
 			sessionsBehavior: func(sessions *MockSessions) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
-					&Session{
-						client:        &Client{username: "test"},
+					&session{
+						client:        &client{username: "test"},
 						active:        0,
 						expectInput:   0,
 						messageChanel: make(chan string),
@@ -141,8 +141,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 			sessionsBehavior: func(sessions *MockSessions) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(nil)
 				sessions.EXPECT().AddSession(int64(1), int64(1), "test_username").Return(
-					&Session{
-						client:        &Client{username: "test_username"},
+					&session{
+						client:        &client{username: "test_username"},
 						messageChanel: make(chan string),
 					},
 				)
@@ -158,8 +158,8 @@ func TestTelegramBot_HandleUpdate(t *testing.T) {
 			},
 			sessionsBehavior: func(sessions *MockSessions) {
 				sessions.EXPECT().GetSession(gomock.Any()).Return(
-					&Session{
-						client:        &Client{username: "test"},
+					&session{
+						client:        &client{username: "test"},
 						active:        0,
 						expectInput:   0,
 						messageChanel: make(chan string),

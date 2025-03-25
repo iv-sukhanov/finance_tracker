@@ -34,10 +34,10 @@ func (m *MockSessions) EXPECT() *MockSessionsMockRecorder {
 }
 
 // AddSession mocks base method.
-func (m *MockSessions) AddSession(chatID, userID int64, username string) *Session {
+func (m *MockSessions) AddSession(chatID, userID int64, username string) *session {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddSession", chatID, userID, username)
-	ret0, _ := ret[0].(*Session)
+	ret0, _ := ret[0].(*session)
 	return ret0
 }
 
@@ -48,10 +48,10 @@ func (mr *MockSessionsMockRecorder) AddSession(chatID, userID, username interfac
 }
 
 // GetSession mocks base method.
-func (m *MockSessions) GetSession(chatID int64) *Session {
+func (m *MockSessions) GetSession(chatID int64) *session {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSession", chatID)
-	ret0, _ := ret[0].(*Session)
+	ret0, _ := ret[0].(*session)
 	return ret0
 }
 
