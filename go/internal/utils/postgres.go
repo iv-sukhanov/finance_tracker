@@ -20,6 +20,8 @@ type ParamsPostgresDB struct {
 	AppName  string
 }
 
+// NewPostgresDB creates a new Postgres database connection using the provided parameters.
+// It returns the database connection, a function to close the connection, and an error if any.
 func NewPostgresDB(params ParamsPostgresDB) (*sqlx.DB, func(), error) {
 
 	dbURL, err := composeURL(params)
@@ -38,6 +40,8 @@ func NewPostgresDB(params ParamsPostgresDB) (*sqlx.DB, func(), error) {
 	return db, func() { db.Close() }, nil
 }
 
+// composeURL composes a PostgreSQL connection URL from the provided parameters.
+// It returns the URL as a string and an error if any required parameters are missing.
 func composeURL(params ParamsPostgresDB) (url string, err error) {
 
 	if params.User == "" || params.Password == "" || params.Host == "" || params.Port == "" || params.DBName == "" {

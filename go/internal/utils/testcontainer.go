@@ -12,24 +12,29 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
+// PostgresContainer is a wrapper for testcontainers.Container
 type postgresContainer struct {
 	testcontainers.Container
 }
 
+// postgresContainerOption is a function that modifies the ContainerRequest
 type postgresContainerOption func(req *testcontainers.ContainerRequest)
 
+// WithWaitStrategy is a function that sets the waiting strategy for the container
 func WithWaitStrategy(strats ...wait.Strategy) func(req *testcontainers.ContainerRequest) {
 	return func(req *testcontainers.ContainerRequest) {
 		req.WaitingFor = wait.ForAll(strats...).WithDeadline(time.Minute * 1)
 	}
 }
 
+// WithPort is a function that sets the exposed ports for the container
 func WithPort(port string) func(req *testcontainers.ContainerRequest) {
 	return func(req *testcontainers.ContainerRequest) {
 		req.ExposedPorts = append(req.ExposedPorts, port)
 	}
 }
 
+// WithInitialDatabase is a function that sets the initial database for the container
 func WithInitialDatabase(user, password, dbName string) func(req *testcontainers.ContainerRequest) {
 	return func(req *testcontainers.ContainerRequest) {
 		req.Env["POSTGRES_USER"] = user
@@ -38,12 +43,14 @@ func WithInitialDatabase(user, password, dbName string) func(req *testcontainers
 	}
 }
 
+// WithHostConfigModigier is a function that sets the host config modifier for the container
 func WithHostConfigModigier(modifier func(*container.HostConfig)) func(req *testcontainers.ContainerRequest) {
 	return func(req *testcontainers.ContainerRequest) {
 		req.HostConfigModifier = modifier
 	}
 }
 
+// StartConteiner starts a PostgreSQL container applying the given options
 func StartConteiner(ctx context.Context, opts ...postgresContainerOption) (*postgresContainer, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres",
@@ -67,6 +74,7 @@ func StartConteiner(ctx context.Context, opts ...postgresContainerOption) (*post
 	return &postgresContainer{container}, nil
 }
 
+// NewPostgresDB creates a new PostgreSQL database testcontainer connection
 func NewPGContainer(filenames ...string) (db *sqlx.DB, shut func(), err error) {
 	ctx := context.Background()
 
@@ -125,6 +133,7 @@ func NewPGContainer(filenames ...string) (db *sqlx.DB, shut func(), err error) {
 	return db, shut, nil
 }
 
+// filenamesToMounts converts a list of filenames to a list of mounts
 func filenamesToMounts(filenames ...string) []mount.Mount {
 	mounts := make([]mount.Mount, 0, len(filenames))
 
