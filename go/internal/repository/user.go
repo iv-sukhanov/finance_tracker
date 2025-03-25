@@ -10,10 +10,12 @@ import (
 )
 
 type (
+	// UserRepo implements the User interface.
 	UserRepo struct {
 		db *sqlx.DB
 	}
 
+	// UserOptions defines the options for retrieving users.
 	UserOptions struct {
 		Limit       int
 		GUIDs       []uuid.UUID
@@ -22,10 +24,19 @@ type (
 	}
 )
 
+// NewUserRepository creates a new instance of UserRepo with the provided database connection.
 func NewUserRepository(db *sqlx.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
+// GetUsers retrieves a list of users from the database based on the provided options.
+//
+// Parameters:
+//   - opts: A struct containing filtering options
+//
+// Returns:
+//   - A slice of User objects matching the specified criteria.
+//   - An error if the query fails or any other issue occurs.
 func (s *UserRepo) GetUsers(opts UserOptions) ([]ftracker.User, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
@@ -50,6 +61,14 @@ func (s *UserRepo) GetUsers(opts UserOptions) ([]ftracker.User, error) {
 	return users, nil
 }
 
+// AddUsers inserts multiple users into the database and returns their generated UUIDs.
+//
+// Parameters:
+//   - users: A slice of ftracker.User objects to be inserted into the database.
+//
+// Returns:
+//   - A slice of uuid.UUID representing the generated UUIDs for the inserted users.
+//   - An error if any issue occurs during the operation.
 func (s *UserRepo) AddUsers(users []ftracker.User) ([]uuid.UUID, error) {
 
 	tx, err := s.db.Beginx()

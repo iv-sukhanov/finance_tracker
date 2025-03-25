@@ -10,10 +10,12 @@ import (
 )
 
 type (
+	// CategoryRepo implements the SpendingCategory interface.
 	CategoryRepo struct {
 		db *sqlx.DB
 	}
 
+	// CategoryOptions defines the options for retrieving spending categories.
 	CategoryOptions struct {
 		Limit      int
 		GUIDs      []uuid.UUID
@@ -22,17 +24,26 @@ type (
 		Order      CategoryOrder
 	}
 
-	CategoryOption func(*CategoryOptions)
-	CategoryOrder  struct {
+	// CategoryOrder defines the order in which categories can be sorted.
+	CategoryOrder struct {
 		Column string
 		Asc    bool
 	}
 )
 
+// NewCategoryRepository creates a new instance of CategoryRepo with the provided database connection.
 func NewCategoryRepository(db *sqlx.DB) *CategoryRepo {
 	return &CategoryRepo{db: db}
 }
 
+// GetCategories retrieves a list of spending categories from the database based on the provided options.
+//
+// Parameters:
+//   - opts: A struct containing filtering, ordering, and limiting options for the query.
+//
+// Returns:
+//   - A slice of SpendingCategory objects that match the query criteria.
+//   - An error if the query fails, or nil if successful.
 func (c *CategoryRepo) GetCategories(opts CategoryOptions) ([]ftracker.SpendingCategory, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
@@ -57,6 +68,14 @@ func (c *CategoryRepo) GetCategories(opts CategoryOptions) ([]ftracker.SpendingC
 	return categories, nil
 }
 
+// AddCategories inserts multiple spending categories into the database and returns their generated UUIDs.
+//
+// Parameters:
+//   - categories: A slice of SpendingCategory objects to be added to the database.
+//
+// Returns:
+//   - A slice of UUIDs corresponding to the inserted categories.
+//   - An error if the operation fails at any point.
 func (c *CategoryRepo) AddCategories(categories []ftracker.SpendingCategory) ([]uuid.UUID, error) {
 	tx, err := c.db.Beginx()
 	if err != nil {

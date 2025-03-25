@@ -11,10 +11,12 @@ import (
 )
 
 type (
+	// RecordRepo implements the SpendingRecord interface.
 	RecordRepo struct {
 		db *sqlx.DB
 	}
 
+	// RecordOptions defines the options for retrieving spending records.
 	RecordOptions struct {
 		Limit         int
 		TimeFrom      time.Time
@@ -25,17 +27,29 @@ type (
 		Order         RecordOrder
 	}
 
+	// RecordOption is a function to modify the RecordOptions.
 	RecordOption func(*RecordOptions)
-	RecordOrder  struct {
+
+	// RecordOrder defines the order in which records can be sorted.
+	RecordOrder struct {
 		Column string
 		Asc    bool
 	}
 )
 
+// NewRecordRepository creates a new instance of RecordRepo with the provided database connection.
 func NewRecordRepository(db *sqlx.DB) *RecordRepo {
 	return &RecordRepo{db: db}
 }
 
+// GetRecords retrieves a list of spending records from the database based on the provided options.
+//
+// Parameters:
+//   - opts: A struct containing options.
+//
+// Returns:
+//   - A slice of SpendingRecord structs matching the query.
+//   - An error if the query fails, or nil if successful.
 func (r *RecordRepo) GetRecords(opts RecordOptions) ([]ftracker.SpendingRecord, error) {
 
 	whereClause := utils.BindWithOp("AND", true,
@@ -61,6 +75,15 @@ func (r *RecordRepo) GetRecords(opts RecordOptions) ([]ftracker.SpendingRecord, 
 	return records, nil
 }
 
+// AddRecords inserts multiple spending records into the database and updates the corresponding
+// spending categories' amounts.
+//
+// Parameters:
+//   - records: A slice of SpendingRecord objects to be added to the database.
+//
+// Returns:
+//   - A slice of UUIDs representing the GUIDs of the newly inserted spending records.
+//   - An error if any issue occurs during the operation.
 func (r *RecordRepo) AddRecords(records []ftracker.SpendingRecord) ([]uuid.UUID, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
