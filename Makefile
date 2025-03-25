@@ -21,4 +21,4 @@ compose-restart:
 	docker compose build --no-cache
 	docker compose up -d
 gh-action:
-	gh workflow run 147279424
+	gh workflow run ${WORKFLOW_ID}
