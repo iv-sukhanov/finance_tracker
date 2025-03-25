@@ -50,7 +50,16 @@ func WithHostConfigModigier(modifier func(*container.HostConfig)) func(req *test
 	}
 }
 
-// StartConteiner starts a PostgreSQL container applying the given options
+// StartConteiner initializes and starts a PostgreSQL container using the testcontainers library.
+// It accepts a context and a variadic list of options to customize the container configuration.
+//
+// Parameters:
+//   - ctx: The context to control the container's lifecycle.
+//   - opts: A variadic list of postgresContainerOption functions to modify the container request.
+//
+// Returns:
+//   - *postgresContainer: A pointer to the started PostgreSQL container.
+//   - error: An error if the container could not be started or configured.
 func StartConteiner(ctx context.Context, opts ...postgresContainerOption) (*postgresContainer, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres",
@@ -75,6 +84,14 @@ func StartConteiner(ctx context.Context, opts ...postgresContainerOption) (*post
 }
 
 // NewPostgresDB creates a new PostgreSQL database testcontainer connection
+//
+// Parameters:
+//   - filenames: A variadic list of .sql filenames that would be executed on the database.
+//
+// Returns:
+//   - *sqlx.DB: A pointer to the initialized database connection.
+//   - func(): A cleanup function to close the database connection.
+//   - error: An error if the database connection could not be established or any other issue occurs.
 func NewPGContainer(filenames ...string) (db *sqlx.DB, shut func(), err error) {
 	ctx := context.Background()
 

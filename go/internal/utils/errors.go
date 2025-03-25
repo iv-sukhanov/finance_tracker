@@ -10,17 +10,31 @@ const (
 	ErrSQLUniqueViolation = "23505"
 )
 
-// GetItitialError returns the initial error from a wrapped error chain.
+// GetItitialError traverses the chain of wrapped errors and returns the
+// initial (root) error in the chain. If the provided error is nil, it
+// returns nil.
+//
+// Parameters:
+//   - err: The error to traverse.
+//
+// Returns:
+//   - initialError: The root error in the chain, or nil if the input error is nil.
 func GetItitialError(err error) (initialError error) {
 	for err != nil {
 		initialError = err
 		err = errors.Unwrap(err)
 	}
-	return initialError
+	return nil
 }
 
-// GetSQLErrorCode returns the SQL error code from a pgconn.PgError.
-// If the error is not a pgconn.PgError, it returns an empty string.
+// GetSQLErrorCode extracts the SQL state code from a PostgreSQL error.
+//
+// Parameters:
+//   - err: The error to extract the SQL state code from.
+//
+// Returns:
+//   - A string representing the SQL state code if the error is a PostgreSQL
+//     error, or an empty string otherwise.
 func GetSQLErrorCode(err error) string {
 	if res, ok := err.(*pgconn.PgError); ok {
 		return res.SQLState()

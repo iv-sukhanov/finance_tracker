@@ -18,7 +18,17 @@ func NewLogger(level string) *logrus.Logger {
 	return log
 }
 
-// GetLevelFromString converts a string representation of a log level to a logrus.Level.
+// GetLevelFromString converts a string representation of a log level
+// into the corresponding logrus.Level. Supported log levels are:
+// "DEBUG", "INFO", "WARN", "ERROR", "FATAL", and "PANIC".
+// If the provided string does not match any of these levels,
+// the function returns the defaultLogLevel.
+//
+// Parameters:
+//   - currentLevel: A string representing the desired log level.
+//
+// Returns:
+//   - logrus.Level: The corresponding logrus log level.
 func GetLevelFromString(currentLevel string) logrus.Level {
 
 	levels := map[string]logrus.Level{

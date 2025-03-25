@@ -20,8 +20,16 @@ type ParamsPostgresDB struct {
 	AppName  string
 }
 
-// NewPostgresDB creates a new Postgres database connection using the provided parameters.
-// It returns the database connection, a function to close the connection, and an error if any.
+// NewPostgresDB initializes a new PostgreSQL database connection using the provided parameters.
+// It returns a pointer to the sqlx.DB instance, a cleanup function to close the connection, and an error if any occurs.
+//
+// Parameters:
+//   - params: An instance of ParamsPostgresDB containing the necessary configuration for the database connection.
+//
+// Returns:
+//   - *sqlx.DB: A pointer to the initialized database connection.
+//   - func(): A cleanup function to close the database connection.
+//   - error: An error if the database connection could not be established or any other issue occurs.
 func NewPostgresDB(params ParamsPostgresDB) (*sqlx.DB, func(), error) {
 
 	dbURL, err := composeURL(params)

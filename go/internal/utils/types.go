@@ -7,7 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// UUIDsToStrings converts a slice of UUIDs to a slice of strings.
+// UUIDsToStrings converts a slice of uuid.UUID objects to a slice of their string representations.
+//
+// Parameters:
+//   - uuids: A slice of uuid.UUID objects to be converted.
+//
+// Returns:
+//   - []string: A slice containing the string representations of the input UUIDs.
 func UUIDsToStrings(uuids []uuid.UUID) []string {
 	strs := make([]string, len(uuids))
 	for i, guid := range uuids {
@@ -16,8 +22,24 @@ func UUIDsToStrings(uuids []uuid.UUID) []string {
 	return strs
 }
 
-// ExtractAmountParts receives an amount in different formats (string, uint32, uint64)
-// and returns the integer and fractional parts of the amount as strings.
+// ExtractAmountParts splits a monetary amount into its integer (left) and fractional (right) parts.
+// It supports input of type string, uint32, and uint64.
+//
+// For string inputs, the function expects a decimal representation of the amount
+// (e.g., "123.45"). If the fractional part is missing, it defaults to "00". If the
+// fractional part has only one digit, it is padded with a trailing zero.
+//
+// For uint32 and uint64 inputs, the function assumes the amount is represented
+// in cents (e.g., 12345 represents "123.45"). The integer part is derived by dividing
+// the amount by 100, and the fractional part is derived from the remainder. If the
+// fractional part has only one digit, it is padded with a leading zero.
+//
+// Parameters:
+// - amount: The monetary amount to be split. It can be of type string, uint32, or uint64.
+//
+// Returns:
+// - left: The integer part of the amount as a string.
+// - rignt: The fractional part of the amount as a string (always two digits).
 func ExtractAmountParts(amount any) (left string, rignt string) {
 
 	switch amount := amount.(type) {
@@ -48,7 +70,16 @@ func ExtractAmountParts(amount any) (left string, rignt string) {
 	return left, rignt
 }
 
-// OmmitEmptyStrings removes empty strings from a slice of strings.
+// OmmitEmptyStrings filters out empty strings from the provided slice of strings.
+// It returns a new slice containing only the non-empty strings from the input.
+//
+// Parameters:
+//
+//   - strs: A slice of strings to be filtered.
+//
+// Returns:
+//
+//   - A new slice containing only the non-empty strings from the input.
 func OmmitEmptyStrings(strs []string) []string {
 	res := make([]string, 0, len(strs))
 	for _, s := range strs {
