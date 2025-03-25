@@ -2,20 +2,23 @@
 
 ## Description
 
-Finance Tracker Bot is a Telegram bot that helps users track their financial transactions. It allows users to add, categorize, and analyze their expenses.
+Finance Tracker Bot is a Telegram bot designed to help users manage their financial transactions. It enables users to add, categorize, and analyze their expenses efficiently.
 
-## Table of contents
+## Table of Contents
 
 1. [Installation & Setup](#installation--setup)
-2. [Running the Rroject](#running-the-project)
+2. [Running the Project](#running-the-project)
 3. [Deployment](#deployment)
 4. [Logging & Debugging](#logging--debugging)
 5. [Database](#database)
 6. [Overview](#overview)
+7. [Additional Notes](#additional-notes)
 
 ## Installation & Setup
 
 ### Prerequisites
+
+Ensure the following tools are installed:
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
@@ -28,11 +31,11 @@ git clone https://github.com/iv-sukhanov/finance_tracker.git
 cd finance_tracker
 ```
 
-### Environment Variables
+### Configure Environment Variables
 
-Create an `.env/.dev` file and configure the required environment variables:
+Create an `.env/.dev` file and define the required variables:
 
-```
+```env
 TELEGRAM_BOT_TOKEN=your_token
 POSTGRES_USER=your_user
 POSTGRES_PASSWORD=your_password
@@ -42,22 +45,19 @@ POSTGRES_DB=finance_tracker
 DATABASE_URL=postgres://your_user:your_password@db:5432/finance_tracker?sslmode=disable
 ```
 
-Additionally there are optional variables:
+Optional variables:
 
-```
+```env
 LOG_LEVEL=(DEBUG|INFO|WARN|ERROR|FATAL|PANIC)
 TELEGRAM_DEBUG_MODE=(true|false)
 TELEGRAM_USERNAME=your_tg_username
 APP_NAME=finance_tracker_bot
 ```
 
-`LOG_LEVEL` defines the log level of the application *default is INFO
-
-`TELEGRAM_DEBUG_MODE` defines if the telegram API debug logs would be shown *default is false
-
-`TELEGRAM_USERNAME` would add your username to the internal error messages to the users
-
-`APP_NAME` would add the app name to some logs 
+- `LOG_LEVEL`: Sets the application's log level (default: INFO).
+- `TELEGRAM_DEBUG_MODE`: Enables Telegram API debug logs (default: false).
+- `TELEGRAM_USERNAME`: Adds your username to internal error messages.
+- `APP_NAME`: Appends the app name to logs.
 
 ## Running the Project
 
@@ -67,7 +67,7 @@ APP_NAME=finance_tracker_bot
 docker compose up -d --build
 ```
 
-### Using make
+### Using Make
 
 ```sh
 make compose-up
@@ -79,21 +79,22 @@ or
 make compose-restart
 ```
 
-This will start the PostgreSQL database, run migrations, and start the bot.
+This will initialize the PostgreSQL database, apply migrations, and start the bot.
 
 ## Deployment
 
-This project uses GitHub Actions for automated deployment. 
+The project uses GitHub Actions for automated deployment.
 
-To trigger a deployment manually you first need to specify `SSH_PRIVATE_KEY` and `VPS_HOST` variables in the github secrets.
+### Manual Deployment
 
-Then the workflow dispatch could be triggered running:
+1. Add `SSH_PRIVATE_KEY` and `VPS_HOST` to GitHub secrets.
+2. Trigger the workflow:
 
 ```sh
 gh workflow run main.yml
 ```
 
-or it is possible to add an environmental variable `WORKFLOW_ID=workflow_id` and deploy by running:
+Alternatively, set `WORKFLOW_ID=workflow_id` and deploy using:
 
 ```sh
 make gh-action
@@ -102,68 +103,58 @@ make gh-action
 ## Logging & Debugging
 
 - View real-time logs:
-  ```sh
-  docker compose logs -f
-  ```
-- Check database logs:
-  ```sh
-  docker compose logs -f db
-  ```
+    ```sh
+    docker compose logs -f
+    ```
+- View database logs:
+    ```sh
+    docker compose logs -f db
+    ```
 
 ## Database
 
-The project uses postgres to store the data. The posrgres container is run automatically
-with docker compose, then a migrate container applies the init migration. After that the go application connects to the db.
+The project uses PostgreSQL for data storage. The database container is managed by Docker Compose, and migrations are applied automatically.
 
-### Schema
+### Schema Overview
 
-Here is the database schema:
+![Database Schema](/doc/schema.png)
 
-![database schema](/doc/schema.png)
-
-There are tree tables: users, spending_categories, and spending_records.
-
-The relation between the users table and the spending_catigories is one to many, and the relation between the spending_catigories and the spending_records table is one to many as well.
+- **Tables**: `users`, `spending_categories`, `spending_records`
+- **Relationships**:
+  - `users` → `spending_categories`: One-to-Many
+  - `spending_categories` → `spending_records`: One-to-Many
 
 ## Overview
 
 ### Motivation
-As a poor student I have always wanted to keep track of the amount of money I spend on different things to then reconsider the spendings and manage the finances more wisely. But it was too hard for me to keep in mind all the spendings and then update the EXEL table on the laptop every day. Bank applications do not provide enough details about the spendings (*BoC especially*🤭🤭), and different applications felt like too much overhead so they did not really suit me.
 
-So I decided to build a little bot that would help me to keep track of the spendings using telegram - the application that I already constantly use. So I do not need to get used to something new, and usage of telegram reminds me to add spending records, so it suits my demands. It is hosted right now and I personally use it, tracking the spendings.
+As a poor student, I have always wanted to keep track of how much money I spend on different things so that I can later reconsider my expenses and manage my finances more wisely. However, it was too difficult for me to remember all my expenses and update the Excel table on my laptop every day. Bank applications do not provide enough details about my spending (especially BoC 🤭🤭), and other budgeting apps felt like too much overhead, so they didn’t really suit me.
 
-### Functionality
+So, I decided to build a little bot to help me track my spending using Telegram — an app I already use constantly. This way, I don’t have to get used to something new, and using Telegram reminds me to add spending records, making it a perfect fit for my needs. The bot is currently hosted, and I personally use it to track my expenses.
 
-As it was written above, the project is a telegram bot that allows to add and observe:
+### Features
 
-    * spendings categories
-    * spending records
+The bot allows users to:
 
-Then it allows to display the collected data for the chosen time period for the specific category. Additionally, you can request an EXEL file with the data for the further examination.
+- Add and view spending categories.
+- Record and analyze expenses.
+- Generate Excel reports for detailed analysis.
 
-The bot is hosted right now on a digital ocean droplet (at least it is hosted on the moment of writing this README), so you are welcome to test it [here](https://t.me/tgSukhanov_bot), but please please don't steal the data, otherwise you will know how much money I spend on beer and delivery food💀💀.
+The bot is hosted on a DigitalOcean droplet and is available for testing [here](https://t.me/tgSukhanov_bot). But please please don't steal the data, otherwise you will know how much money I spend on beer and delivery food ;)
 
-### How it works
+### How It Works
 
-In two words, the bot gets text, then it checks if it is a new command or an input for the previously initiated command. Then it transmits the data to the proper goroutine, or creates a new one (if it is a new command). Once the command is done, or a timout reached, the go-routine is shut.
+The bot processes user input by identifying commands and delegating tasks to appropriate goroutines. Each goroutine manages its session state using atomic operations to prevent data races.
 
-The whole processing and database manipulating happens in separate go-routines, for each go-routine process there is a special session struct that stores a state as an atomic int32, so there should not be any data races. 
+The project structure includes:
 
-I tried to comment all essential parts of the code, so you are welcome to look at the code, I am sure it would be pretty easy to figure out how everything works.
+- `cmd`: Contains the main entry point.
+- `internal`:
+  - `bot`: Handles Telegram bot functionality.
+  - `repository`: Manages database interactions.
+  - `service`: Provides business logic and utility functions.
+  - `utils`: Contains general-purpose helper functions.
 
-Anyway, it is a full go project, so all the code is inside the go foulder. Then there is a `cmd` foulder with just a main file, nothing interesing there, the db connection and the bot are inited there, and then started.
+## Additional Notes
 
-In the `internal` foulder there are 4 packages:
-
-    * bot
-    * repository
-    * service
-    * utils
-
-`utils` package contains some util functions that are pretty general and not that related to the project.
-
-`repository` is responsible for all code related to the database, there are tests using [test-containers](https://golang.testcontainers.org). The code is just put and retrieve the data from the db.
-
-`service` is the application service. It provides functions wrappers for the repository and functions to create exel files.
-
-`bot` is the most outer arcitecture layer. It represents the whole bot functionality. The `Run()` function there gets the updates from the telegram API and then feeds the recieved text to the proper go-routine, or creates a new one, if needed.
+Feedback on the code, architecture, or any other aspect is highly appreciated. Your suggestions will help me improve my skills.
