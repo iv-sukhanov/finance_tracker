@@ -16,14 +16,12 @@ func TestExelService_CreateExelFromRecords(t *testing.T) {
 	initTime, _ := time.Parse("2006-01-02", "2024-11-26")
 
 	tests := []struct {
-		name     string
-		username string
-		recods   []ftracker.SpendingRecord
-		wantErr  bool
+		name    string
+		recods  []ftracker.SpendingRecord
+		wantErr bool
 	}{
 		{
-			name:     "Ok",
-			username: "test",
+			name: "Ok",
 			recods: []ftracker.SpendingRecord{
 				{
 					Amount:      1234,
@@ -45,14 +43,14 @@ func TestExelService_CreateExelFromRecords(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			file, err := s.CreateExelFromRecords(tt.username, tt.recods)
+			file, err := s.CreateExelFromRecords(tt.recods)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExelService.CreateExelFromRecords() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			for i := range len(tt.recods) + 1 {
 				for j := range 3 {
 					curCell := fmt.Sprintf("%c%d", 'A'+j, i+1)
-					content, err := file.GetCellValue(tt.username, curCell)
+					content, err := file.GetCellValue(sheetName, curCell)
 					var expectedContent string
 					if i == 0 {
 						switch j {
@@ -87,13 +85,11 @@ func TestExelService_CreateExelFromCategories(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		username   string
 		categories []ftracker.SpendingCategory
 		wantErr    bool
 	}{
 		{
-			name:     "Ok",
-			username: "test",
+			name: "Ok",
 			categories: []ftracker.SpendingCategory{
 				{
 					Category:    "Food",
@@ -115,14 +111,14 @@ func TestExelService_CreateExelFromCategories(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			file, err := s.CreateExelFromCategories(tt.username, tt.categories)
+			file, err := s.CreateExelFromCategories(tt.categories)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExelService.CreateExelFromCategories() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			for i := range len(tt.categories) + 1 {
 				for j := range 3 {
 					curCell := fmt.Sprintf("%c%d", 'A'+j, i+1)
-					content, err := file.GetCellValue(tt.username, curCell)
+					content, err := file.GetCellValue(sheetName, curCell)
 					var expectedContent string
 					if i == 0 {
 						switch j {
@@ -148,7 +144,6 @@ func TestExelService_CreateExelFromCategories(t *testing.T) {
 					require.Equal(t, expectedContent, content)
 				}
 			}
-			file.SaveAs("test.xlsx")
 		})
 	}
 }

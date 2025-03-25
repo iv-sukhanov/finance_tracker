@@ -10,6 +10,7 @@ import (
 
 const (
 	formatOut      = "Monday, 02 Jan, 15:04"
+	sheetName      = "records"
 	amountLen      = 10
 	descriptionLen = 30
 	timeLen        = 25
@@ -53,7 +54,7 @@ func NewExelService() *ExelService {
 	return &ExelService{}
 }
 
-func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.SpendingRecord) (f *excelize.File, outputError error) {
+func (s *ExelService) CreateExelFromRecords(recods []ftracker.SpendingRecord) (f *excelize.File, outputError error) {
 
 	f = excelize.NewFile()
 	defer func() {
@@ -62,7 +63,7 @@ func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.S
 		}
 	}()
 
-	index, err := f.NewSheet(username)
+	index, err := f.NewSheet(sheetName)
 	if err != nil {
 		outputError = fmt.Errorf("CreateExelFromRecords: %w", err)
 		return nil, outputError
@@ -82,29 +83,29 @@ func (s *ExelService) CreateExelFromRecords(username string, recods []ftracker.S
 		return nil, outputError
 	}
 
-	f.SetSheetRow(username, "A1", &[]any{"Amount", "Description", "Created At"})
-	f.SetCellStyle(username, "A1", "C1", headerStyle)
+	f.SetSheetRow(sheetName, "A1", &[]any{"Amount", "Description", "Created At"})
+	f.SetCellStyle(sheetName, "A1", "C1", headerStyle)
 
 	for i, record := range recods {
 		start := fmt.Sprintf("A%d", i+2)
 		end := fmt.Sprintf("C%d", i+2)
 		left, right := utils.ExtractAmountParts(record.Amount)
-		f.SetSheetRow(username, start, &[]any{
+		f.SetSheetRow(sheetName, start, &[]any{
 			fmt.Sprintf("%s.%s", left, right),
 			record.Description,
 			record.CreatedAt.Format(formatOut),
 		})
-		f.SetCellStyle(username, start, end, dataStyle)
+		f.SetCellStyle(sheetName, start, end, dataStyle)
 	}
 
-	f.SetColWidth(username, "A", "A", amountLen)
-	f.SetColWidth(username, "B", "B", descriptionLen)
-	f.SetColWidth(username, "C", "C", timeLen)
+	f.SetColWidth(sheetName, "A", "A", amountLen)
+	f.SetColWidth(sheetName, "B", "B", descriptionLen)
+	f.SetColWidth(sheetName, "C", "C", timeLen)
 
 	return f, nil
 }
 
-func (s *ExelService) CreateExelFromCategories(username string, categories []ftracker.SpendingCategory) (f *excelize.File, outputError error) {
+func (s *ExelService) CreateExelFromCategories(categories []ftracker.SpendingCategory) (f *excelize.File, outputError error) {
 	f = excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -112,7 +113,7 @@ func (s *ExelService) CreateExelFromCategories(username string, categories []ftr
 		}
 	}()
 
-	index, err := f.NewSheet(username)
+	index, err := f.NewSheet(sheetName)
 	if err != nil {
 		outputError = fmt.Errorf("CreateExelFromCategories: %w", err)
 		return nil, outputError
@@ -132,24 +133,24 @@ func (s *ExelService) CreateExelFromCategories(username string, categories []ftr
 		return nil, outputError
 	}
 
-	f.SetSheetRow(username, "A1", &[]any{"Category", "Description", "Amount"})
-	f.SetCellStyle(username, "A1", "C1", headerStyle)
+	f.SetSheetRow(sheetName, "A1", &[]any{"Category", "Description", "Amount"})
+	f.SetCellStyle(sheetName, "A1", "C1", headerStyle)
 
 	for i, category := range categories {
 		start := fmt.Sprintf("A%d", i+2)
 		end := fmt.Sprintf("C%d", i+2)
 		left, right := utils.ExtractAmountParts(category.Amount)
-		f.SetSheetRow(username, start, &[]any{
+		f.SetSheetRow(sheetName, start, &[]any{
 			category.Category,
 			category.Description,
 			fmt.Sprintf("%s.%s", left, right),
 		})
-		f.SetCellStyle(username, start, end, dataStyle)
+		f.SetCellStyle(sheetName, start, end, dataStyle)
 	}
 
-	f.SetColWidth(username, "A", "A", categoryLen)
-	f.SetColWidth(username, "B", "B", descriptionLen)
-	f.SetColWidth(username, "C", "C", amountLen)
+	f.SetColWidth(sheetName, "A", "A", categoryLen)
+	f.SetColWidth(sheetName, "B", "B", descriptionLen)
+	f.SetColWidth(sheetName, "C", "C", amountLen)
 
 	return f, nil
 }

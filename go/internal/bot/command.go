@@ -497,7 +497,7 @@ func returnRecordsExelAction(input []string, batch *any, service service.Service
 		return
 	}
 
-	file, err := service.CreateExelFromRecords(cl.username, records)
+	file, err := service.CreateExelFromRecords(records)
 	if err != nil {
 		log.WithError(err).Error("error on create exel")
 		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
@@ -546,7 +546,7 @@ func returnCategoriesExelAction(input []string, batch *any, service service.Serv
 		return
 	}
 
-	file, err := service.CreateExelFromCategories(cl.username, categories)
+	file, err := service.CreateExelFromCategories(categories)
 	if err != nil {
 		log.WithError(err).Error("error on create exel")
 		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
