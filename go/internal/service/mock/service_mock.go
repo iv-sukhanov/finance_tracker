@@ -166,6 +166,21 @@ func (mr *MockSpendingCategoryMockRecorder) AddCategories(categories interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCategories", reflect.TypeOf((*MockSpendingCategory)(nil).AddCategories), categories)
 }
 
+// CreateExelFromCategories mocks base method.
+func (m *MockSpendingCategory) CreateExelFromCategories(categories []ftracker.SpendingCategory) (*excelize.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateExelFromCategories", categories)
+	ret0, _ := ret[0].(*excelize.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateExelFromCategories indicates an expected call of CreateExelFromCategories.
+func (mr *MockSpendingCategoryMockRecorder) CreateExelFromCategories(categories interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromCategories", reflect.TypeOf((*MockSpendingCategory)(nil).CreateExelFromCategories), categories)
+}
+
 // GetCategories mocks base method.
 func (m *MockSpendingCategory) GetCategories(opts ...service.CategoryOption) ([]ftracker.SpendingCategory, error) {
 	m.ctrl.T.Helper()
@@ -293,6 +308,21 @@ func (mr *MockSpendingRecordMockRecorder) AddRecords(records interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRecords", reflect.TypeOf((*MockSpendingRecord)(nil).AddRecords), records)
 }
 
+// CreateExelFromRecords mocks base method.
+func (m *MockSpendingRecord) CreateExelFromRecords(recods []ftracker.SpendingRecord) (*excelize.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateExelFromRecords", recods)
+	ret0, _ := ret[0].(*excelize.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateExelFromRecords indicates an expected call of CreateExelFromRecords.
+func (mr *MockSpendingRecordMockRecorder) CreateExelFromRecords(recods interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromRecords", reflect.TypeOf((*MockSpendingRecord)(nil).CreateExelFromRecords), recods)
+}
+
 // GetRecords mocks base method.
 func (m *MockSpendingRecord) GetRecords(opts ...service.RecordOption) ([]ftracker.SpendingRecord, error) {
 	m.ctrl.T.Helper()
@@ -380,59 +410,6 @@ func (m *MockSpendingRecord) SpendingRecordsWithTimeFrame(from, to time.Time) se
 func (mr *MockSpendingRecordMockRecorder) SpendingRecordsWithTimeFrame(from, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendingRecordsWithTimeFrame", reflect.TypeOf((*MockSpendingRecord)(nil).SpendingRecordsWithTimeFrame), from, to)
-}
-
-// MockExelMaker is a mock of ExelMaker interface.
-type MockExelMaker struct {
-	ctrl     *gomock.Controller
-	recorder *MockExelMakerMockRecorder
-}
-
-// MockExelMakerMockRecorder is the mock recorder for MockExelMaker.
-type MockExelMakerMockRecorder struct {
-	mock *MockExelMaker
-}
-
-// NewMockExelMaker creates a new mock instance.
-func NewMockExelMaker(ctrl *gomock.Controller) *MockExelMaker {
-	mock := &MockExelMaker{ctrl: ctrl}
-	mock.recorder = &MockExelMakerMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockExelMaker) EXPECT() *MockExelMakerMockRecorder {
-	return m.recorder
-}
-
-// CreateExelFromCategories mocks base method.
-func (m *MockExelMaker) CreateExelFromCategories(categories []ftracker.SpendingCategory) (*excelize.File, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateExelFromCategories", categories)
-	ret0, _ := ret[0].(*excelize.File)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateExelFromCategories indicates an expected call of CreateExelFromCategories.
-func (mr *MockExelMakerMockRecorder) CreateExelFromCategories(categories interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromCategories", reflect.TypeOf((*MockExelMaker)(nil).CreateExelFromCategories), categories)
-}
-
-// CreateExelFromRecords mocks base method.
-func (m *MockExelMaker) CreateExelFromRecords(recods []ftracker.SpendingRecord) (*excelize.File, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateExelFromRecords", recods)
-	ret0, _ := ret[0].(*excelize.File)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateExelFromRecords indicates an expected call of CreateExelFromRecords.
-func (mr *MockExelMakerMockRecorder) CreateExelFromRecords(recods interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExelFromRecords", reflect.TypeOf((*MockExelMaker)(nil).CreateExelFromRecords), recods)
 }
 
 // MockServiceInterface is a mock of ServiceInterface interface.

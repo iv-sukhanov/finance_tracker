@@ -12,8 +12,8 @@ import (
 
 func TestExelService_CreateExelFromRecords(t *testing.T) {
 
-	s := NewExelService()
 	initTime, _ := time.Parse("2006-01-02", "2024-11-26")
+	s := RecordService{}
 
 	tests := []struct {
 		name    string
@@ -81,7 +81,8 @@ func TestExelService_CreateExelFromRecords(t *testing.T) {
 }
 
 func TestExelService_CreateExelFromCategories(t *testing.T) {
-	s := NewExelService()
+
+	s := CategoryService{}
 
 	tests := []struct {
 		name       string

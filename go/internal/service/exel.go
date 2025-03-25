@@ -18,6 +18,7 @@ const (
 )
 
 var (
+	// header style for the exel file
 	headerStyle = excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
@@ -37,6 +38,7 @@ var (
 		},
 	}
 
+	// data style for the exel file
 	dataStyle = excelize.Style{
 		Border: []excelize.Border{
 			{Type: "left", Color: "000000", Style: 1},
@@ -47,14 +49,15 @@ var (
 	}
 )
 
-type ExelService struct {
-}
-
-func NewExelService() *ExelService {
-	return &ExelService{}
-}
-
-func (s *ExelService) CreateExelFromRecords(recods []ftracker.SpendingRecord) (f *excelize.File, outputError error) {
+// CreateExelFromRecords generates an Excel file from a slice of SpendingRecord objects.
+//
+// Parameters:
+//   - recods: A slice of SpendingRecord objects containing the data to be written to the Excel file.
+//
+// Returns:
+//   - f: A pointer to the generated excelize.File containing the formatted data.
+//   - outputError: An error object if any issues occur during the file creation process.
+func (s RecordService) CreateExelFromRecords(recods []ftracker.SpendingRecord) (f *excelize.File, outputError error) {
 
 	f = excelize.NewFile()
 	defer func() {
@@ -105,7 +108,15 @@ func (s *ExelService) CreateExelFromRecords(recods []ftracker.SpendingRecord) (f
 	return f, nil
 }
 
-func (s *ExelService) CreateExelFromCategories(categories []ftracker.SpendingCategory) (f *excelize.File, outputError error) {
+// CreateExelFromCategories generates an Excel file containing a list of spending categories.
+//
+// Parameters:
+//   - categories: A slice of SpendingCategory objects containing the data to be written to the Excel file.
+//
+// Returns:
+//   - f: A pointer to the generated Excel file.
+//   - outputError: An error object if any issues occur during the file creation process.
+func (s CategoryService) CreateExelFromCategories(categories []ftracker.SpendingCategory) (f *excelize.File, outputError error) {
 	f = excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
