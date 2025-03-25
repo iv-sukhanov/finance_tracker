@@ -316,9 +316,10 @@ func Test_showCategoriesAction(t *testing.T) {
 					"Your categories:\n"+
 						"1\\. test1 \\- 11\\.01\u20AC\n"+
 						"2\\. test2 \\- 11\\.02\u20AC\n"+
-						"3\\. test3 \\- 11\\.03\u20AC\n",
+						"3\\. test3 \\- 11\\.03\u20AC\n"+
+						MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelCategoriesKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
@@ -343,9 +344,10 @@ func Test_showCategoriesAction(t *testing.T) {
 					"Your categories:\n"+
 						"1\\. test1 \\- 11\\.01\u20AC\ntest1descr\n\n"+
 						"2\\. test2 \\- 11\\.02\u20AC\ntest2descr\n\n"+
-						"3\\. test3 \\- 11\\.03\u20AC\ntest3descr\n\n",
+						"3\\. test3 \\- 11\\.03\u20AC\ntest3descr\n\n"+
+						MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelCategoriesKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
@@ -369,9 +371,10 @@ func Test_showCategoriesAction(t *testing.T) {
 				msg := tgbotapi.NewMessage(int64(1),
 					"Your categories:\n"+
 						"1\\. test1 \\- 11\\.01\u20AC\ntest1descr\n\n"+
-						"2\\. test2 \\- 11\\.02\u20AC\ntest2descr\n\n",
+						"2\\. test2 \\- 11\\.02\u20AC\ntest2descr\n\n"+
+						MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelCategoriesKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
@@ -393,9 +396,10 @@ func Test_showCategoriesAction(t *testing.T) {
 			senderBeh: func(s *MockSender) {
 				msg := tgbotapi.NewMessage(int64(1),
 					"Your categories:\n"+
-						"1\\. beer \\- 11\\.01\u20AC\nmoney spent on beer\n\n",
+						"1\\. beer \\- 11\\.01\u20AC\nmoney spent on beer\n\n"+
+						MessageWantEXEL,
 				)
-				msg.ReplyMarkup = baseKeyboard
+				msg.ReplyMarkup = wantExelCategoriesKeyboard
 				s.EXPECT().Send(msg)
 			},
 			serviceBeh: func(s *mock_service.MockServiceInterface) {
@@ -475,10 +479,11 @@ func Test_showCategoriesAction(t *testing.T) {
 			sender := NewMockSender(controller)
 			tt.senderBeh(sender)
 
+			var batch any
 			cmd := commandsByIDs[4]
 			client := &Client{chanID: 1, userGUID: tt.clientGUID}
 
-			showCategoriesAction(tt.input, nil, service, test_log, sender, client, &cmd)
+			showCategoriesAction(tt.input, &batch, service, test_log, sender, client, &cmd)
 		})
 	}
 }
