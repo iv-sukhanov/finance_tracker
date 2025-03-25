@@ -24,7 +24,7 @@ func GetItitialError(err error) (initialError error) {
 		initialError = err
 		err = errors.Unwrap(err)
 	}
-	return nil
+	return initialError
 }
 
 // GetSQLErrorCode extracts the SQL state code from a PostgreSQL error.
