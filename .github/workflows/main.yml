@@ -1,4 +1,4 @@
-name: CI/CD for a young goodlooking man
+name: CI/CD for a young goodlooking man 
 
 on:
   workflow_dispatch:
