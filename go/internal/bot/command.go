@@ -308,6 +308,7 @@ func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterf
 	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
 	// or to catch some errors I am unaware of
 	if len(input) != 4 {
+		cmd.becomeLast()
 		log.Error("wrong tocken number for add record command")
 		return
 	}
@@ -328,6 +329,8 @@ func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterf
 		if err != nil {
 			log.WithError(err).Error("error on parsing limit")
 			msg.Text = MessageLimitError + "\n" + internalErrorAditionalInfo
+			msg.ReplyMarkup = baseKeyboard
+			cmd.becomeLast()
 			return
 		}
 	case "all":
@@ -348,6 +351,8 @@ func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterf
 	if err != nil {
 		log.WithError(err).Error("error on get categories")
 		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
+		msg.ReplyMarkup = baseKeyboard
+		cmd.becomeLast()
 		return
 	}
 
@@ -357,6 +362,8 @@ func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterf
 		} else {
 			msg.Text = MessageNoCategoryFound
 		}
+		msg.ReplyMarkup = baseKeyboard
+		cmd.becomeLast()
 		return
 	}
 
@@ -387,6 +394,7 @@ func showRecordsAction(input []string, batch *any, srvc service.ServiceInterface
 	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
 	// or to catch some errors I am unaware of
 	if len(input) != 2 {
+		cmd.becomeLast()
 		log.Error("wrong tocken number for show records command")
 		return
 	}
@@ -426,6 +434,7 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 	// but in case of future changes, it is better to keep it, to catch invalid regex changes,
 	// or to catch some errors I am unaware of
 	if len(input) != 6 {
+		cmd.becomeLast()
 		log.Error("wrong tocken number for set time boundaries command")
 		return
 	}
@@ -446,6 +455,8 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 		if err != nil {
 			log.WithError(err).Error("error on parsing limit")
 			msg.Text = MessageLimitError + "\n" + internalErrorAditionalInfo
+			msg.ReplyMarkup = baseKeyboard
+			cmd.becomeLast()
 			return
 		}
 	}
@@ -456,6 +467,8 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 		if err != nil {
 			log.WithError(err).Error("error on parsing time from")
 			msg.Text = MessageInvalidFromDate
+			msg.ReplyMarkup = baseKeyboard
+			cmd.becomeLast()
 			return
 		}
 
@@ -466,6 +479,8 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 			if err != nil {
 				log.WithError(err).Error("error on parsing time to")
 				msg.Text = MessageInvalidToDate
+				msg.ReplyMarkup = baseKeyboard
+				cmd.becomeLast()
 				return
 			}
 		}
@@ -483,6 +498,8 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 		default:
 			log.Error("invalid token for ymd time boundaries")
 			msg.Text = MessageInvalidFixedTime + "\n" + internalErrorAditionalInfo
+			msg.ReplyMarkup = baseKeyboard
+			cmd.becomeLast()
 			return
 		}
 	}
@@ -498,11 +515,15 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 	if err != nil {
 		log.WithError(err).Error("error on get records")
 		msg.Text = MessageDatabaseError + "\n" + internalErrorAditionalInfo
+		msg.ReplyMarkup = baseKeyboard
+		cmd.becomeLast()
 		return
 	}
 
 	if len(records) == 0 {
 		msg.Text = MessageUnderflowRecords
+		msg.ReplyMarkup = baseKeyboard
+		cmd.becomeLast()
 		return
 	}
 
