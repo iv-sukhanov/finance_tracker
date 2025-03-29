@@ -10,7 +10,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 	ftracker "github.com/iv-sukhanov/finance_tracker/internal"
-	"github.com/iv-sukhanov/finance_tracker/internal/repository"
 	"github.com/iv-sukhanov/finance_tracker/internal/service"
 	"github.com/iv-sukhanov/finance_tracker/internal/utils"
 	"github.com/sirupsen/logrus"
@@ -421,7 +420,7 @@ func showRecordsAction(input []string, batch *any, srvc service.ServiceInterface
 		cmd.becomeLast()
 		return
 	}
-	(*batch).(*repository.RecordOptions).CategoryGUIDs = []uuid.UUID{categories[0].GUID}
+	(*batch).(*batchShowRecords).singleCategoryGUID = categories[0].GUID
 	msg.Text = MessageAddTimeDetails
 }
 
@@ -506,9 +505,9 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 	}
 
 	log.Debug("time boundaries: ", timeFrom, timeTo)
-	recordOption := *(*batch).(*repository.RecordOptions)
+	singleCategoryGUID := (*batch).(*batchShowRecords).singleCategoryGUID
 	records, err := srvc.GetRecords(
-		srvc.SpendingRecordsWithCategoryGUIDs(recordOption.CategoryGUIDs),
+		srvc.SpendingRecordsWithCategoryGUIDs([]uuid.UUID{singleCategoryGUID}),
 		srvc.SpendingRecordsWithTimeFrame(timeFrom, timeTo),
 		srvc.SpendingRecordsWithLimit(recordsLimit),
 		srvc.SpendingRecordsWithOrder(service.OrderRecordsByCreatedAt, false),
@@ -528,7 +527,7 @@ func getTimeBoundariesAction(input []string, batch *any, srvc service.ServiceInt
 		return
 	}
 
-	*batch = records
+	(*batch).(*batchShowRecords).spendingRecords = records
 	var subtotal uint32 = 0
 	if addDescription {
 		for _, record := range records {
@@ -580,12 +579,7 @@ func returnRecordsExelAction(input []string, batch *any, service service.Service
 		return
 	}
 
-	records, ok := (*batch).([]ftracker.SpendingRecord)
-	if !ok {
-		log.Errorf("wrong batch type for exel: %T", *batch)
-		msg.Text = MessageInternalError + "\n" + internalErrorAditionalInfo
-		return
-	}
+	records := (*batch).(*batchShowRecords).spendingRecords
 
 	file, err := service.CreateExelFromRecords(records)
 	if err != nil {
@@ -703,8 +697,12 @@ func isCommand(s string) (command, bool) {
 }
 
 type batchShowRecords struct {
+	single bool
+
 	singleCategoryGUID      uuid.UUID
 	multipleCategoriesGUIDs map[uuid.UUID]string
+
+	spendingRecords []ftracker.SpendingRecord
 }
 
 // inits the batch for the command
