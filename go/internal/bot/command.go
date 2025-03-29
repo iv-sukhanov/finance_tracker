@@ -367,7 +367,8 @@ func showCategoriesAction(input []string, batch *any, srvc service.ServiceInterf
 		return
 	}
 
-	*batch = categories
+	*(*batch).(*[]ftracker.SpendingCategory) = categories
+	log.Debugf("batch type: %T", *batch)
 	msg.Text = "Your categories:\n"
 	if addDescription {
 		for i, category := range categories {
@@ -635,14 +636,15 @@ func returnCategoriesExelAction(input []string, batch *any, service service.Serv
 		return
 	}
 
-	categories, ok := (*batch).([]ftracker.SpendingCategory)
+	categories, ok := (*batch).(*[]ftracker.SpendingCategory)
+	log.Debugf("batch type: %T", *batch)
 	if !ok {
 		log.Errorf("wrong batch type for exel: %T", *batch)
 		msg.Text = MessageInternalError + "\n" + internalErrorAditionalInfo
 		return
 	}
 
-	file, err := service.CreateExelFromCategories(categories)
+	file, err := service.CreateExelFromCategories(*categories)
 	if err != nil {
 		log.WithError(err).Error("error on create exel")
 		msg.Text = MessageExelError + "\n" + internalErrorAditionalInfo
@@ -700,6 +702,11 @@ func isCommand(s string) (command, bool) {
 	return commandsByIDs[id], true
 }
 
+type batchShowRecords struct {
+	singleCategoryGUID      uuid.UUID
+	multipleCategoriesGUIDs map[uuid.UUID]string
+}
+
 // inits the batch for the command
 func initBatch(id int) any {
 	switch id {
@@ -707,8 +714,10 @@ func initBatch(id int) any {
 		return &ftracker.SpendingCategory{}
 	case 3:
 		return &ftracker.SpendingRecord{}
+	case 4:
+		return &[]ftracker.SpendingCategory{}
 	case 5:
-		return &repository.RecordOptions{}
+		return &batchShowRecords{}
 	}
 
 	return nil
